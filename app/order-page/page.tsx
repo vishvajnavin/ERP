@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,20 +8,80 @@ import { Select, SelectItem, SelectTrigger, SelectValue, SelectContent } from '@
 import { Textarea } from '@/components/ui/textarea';
 
 export default function OrderPage() {
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [sofaModels, setSofaModels] = useState<any[]>([]);
-  const [bedModels, setBedModels] = useState<any[]>([]);
+  interface Customer {
+    id: string;
+    customer_name: string;
+    // Add other fields as needed based on your customer_details table
+  }
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  interface SofaModel {
+    id: string;
+    model_name: string;
+    // Add other fields as needed based on your sofa_products table
+  }
+  const [sofaModels, setSofaModels] = useState<SofaModel[]>([]);
+  interface BedModel {
+    id: string;
+    model_name: string;
+    // Add other fields as needed based on your bed_products table
+  }
+  const [bedModels, setBedModels] = useState<BedModel[]>([]);
+
+  interface Product {
+    product_type?: 'sofa' | 'bed';
+    is_existing_model?: boolean;
+    quantity?: number;
+    // For existing models
+    sofa_product_id?: string;
+    bed_product_id?: string;
+    // For new sofa
+    model_name?: string;
+    reference_image_url?: string;
+    measurement_drawing_url?: string;
+    description?: string;
+    recliner_mechanism_mode?: string;
+    recliner_mechanism_flip?: string;
+    wood_to_floor?: boolean;
+    headrest_mode?: string;
+    cup_holder?: string;
+    snack_swivel_tray?: boolean;
+    daybed_headrest_mode?: string;
+    daybed_position?: string;
+    armrest_storage?: boolean;
+    storage_side?: string;
+    foam_density_seating?: number | string;
+    foam_density_backrest?: number | string;
+    belt_details?: string;
+    leg_type?: string;
+    pvd_color?: string;
+    chester_option?: string;
+    armrest_panels?: string;
+    polish_color?: string;
+    polish_finish?: string;
+    seat_width?: number | string;
+    seat_depth?: number | string;
+    seat_height?: number | string;
+    armrest_width?: number | string;
+    armrest_depth?: number | string;
+    upholstery?: string;
+    upholstery_color?: string;
+    total_width?: number | string;
+    total_depth?: number | string;
+    total_height?: number | string;
+    // For new bed
+    bed_size?: string;
+    customized_mattress_size?: string;
+    headboard_type?: string;
+    storage_option?: string;
+    bed_portion?: string;
+  }
 
   const [selectedCustomer, setSelectedCustomer] = useState<string>('');
   const [totalProducts, setTotalProducts] = useState<number>(1);
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const supabase = createClient();
 
-  useEffect(() => {
-    fetchInitialData();
-  }, []);
-
-  const fetchInitialData = async () => {
+  const fetchInitialData = useCallback(async () => {
     const { data: customerData } = await supabase.from('customer_details').select('*');
     const { data: sofaData } = await supabase.from('sofa_products').select('*');
     const { data: bedData } = await supabase.from('bed_products').select('*');
@@ -29,9 +89,13 @@ export default function OrderPage() {
     setCustomers(customerData || []);
     setSofaModels(sofaData || []);
     setBedModels(bedData || []);
-  };
+  }, [supabase]);
 
-  const handleProductChange = (index: number, field: string, value: any) => {
+  useEffect(() => {
+    fetchInitialData();
+  }, [fetchInitialData]);
+
+  const handleProductChange = (index: number, field: string, value: string | number | boolean | undefined) => {
     const updated = [...products];
     updated[index] = {
       ...updated[index],
@@ -468,7 +532,7 @@ export default function OrderPage() {
   };
 
   useEffect(() => {
-    setProducts(Array.from({ length: totalProducts }, (_, i) => products[i] || {}));
+    setProducts(prevProducts => Array.from({ length: totalProducts }, (_, i) => prevProducts[i] || {}));
   }, [totalProducts]);
 
   return (
