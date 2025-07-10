@@ -1,7 +1,7 @@
 // components/order-page-client.tsx
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,7 +54,7 @@ const OrderPageClient: React.FC<OrderPageClientProps> = ({
         product_type: "sofa",
         is_existing_model: true,
         quantity: 1,
-        sofa_product_id: initialSofaModels[0]?.id || undefined,
+        sofa_product_id: initialSofaModels.length > 0 ? initialSofaModels[0].id : undefined,
       } as Product,
     ],
   });
@@ -71,7 +71,7 @@ const OrderPageClient: React.FC<OrderPageClientProps> = ({
     }));
   }, [formData.products]);
 
-  const handleFormChange = (
+  const handleFormChange = useCallback((
     field: keyof OrderFormState,
     value: string | number | Product[]
   ) => {
@@ -79,7 +79,7 @@ const OrderPageClient: React.FC<OrderPageClientProps> = ({
       ...prev,
       [field]: value,
     }));
-  };
+  }, []);
 
   const clearSofaCustomFields = (product: Product): Product => {
     const clearedProduct = { ...product };
@@ -140,7 +140,7 @@ const OrderPageClient: React.FC<OrderPageClientProps> = ({
     return clearedProduct;
   };
 
-  const handleProductChange = (
+  const handleProductChange = useCallback((
     index: number,
     field: keyof Product,
     value: string | number | boolean | undefined
@@ -173,19 +173,23 @@ const OrderPageClient: React.FC<OrderPageClientProps> = ({
           }
       }
 
-      if (field === 'is_existing_model') {
-          if (value === true) {
-              if (updatedProduct.product_type === 'sofa') {
-                  updatedProduct = clearSofaCustomFields(updatedProduct);
-                  updatedProduct.sofa_product_id = initialSofaModels[0]?.id || undefined;
-              } else if (updatedProduct.product_type === 'bed') {
-                  updatedProduct = clearBedCustomFields(updatedProduct);
-                  updatedProduct.bed_product_id = initialBedModels[0]?.id || undefined;
-              }
-          } else {
-              updatedProduct.sofa_product_id = undefined;
-              updatedProduct.bed_product_id = undefined;
-          }
+      if (field === 'is_existing_model' || field === 'is_customization') {
+        if (field === 'is_customization' && value === true) {
+          updatedProduct.is_existing_model = false;
+        }
+        
+        if (value === true) {
+            if (updatedProduct.product_type === 'sofa') {
+                updatedProduct = clearSofaCustomFields(updatedProduct);
+                updatedProduct.sofa_product_id = initialSofaModels[0]?.id || undefined;
+            } else if (updatedProduct.product_type === 'bed') {
+                updatedProduct = clearBedCustomFields(updatedProduct);
+                updatedProduct.bed_product_id = initialBedModels[0]?.id || undefined;
+            }
+        } else {
+            updatedProduct.sofa_product_id = undefined;
+            updatedProduct.bed_product_id = undefined;
+        }
       }
 
       newProducts[index] = updatedProduct;
@@ -195,15 +199,16 @@ const OrderPageClient: React.FC<OrderPageClientProps> = ({
         products: newProducts,
       };
     });
-  };
+  }, [initialSofaModels, initialBedModels]);
 
-  const addProduct = () => {
+  const addProduct = useCallback(() => {
     setFormData((prev) => {
       const newProducts = [
         ...prev.products,
         {
           product_type: "sofa",
           is_existing_model: true,
+          is_customization: false,
           quantity: 1,
           sofa_product_id: initialSofaModels[0]?.id || undefined,
         } as Product,
@@ -213,9 +218,9 @@ const OrderPageClient: React.FC<OrderPageClientProps> = ({
         products: newProducts,
       };
     });
-  };
+  }, [initialSofaModels]);
 
-  const removeProduct = (index: number) => {
+  const removeProduct = useCallback((index: number) => {
     setFormData((prev) => {
       const newProducts = prev.products.filter((_, i) => i !== index);
       return {
@@ -223,7 +228,7 @@ const OrderPageClient: React.FC<OrderPageClientProps> = ({
         products: newProducts,
       };
     });
-  };
+  }, []);
 
   // Handle form submission using the Server Action
   const handleSubmit = async (e: React.FormEvent) => {

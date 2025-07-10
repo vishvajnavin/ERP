@@ -1,6 +1,7 @@
 export interface Product {
     product_type?: 'sofa' | 'bed';
     is_existing_model?: boolean;
+    is_customization?: boolean;
     quantity?: number;
     // For existing models
     sofa_product_id?: string;

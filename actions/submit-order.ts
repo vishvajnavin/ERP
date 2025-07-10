@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase/server'; // Adjust path if necess
 
 export interface ProductItem {
   is_existing_model: boolean;
+  is_customization?: boolean;
   product_type: 'sofa' | 'bed';
   quantity?: number;
   // Existing model properties
@@ -81,7 +82,7 @@ export async function submitOrder(params: SubmitOrderParams) {
     console.log('Order created:', order);
 
     for (const item of products) {
-      if (item.is_existing_model) {
+      if (item.is_existing_model && !item.is_customization) {
         const { error: orderItemError } = await supabase.from('order_items').insert({
           order_id: order.id,
           product_type: item.product_type,

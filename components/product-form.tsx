@@ -26,7 +26,7 @@ import { createClient } from '@/utils/supabase/client'; // Import client-side Su
 
 // --- Product Types and Display Component ---
 import { Product } from "@/types/products"; // Ensure this Product type includes ALL possible sofa and bed fields
-import { ProductDetailsDisplay } from "./product-details-display"; // New component for displaying details
+import { ProductDetailsDisplay } from "./product-details-display";
 
 // Define a type for your existing models (if not already in types/product)
 export interface ExistingModel {
@@ -53,62 +53,33 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   sofaModels,
   bedModels,
 }) => {
-  // Supabase Client instance
   const supabase = createClient();
-
-  // State for managing the combobox open/closed state
   const [openSofaCombobox, setOpenSofaCombobox] = useState(false);
   const [openBedCombobox, setOpenBedCombobox] = useState(false);
-
-  // State to manage the search input value within the combobox
   const [sofaSearchTerm, setSofaSearchTerm] = useState('');
   const [bedSearchTerm, setBedSearchTerm] = useState('');
-
-  // State to store the *fetched* detailed product information for display
   const [fetchedProductDetails, setFetchedProductDetails] = useState<Product | null>(null);
   const [isFetchingDetails, setIsFetchingDetails] = useState(false);
   const [fetchDetailsError, setFetchDetailsError] = useState<string | null>(null);
+  const [selectedModelId, setSelectedModelId] = useState<string | undefined>(undefined);
 
-  // Effect to synchronize combobox display text with selected model
-  // and trigger detail fetching
   useEffect(() => {
-    // Reset fetched details and errors when product type or existing model status changes
-    setFetchedProductDetails(null);
-    setFetchDetailsError(null);
-
     const fetchDetails = async (modelId: string, type: 'sofa' | 'bed') => {
       setIsFetchingDetails(true);
       setFetchDetailsError(null);
+      setFetchedProductDetails(null);
 
       try {
-        let tableName = '';
-        if (type === 'sofa') {
-          tableName = 'sofa_products'; // Replace with your actual sofa models table name
-          setSofaSearchTerm(sofaModels.find(m => m.id === modelId)?.model_name || '');
-        } else if (type === 'bed') {
-          tableName = 'bed_products'; // Replace with your actual bed models table name
-          setBedSearchTerm(bedModels.find(m => m.id === modelId)?.model_name || '');
-        }
-
-        const { data, error } = await supabase
-          .from(tableName)
-          .select('*') // Select all columns to get full details
-          .eq('id', modelId)
-          .single(); // Expecting a single record
-
-        if (error) {
-          throw error;
-        }
+        const tableName = type === 'sofa' ? 'sofa_products' : 'bed_products';
+        const { data, error } = await supabase.from(tableName).select('*').eq('id', modelId).single();
+        if (error) throw error;
 
         if (data) {
-          // IMPORTANT: You need to map your Supabase table data to your Product interface.
-          // This mapping ensures that the fetched data aligns with your `Product` type.
-          // Adjust property names based on your actual database schema.
           const mappedProduct: Product = {
-            product_type: type, // Ensure type is correctly set
-            is_existing_model: true,
-            quantity: product.quantity, // Keep current quantity
-            // Map common fields
+            product_type: type,
+            is_existing_model: product.is_existing_model,
+            is_customization: product.is_customization,
+            quantity: product.quantity,
             model_name: data.model_name,
             description: data.description,
             reference_image_url: data.reference_image_url,
@@ -120,7 +91,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             total_height: data.total_height,
             polish_color: data.polish_color,
             polish_finish: data.polish_finish,
-            // Sofa-specific fields (ensure they match your DB columns)
             sofa_product_id: type === 'sofa' ? data.id : undefined,
             recliner_mechanism_mode: data.recliner_mechanism_mode,
             recliner_mechanism_flip: data.recliner_mechanism_flip,
@@ -144,7 +114,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             seat_height: data.seat_height,
             armrest_width: data.armrest_width,
             armrest_depth: data.armrest_depth,
-            // Bed-specific fields (ensure they match your DB columns)
             bed_product_id: type === 'bed' ? data.id : undefined,
             bed_size: data.bed_size,
             customized_mattress_size: data.customized_mattress_size,
@@ -152,30 +121,28 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             storage_option: data.storage_option,
             bed_portion: data.bed_portion,
           };
-          setFetchedProductDetails(mappedProduct);
+
+          if (product.is_customization) {
+            Object.keys(mappedProduct).forEach(key => {
+              handleProductChange(index, key as keyof Product, mappedProduct[key as keyof Product]);
+            });
+          } else {
+            setFetchedProductDetails(mappedProduct);
+          }
         }
       } catch (err: unknown) {
-        if (err instanceof Error) {
-          console.error("Error fetching model details:", err.message);
-          setFetchDetailsError(`Failed to load details: ${err.message}`);
-        } else {
-          console.error("Error fetching model details:", err);
-          setFetchDetailsError("Failed to load details: Unknown error");
-        }
+        const message = err instanceof Error ? err.message : "Unknown error";
+        console.error("Error fetching model details:", message);
+        setFetchDetailsError(`Failed to load details: ${message}`);
       } finally {
         setIsFetchingDetails(false);
       }
     };
 
-    // Trigger fetch only if an existing model ID is selected for the current product type
-    if (product.is_existing_model) {
-      if (product.product_type === 'sofa' && product.sofa_product_id) {
-        fetchDetails(product.sofa_product_id, 'sofa');
-      } else if (product.product_type === 'bed' && product.bed_product_id) {
-        fetchDetails(product.bed_product_id, 'bed');
-      }
+    if (selectedModelId) {
+      fetchDetails(selectedModelId, product.product_type!);
     }
-  }, [product.sofa_product_id, product.bed_product_id, product.product_type, product.is_existing_model, supabase, sofaModels, bedModels, product.quantity]); // Add product.quantity to dependencies if it's used in mapping
+  }, [selectedModelId, product.product_type, product.is_existing_model, product.is_customization, supabase, index, product.quantity, handleProductChange]);
 
   return (
     <Card className="p-4 my-4">
@@ -196,10 +163,24 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           </SelectContent>
         </Select>
 
-        {/* Existing Model or New Specification Selection */}
+        {/* Existing Model, New Specification, or Customize Selection */}
         <Select
-          value={product.is_existing_model === true ? 'true' : product.is_existing_model === false ? 'false' : ''}
-          onValueChange={(val) => handleProductChange(index, 'is_existing_model', val === 'true')}
+          value={
+            product.is_customization
+              ? "customize"
+              : product.is_existing_model
+              ? "true"
+              : "false"
+          }
+          onValueChange={(val) => {
+            if (val === "customize") {
+              handleProductChange(index, "is_customization", true);
+              handleProductChange(index, "is_existing_model", false);
+            } else {
+              handleProductChange(index, "is_customization", false);
+              handleProductChange(index, "is_existing_model", val === "true");
+            }
+          }}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select Existing or New" />
@@ -207,6 +188,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           <SelectContent>
             <SelectItem value="true">Existing Model</SelectItem>
             <SelectItem value="false">New Custom Specification</SelectItem>
+            <SelectItem value="customize">Customize From Existing</SelectItem>
           </SelectContent>
         </Select>
 
@@ -221,7 +203,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       </div>
 
       {/* Conditional Rendering for Existing Model Selection (Combobox) */}
-      {product.product_type === 'sofa' && product.is_existing_model && (
+      {product.product_type === 'sofa' && (product.is_existing_model || product.is_customization) && (
         <div className="mt-4">
           <Label htmlFor={`sofa-model-combobox-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
             Select Existing Sofa Model
@@ -260,6 +242,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                           key={model.id}
                           value={model.model_name}
                           onSelect={() => {
+                            setSelectedModelId(model.id);
                             handleProductChange(index, 'sofa_product_id', model.id);
                             setSofaSearchTerm(model.model_name);
                             setOpenSofaCombobox(false);
@@ -282,7 +265,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         </div>
       )}
 
-      {product.product_type === 'bed' && product.is_existing_model && (
+      {product.product_type === 'bed' && (product.is_existing_model || product.is_customization) && (
         <div className="mt-4">
           <Label htmlFor={`bed-model-combobox-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
             Select Existing Bed Model
@@ -321,6 +304,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                           key={model.id}
                           value={model.model_name}
                           onSelect={() => {
+                            setSelectedModelId(model.id);
                             handleProductChange(index, 'bed_product_id', model.id);
                             setBedSearchTerm(model.model_name);
                             setOpenBedCombobox(false);
@@ -360,14 +344,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
 
       {/* Conditional Rendering for Custom Specification Details Forms */}
-      {product.product_type === 'sofa' && !product.is_existing_model && (
+      {product.product_type === 'sofa' && (!product.is_existing_model || product.is_customization) && (
         <SofaDetailsForm
           index={index}
           product={product}
           handleProductChange={handleProductChange}
         />
       )}
-      {product.product_type === 'bed' && !product.is_existing_model && (
+      {product.product_type === 'bed' && (!product.is_existing_model || product.is_customization) && (
         <BedDetailsForm
           index={index}
           product={product}
