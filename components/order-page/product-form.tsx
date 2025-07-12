@@ -48,8 +48,7 @@ interface ProductFormProps {
   bedModels: ExistingModel[]; // Array of existing bed models
 }
 
-// Define new option type for product state
-type ProductSelectionMode = 'existing' | 'new' | 'customize';
+
 
 export const ProductForm: React.FC<ProductFormProps> = ({
   index,
@@ -360,15 +359,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       )}
 
       {/* Conditional Rendering for Customization Form */}
-      {product.product_type && selectionMode === 'customize' && (
-        <ProductCustomizationForm
-          index={index}
-          product={product} // Pass the current product state for editing
-          handleProductChange={handleProductChange}
-          sofaModels={sofaModels}
-          bedModels={bedModels}
-        />
-      )}
 
       {/* Conditional Rendering for Custom Specification Details Forms */}
       {product.product_type === 'sofa' && (!product.is_existing_model || product.is_customization) && (
