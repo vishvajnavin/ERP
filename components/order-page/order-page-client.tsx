@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Product } from "@/types/products"; // Adjust path to your types file
 import { ProductForm } from "./product-form"; // Adjust path to ProductForm component
+import { toast } from "sonner";
 
 // Import the Server Action
 import { submitOrder, ProductItem } from '@/actions/submit-order'; // Adjust path if necessary
@@ -317,11 +318,13 @@ const OrderPageClient: React.FC<OrderPageClientProps> = ({
     if (result.success) {
       setSubmissionMessage(result.message);
       setIsError(false);
+      toast.success(result.message);
       // Optionally reset form after successful submission
       // setFormData({ /* initial state */ });
     } else {
       setSubmissionMessage(result.message);
       setIsError(true);
+      toast.error(result.message);
     }
     setIsSubmitting(false);
   };

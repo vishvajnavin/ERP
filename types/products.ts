@@ -1,3 +1,8 @@
+// types/products.ts
+// Assuming this is your Product interface. Adjust fields as per your actual DB schema.
+
+export type ProductType = 'sofa' | 'bed'; // Add other types if needed
+
 export interface Product {
     product_type?: 'sofa' | 'bed';
     is_existing_model?: boolean;
