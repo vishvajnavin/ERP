@@ -2,7 +2,7 @@
 // This file will act as your Server Component wrapper
 
 import { createClient as createServerClientForPage } from '@/utils/supabase/server'; // Import your server-side Supabase client
-import OrderPageClient from '@/components/order-page-client'; // Import your client component
+import OrderPageClient from '@/components/order-page/order-page-client'; // Import your client component
 
 // --- Interfaces for Data (keep these consistent with your DB schema) ---
 // Assuming these interfaces match your Supabase table structures
