@@ -343,7 +343,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         </div>
       )}
 
-      {/* Display fetched details for existing models */}
       {product.is_existing_model && (
         <>
           {isFetchingDetails && (

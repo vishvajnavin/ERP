@@ -18,10 +18,10 @@ export interface ProductItem {
   measurement_drawing_url?: string;
   // New sofa-specific properties
   recliner_mechanism_mode?: string;
-  recliner_mechanism_flip?: boolean;
+  recliner_mechanism_flip?: string;
   wood_to_floor?: boolean;
   headrest_mode?: string;
-  cup_holder?: boolean;
+  cup_holder?: string;
   snack_swivel_tray?: boolean;
   daybed_headrest_mode?: string;
   daybed_position?: string;
@@ -98,7 +98,7 @@ export async function submitOrder(params: SubmitOrderParams) {
         }
       } else {
         if (item.product_type === 'sofa') {
-          const { data: newSofa, error: newSofaError } = await supabase.from('sofa_products').insert({
+          const productToAdd={
             model_name: item.model_name,
             reference_image_url: item.reference_image_url,
             measurement_drawing_url: item.measurement_drawing_url,
@@ -132,7 +132,9 @@ export async function submitOrder(params: SubmitOrderParams) {
             total_width: item.total_width,
             total_depth: item.total_depth,
             total_height: item.total_height,
-          }).select().single();
+          }
+          console.log(productToAdd)
+          const { data: newSofa, error: newSofaError } = await supabase.from('sofa_products').insert(productToAdd).select().single();
 
           if (newSofaError) {
             console.error('Error creating new sofa product:', newSofaError);

@@ -272,14 +272,10 @@ const OrderPageClient: React.FC<OrderPageClientProps> = ({
             if (product.product_type === 'sofa') {
                 // Sofa-specific custom fields
                 item.recliner_mechanism_mode = product.recliner_mechanism_mode;
-                item.recliner_mechanism_flip = typeof product.recliner_mechanism_flip === "string"
-                  ? product.recliner_mechanism_flip === "true"
-                  : product.recliner_mechanism_flip;
+                item.recliner_mechanism_flip = product.recliner_mechanism_flip;
                 item.wood_to_floor = product.wood_to_floor;
                 item.headrest_mode = product.headrest_mode;
-                item.cup_holder = typeof product.cup_holder === "string"
-                  ? product.cup_holder === "true"
-                  : product.cup_holder;
+                item.cup_holder = product.cup_holder;
                 item.snack_swivel_tray = product.snack_swivel_tray;
                 item.daybed_headrest_mode = product.daybed_headrest_mode;
                 item.daybed_position = product.daybed_position;
