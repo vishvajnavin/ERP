@@ -14,6 +14,7 @@ export const SofaDetailsForm: React.FC<DetailsFormProps> = ({ index, product, ha
         {value: 'leather_smoothy_nappa', label: 'Leather Smoothy Nappa'}, {value: 'pu_leather', label: 'PU Leather'}
     ];
     
+    console.log(product)
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <InputField name={`${baseName}.model_name`} label="Model Name" value={product.model_name || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "model_name", e.target.value)} />

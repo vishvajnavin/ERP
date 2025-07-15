@@ -49,7 +49,7 @@ const PlaceOrderPage = ({
     // React 19: useActionState hook to handle server action state
     const [state, formAction] = useActionState(submitOrder, { success: false, message: '' });
 
-    const mockProducts = useMemo(() => {
+    const products = useMemo(() => {
         const sofas = initialSofaModels.map(sofa => ({ id: sofa.id, type: 'Sofa' as const, name: sofa.model_name, price: 0, details: { ...sofa } }));
         const beds = initialBedModels.map(bed => ({ id: bed.id, type: 'Bed' as const, name: bed.model_name, price: 0, details: { ...bed } }));
         return [...sofas, ...beds];
@@ -92,7 +92,7 @@ const PlaceOrderPage = ({
                     <div className="lg:col-span-2 space-y-6">
                         {orderItems.map((item, index) => (
                             <ProductEntryForm
-                                key={item.uniqueId}
+                                key={`${item.uniqueId}-${item.id || ''}`}
                                 item={item}
                                 index={index}
                                 onItemChange={handleItemChange}
@@ -100,7 +100,7 @@ const PlaceOrderPage = ({
                                 onProductSelect={handleProductSelect}
                                 onRemove={removeItem}
                                 isOnlyItem={orderItems.length === 1}
-                                mockProducts={mockProducts}
+                                products={products}
                             />
                         ))}
                         <button type="button" onClick={addNewItem} className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-300 text-gray-500 font-semibold rounded-lg hover:bg-gray-200 hover:border-gray-400 transition">

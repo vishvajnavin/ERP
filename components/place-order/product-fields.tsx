@@ -18,10 +18,10 @@ export interface DetailsFormProps {
   disabled: boolean;
 }
 
-export const InputField = ({ label, name, ...props }: { label: string; name: string } & React.InputHTMLAttributes<HTMLInputElement>) => (
+export const InputField = ({ label, name,value, ...props }: { label: string; name: string } & React.InputHTMLAttributes<HTMLInputElement>) => (
     <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-        <input name={name} {...props} className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-red-500 disabled:bg-gray-200 disabled:cursor-not-allowed" />
+        <input name={name} value={value} {...props} className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-red-500 disabled:bg-gray-200 disabled:cursor-not-allowed" />
     </div>
 );
 
