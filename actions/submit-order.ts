@@ -1,6 +1,8 @@
 // app/actions/orderActions.ts
 'use server'; // This directive is crucial for making this a Server Action
 
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server'; // Adjust path if necessary
 
 export interface ProductItem {
@@ -54,154 +56,165 @@ export interface ProductItem {
   customized_mattress_size?: string;
 }
 
-interface SubmitOrderParams {
-  selectedCustomer: string;
-  totalProducts: number;
-  products: ProductItem[];
+interface FormState {
+  success: boolean;
+  message: string | null;
 }
 
-export async function submitOrder(params: SubmitOrderParams) {
-  const { selectedCustomer, totalProducts, products } = params;
+export async function submitOrder(prevState: FormState, formData: FormData) {
   const supabase = createClient();
+  const selectedCustomerId = formData.get('selectedCustomerId') as string;
+  const totalProducts = parseInt(formData.get('totalProducts') as string, 10);
 
-  if (!selectedCustomer || totalProducts < 1) {
+  if (!selectedCustomerId || isNaN(totalProducts) || totalProducts < 1) {
     return { success: false, message: 'Invalid customer or product count.' };
   }
 
+  let orderId: string | null = null;
+
   try {
+    // 1. Create the main order record to get an ID
     const { data: order, error: orderError } = await supabase.from('orders').insert({
-      customer_id: selectedCustomer,
+      customer_id: selectedCustomerId,
       total_products: totalProducts,
-    }).select().single();
+    }).select('id').single();
 
-    if (orderError) {
-      console.error('Error creating order:', orderError);
-      return { success: false, message: `Failed to create order: ${orderError.message}` };
+    if (orderError) throw new Error(`Failed to create order: ${orderError.message}`);
+    orderId = order.id;
+
+    // 2. Process each product item from the form
+    for (let i = 0; i < totalProducts; i++) {
+        const baseName = `products[${i}]`;
+        const productType = formData.get(`${baseName}.product_type`) as 'sofa' | 'bed';
+        const isExistingModel = formData.get(`${baseName}.is_existing_model`) === 'true';
+        const isCustomization = formData.get(`${baseName}.is_customization`) === 'true';
+        const quantity = parseInt(formData.get(`${baseName}.quantity`) as string, 10);
+
+        // --- Case 1: Existing, non-customized product ---
+        if (isExistingModel && !isCustomization) {
+            const productIdKey = productType === 'sofa' ? 'sofa_product_id' : 'bed_product_id';
+            const productId = formData.get(`${baseName}.${productIdKey}`) as string;
+
+            const { error: orderItemError } = await supabase.from('order_items').insert({
+                order_id: orderId,
+                product_type: productType,
+                sofa_product_id: productType === 'sofa' ? productId : null,
+                bed_product_id: productType === 'bed' ? productId : null,
+                quantity: quantity || 1,
+            });
+            if (orderItemError) throw new Error(`[Item ${i+1}] Failed to add existing product to order: ${orderItemError.message}`);
+        
+        // --- Case 2: New or customized product ---
+        } else {
+            const model_name = formData.get(`${baseName}.model_name`) as string;
+
+            // --- Handle File Uploads ---
+            const referenceImageFile = formData.get(`${baseName}.reference_image_url`) as File | null;
+            let reference_image_url: string | undefined = undefined;
+            if (referenceImageFile && referenceImageFile.size > 0) {
+                const filePath = `public/orders/${orderId}/${baseName}-ref-${referenceImageFile.name}`;
+                const { error } = await supabase.storage.from('product-images').upload(filePath, referenceImageFile);
+                if (error) throw new Error(`[Item ${i+1}] Failed to upload reference image: ${error.message}`);
+                reference_image_url = supabase.storage.from('product-images').getPublicUrl(filePath).data.publicUrl;
+            }
+
+            const measurementDrawingFile = formData.get(`${baseName}.measurement_drawing_url`) as File | null;
+            let measurement_drawing_url: string | undefined = undefined;
+            if (measurementDrawingFile && measurementDrawingFile.size > 0) {
+                const filePath = `public/orders/${orderId}/${baseName}-measure-${measurementDrawingFile.name}`;
+                const { error } = await supabase.storage.from('product-images').upload(filePath, measurementDrawingFile);
+                if (error) throw new Error(`[Item ${i+1}] Failed to upload measurement drawing: ${error.message}`);
+                measurement_drawing_url = supabase.storage.from('product-images').getPublicUrl(filePath).data.publicUrl;
+            }
+            
+            let newProductId: string;
+
+            if (productType === 'sofa') {
+                const { data: newSofa, error } = await supabase.from('sofa_products').insert({
+                    model_name,
+                    reference_image_url,
+                    measurement_drawing_url,
+                    description: formData.get(`${baseName}.description`) as string | undefined,
+                    recliner_mechanism_mode: formData.get(`${baseName}.recliner_mechanism_mode`) as string | undefined,
+                    recliner_mechanism_flip: formData.get(`${baseName}.recliner_mechanism_flip`) as string | undefined,
+                    wood_to_floor: formData.get(`${baseName}.wood_to_floor`) === 'true',
+                    headrest_mode: formData.get(`${baseName}.headrest_mode`) as string | undefined,
+                    cup_holder: formData.get(`${baseName}.cup_holder`) as string | undefined,
+                    snack_swivel_tray: formData.get(`${baseName}.snack_swivel_tray`) === 'true',
+                    daybed_headrest_mode: formData.get(`${baseName}.daybed_headrest_mode`) as string | undefined,
+                    daybed_position: formData.get(`${baseName}.daybed_position`) as string | undefined,
+                    armrest_storage: formData.get(`${baseName}.armrest_storage`) === 'true',
+                    storage_side: formData.get(`${baseName}.storage_side`) as string | undefined,
+                    foam_density_seating: Number(formData.get(`${baseName}.foam_density_seating`)),
+                    foam_density_backrest: Number(formData.get(`${baseName}.foam_density_backrest`)),
+                    belt_details: formData.get(`${baseName}.belt_details`) as string | undefined,
+                    leg_type: formData.get(`${baseName}.leg_type`) as string | undefined,
+                    pvd_color: formData.get(`${baseName}.pvd_color`) as string | undefined,
+                    chester_option: formData.get(`${baseName}.chester_option`) as string | undefined,
+                    armrest_panels: formData.get(`${baseName}.armrest_panels`) as string | undefined,
+                    polish_color: formData.get(`${baseName}.polish_color`) as string | undefined,
+                    polish_finish: formData.get(`${baseName}.polish_finish`) as string | undefined,
+                    upholstery: formData.get(`${baseName}.upholstery`) as string | undefined,
+                    upholstery_color: formData.get(`${baseName}.upholstery_color`) as string | undefined,
+                    total_width: Number(formData.get(`${baseName}.total_width`)),
+                    total_depth: Number(formData.get(`${baseName}.total_depth`)),
+                    total_height: Number(formData.get(`${baseName}.total_height`)),
+                    seat_width: Number(formData.get(`${baseName}.seat_width`)),
+                    seat_depth: Number(formData.get(`${baseName}.seat_depth`)),
+                    seat_height: Number(formData.get(`${baseName}.seat_height`)),
+                    armrest_width: Number(formData.get(`${baseName}.armrest_width`)),
+                    armrest_depth: Number(formData.get(`${baseName}.armrest_depth`)),
+                }).select('id').single();
+                if (error) throw new Error(`[Item ${i+1}] Failed to create new sofa product: ${error.message}`);
+                newProductId = newSofa.id;
+            } else { // productType === 'bed'
+                 const { data: newBed, error } = await supabase.from('bed_products').insert({
+                    model_name,
+                    reference_image_url,
+                    measurement_drawing_url,
+                    description: formData.get(`${baseName}.description`) as string | undefined,
+                    bed_size: formData.get(`${baseName}.bed_size`) as string | undefined,
+                    customized_mattress_size: formData.get(`${baseName}.customized_mattress_size`) as string | undefined,
+                    headboard_type: formData.get(`${baseName}.headboard_type`) as string | undefined,
+                    storage_option: formData.get(`${baseName}.storage_option`) as string | undefined,
+                    bed_portion: formData.get(`${baseName}.bed_portion`) as string | undefined,
+                    upholstery: formData.get(`${baseName}.upholstery`) as string | undefined,
+                    upholstery_color: formData.get(`${baseName}.upholstery_color`) as string | undefined,
+                    polish_color: formData.get(`${baseName}.polish_color`) as string | undefined,
+                    polish_finish: formData.get(`${baseName}.polish_finish`) as string | undefined,
+                    total_width: Number(formData.get(`${baseName}.total_width`)),
+                    total_depth: Number(formData.get(`${baseName}.total_depth`)),
+                    total_height: Number(formData.get(`${baseName}.total_height`)),
+                }).select('id').single();
+                if (error) throw new Error(`[Item ${i+1}] Failed to create new bed product: ${error.message}`);
+                newProductId = newBed.id;
+            }
+
+            // --- Link the newly created product to the order ---
+            const { error: orderItemError } = await supabase.from('order_items').insert({
+              order_id: orderId,
+              product_type: productType,
+              sofa_product_id: productType === 'sofa' ? newProductId : null,
+              bed_product_id: productType === 'bed' ? newProductId : null,
+              quantity: quantity || 1,
+            });
+            if (orderItemError) throw new Error(`[Item ${i+1}] Failed to link new ${productType} to order: ${orderItemError.message}`);
+        }
     }
 
-    console.log('Order created:', order);
-
-    for (const item of products) {
-      if (item.is_existing_model && !item.is_customization) {
-        const { error: orderItemError } = await supabase.from('order_items').insert({
-          order_id: order.id,
-          product_type: item.product_type,
-          sofa_product_id: item.product_type === 'sofa' ? item.sofa_product_id : null,
-          bed_product_id: item.product_type === 'bed' ? item.bed_product_id : null,
-          quantity: item.quantity || 1,
-        });
-        if (orderItemError) {
-          console.error(`Error inserting existing order item for ${item.product_type}:`, orderItemError);
-          // You might want to handle this error more robustly,
-          // e.g., by rolling back the order or notifying the user.
-          return { success: false, message: `Failed to add existing product to order: ${orderItemError.message}` };
-        }
-      } else {
-        if (item.product_type === 'sofa') {
-          const productToAdd={
-            model_name: item.model_name,
-            reference_image_url: item.reference_image_url,
-            measurement_drawing_url: item.measurement_drawing_url,
-            recliner_mechanism_mode: item.recliner_mechanism_mode,
-            recliner_mechanism_flip: item.recliner_mechanism_flip,
-            wood_to_floor: item.wood_to_floor,
-            headrest_mode: item.headrest_mode,
-            cup_holder: item.cup_holder,
-            snack_swivel_tray: item.snack_swivel_tray,
-            daybed_headrest_mode: item.daybed_headrest_mode,
-            daybed_position: item.daybed_position,
-            armrest_storage: item.armrest_storage,
-            storage_side: item.storage_side,
-            foam_density_seating: item.foam_density_seating,
-            foam_density_backrest: item.foam_density_backrest,
-            belt_details: item.belt_details,
-            leg_type: item.leg_type,
-            pvd_color: item.pvd_color,
-            chester_option: item.chester_option,
-            armrest_panels: item.armrest_panels,
-            polish_color: item.polish_color,
-            polish_finish: item.polish_finish,
-            seat_width: item.seat_width,
-            seat_depth: item.seat_depth,
-            seat_height: item.seat_height,
-            armrest_width: item.armrest_width,
-            armrest_depth: item.armrest_depth,
-            upholstery: item.upholstery,
-            upholstery_color: item.upholstery_color,
-            description: item.description,
-            total_width: item.total_width,
-            total_depth: item.total_depth,
-            total_height: item.total_height,
-          }
-          console.log(productToAdd)
-          const { data: newSofa, error: newSofaError } = await supabase.from('sofa_products').insert(productToAdd).select().single();
-
-          if (newSofaError) {
-            console.error('Error creating new sofa product:', newSofaError);
-            return { success: false, message: `Failed to create new sofa: ${newSofaError.message}` };
-          }
-
-          if (newSofa) {
-            const { error: orderItemError } = await supabase.from('order_items').insert({
-              order_id: order.id,
-              product_type: 'sofa',
-              sofa_product_id: newSofa.id,
-              quantity: item.quantity || 1,
-            });
-            if (orderItemError) {
-              console.error('Error inserting new sofa order item:', orderItemError);
-              return { success: false, message: `Failed to add new sofa to order: ${orderItemError.message}` };
-            }
-          }
-        } else if (item.product_type === 'bed') {
-          const { data: newBed, error: newBedError } = await supabase.from('bed_products').insert({
-            model_name: item.model_name,
-            description: item.description,
-            reference_image_url: item.reference_image_url,
-            measurement_drawing_url: item.measurement_drawing_url,
-            headboard_type: item.headboard_type,
-            storage_option: item.storage_option,
-            bed_portion: item.bed_portion,
-            upholstery: item.upholstery,
-            upholstery_color: item.upholstery_color,
-            polish_color: item.polish_color,
-            polish_finish: item.polish_finish,
-            bed_size: item.bed_size,
-            customized_mattress_size: item.customized_mattress_size,
-            total_width: item.total_width,
-            total_depth: item.total_depth,
-            total_height: item.total_height,
-          }).select().single();
-
-          if (newBedError) {
-            console.error('Error creating new bed product:', newBedError);
-            return { success: false, message: `Failed to create new bed: ${newBedError.message}` };
-          }
-
-          if (newBed) {
-            const { error: orderItemError } = await supabase.from('order_items').insert({
-              order_id: order.id,
-              product_type: 'bed',
-              bed_product_id: newBed.id,
-              quantity: item.quantity || 1,
-            });
-            if (orderItemError) {
-              console.error('Error inserting new bed order item:', orderItemError);
-              return { success: false, message: `Failed to add new bed to order: ${orderItemError.message}` };
-            }
-          }
-        }
-      }
-    }
-
-    return { success: true, message: 'Order placed successfully!' };
-
+    // 3. Success: Revalidate path and redirect
+    revalidatePath('/orders'); // Invalidate cache for the orders list page
+    redirect(`/orders/${orderId}`); // Redirect to the new order's detail page
+    
   } catch (error: unknown) {
-    console.error('Unhandled error during order submission:', error);
-    let errorMessage = 'Unknown error';
-    if (error && typeof error === 'object' && 'message' in error && typeof (error as { message?: unknown }).message === 'string') {
-      errorMessage = (error as { message: string }).message;
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+    console.error('Order submission error:', errorMessage);
+    
+    // Attempt to clean up the created order if an error occurs mid-process
+    if (orderId) {
+        await supabase.from('orders').delete().match({ id: orderId });
     }
-    return { success: false, message: `An unexpected error occurred: ${errorMessage}` };
+
+    return { success: false, message: errorMessage };
   }
 }
