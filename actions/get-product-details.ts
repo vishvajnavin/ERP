@@ -1,22 +1,43 @@
 'use server';
 
+import { z } from 'zod';
 import { createClient } from '@/utils/supabase/server';
-import { Product } from '@/types/products';
 
-export async function getProductDetails(productId: string, productType: 'Sofa' | 'Bed'): Promise<Product | null> {
+const formSchema = z.object({
+  id: z.number(),
+  type: z.enum(['Sofa', 'Bed']),
+});
+
+export default async function getProductDetails(id: number, type: 'Sofa' | 'Bed') {
   const supabase = createClient();
-  const tableName = productType === 'Sofa' ? 'sofas' : 'beds';
+
+  const validatedFields = formSchema.safeParse({
+    id: id,
+    type: type,
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+    };
+  }
+  const tableName= validatedFields.data.type === 'Sofa' ? 'sofa_products' : 'bed_products';
 
   const { data, error } = await supabase
     .from(tableName)
     .select('*')
-    .eq('id', productId)
+    .eq('id', validatedFields.data.id)
     .single();
 
   if (error) {
-    console.error('Error fetching product details:', error);
-    return null;
+    return {
+      errors: {
+        database: ['Failed to fetch product details.'],
+      },
+    };
   }
 
-  return data as Product;
+  return {
+    data,
+  };
 }

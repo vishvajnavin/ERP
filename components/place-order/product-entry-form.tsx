@@ -3,7 +3,6 @@ import { BedDetailsForm } from "./bed-details-form";
 import { useState } from "react";
 import { OrderItem } from "./order-page-client";
 import { Product } from "@/types/products";
-import { getProductDetails } from "@/actions/get-product-details";
 import { Search, Plus, Minus, Sofa, Bed, Trash2 } from 'lucide-react'
 
 type ProductEntryFormProps = {
@@ -11,42 +10,30 @@ type ProductEntryFormProps = {
     index: number;
     onItemChange: <K extends keyof OrderItem>(index: number, field: K, value: OrderItem[K]) => void;
     onDetailsChange: <K extends keyof Product>(index: number, detailField: K, value: Product[K]) => void;
-    onProductSelect: (index: number, product: { id: string; type: 'Sofa' | 'Bed'; name: string; price: number; details: Product }) => void;
+    onProductSelect: (index: number, product: { id: string; type: 'Sofa' | 'Bed'; model_name: string; }) => void;
     onRemove: (index: number) => void;
     isOnlyItem: boolean;
-    products: { id: string; type: 'Sofa' | 'Bed'; name: string; price: number; details: Product }[];
+    sofaModels: { id: string; model_name: string; }[];
+    bedModels: { id: string; model_name: string; }[];
 };
 
-export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, onProductSelect, onRemove, isOnlyItem, products }: ProductEntryFormProps) => {
+export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, onProductSelect, onRemove, isOnlyItem, sofaModels, bedModels }: ProductEntryFormProps) => {
     const [search, setSearch] = useState('');
     const [isSearching, setIsSearching] = useState(false);
-    const [isFetchingDetails, setIsFetchingDetails] = useState(false);
 
-    const filteredProducts = products.filter(p =>
-        p.type === item.type && p.name.toLowerCase().includes(search.toLowerCase())
+    const filteredProducts = item.type === 'Sofa' ? sofaModels.filter(p =>
+        p.model_name.toLowerCase().includes(search.toLowerCase())||
+        p.id.toString().includes(search)
+    ) : bedModels.filter(p =>
+        p.model_name.toLowerCase().includes(search.toLowerCase()) ||
+        p.id.toString().includes(search)
     );
-
-    const handleSelect = async (product: { id: string; type: 'Sofa' | 'Bed'; name: string; price: number; details: Product }) => {
-        setIsFetchingDetails(true);
-        const fullDetails = await getProductDetails(product.id, product.type);
-        if (fullDetails) {
-            onProductSelect(index, { ...product, details: fullDetails });
-        }
-        setIsFetchingDetails(false);
-        setIsSearching(false);
-        setSearch(product.name);
-    };
 
     // Construct the base name for input fields in this product entry
     const baseName = `products[${index}]`;
 
     return (
         <div className="bg-white p-6 rounded-xl shadow-md relative">
-            {isFetchingDetails && (
-                <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center z-20">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
-                </div>
-            )}
             {/* Hidden inputs to structure the form data for the server action */}
             <input type="hidden" name={`${baseName}.product_type`} value={item.type.toLowerCase()} />
             <input type="hidden" name={`${baseName}.is_existing_model`} value={String(!!item.id)} />
@@ -69,7 +56,7 @@ export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, o
                     <input
                         type="text"
                         placeholder={`Search existing ${item.type.toLowerCase()} models...`}
-                        value={item.id ? item.name : search}
+                        value={item.id ? item.model_name : search}
                         onChange={e => {
                             setSearch(e.target.value);
                             onItemChange(index, 'id', null);
@@ -82,7 +69,12 @@ export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, o
                     {isSearching && search && (
                         <div className="absolute z-10 top-full mt-1 w-full bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
                             {filteredProducts.length > 0 ? filteredProducts.map(p => (
-                                <div key={p.id} onClick={() => handleSelect(p)} className="p-3 hover:bg-red-50 cursor-pointer">{p.name}</div>
+                                <div key={p.id} onClick={() => {
+                                        onProductSelect(index,{...p, type: item.type, })
+                                    setSearch(p.model_name); 
+                                    setIsSearching(false); 
+                                }} 
+                                className="p-3 hover:bg-red-50 cursor-pointer">{p.model_name}</div>
                             )) : <div className="p-3 text-gray-500">No models found.</div>}
                         </div>
                     )}
