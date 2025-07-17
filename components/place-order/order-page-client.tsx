@@ -48,6 +48,12 @@ const PlaceOrderPage = ({
     // React 19: useActionState hook to handle server action state
     const [state, formAction] = useActionState(submitOrder, { success: false, message: '' });
 
+    const hasNameError = orderItems.some(item => {
+        const nameExists = item.isCustom && (item.type == 'Sofa' ? initialSofaModels.some(p => p.model_name.toLowerCase() === item.details.model_name?.toLowerCase() && p.id !== item.id) :
+        initialBedModels.some(p => p.model_name.toLowerCase() === item.details.model_name?.toLowerCase() && p.id !== item.id));
+        return nameExists;
+    });
+
     const handleItemChange = <K extends keyof OrderItem>(index: number, field: K, value: OrderItem[K]) => {
         const newItems = [...orderItems];
         newItems[index][field] = value;
@@ -105,7 +111,7 @@ const PlaceOrderPage = ({
 
                     <div className="lg:col-span-1 space-y-6 sticky top-6">
                         <CustomerSelector customer={selectedCustomer} onSelect={setSelectedCustomer} />
-                        <OrderSummary itemCount={orderItems.reduce((sum, item) => sum + item.quantity, 0)} />
+                        <OrderSummary itemCount={orderItems.reduce((sum, item) => sum + item.quantity, 0)} disabled={hasNameError} />
                         {/* MODIFICATION: Display server response message */}
                         {state?.message && (
                              <div className={`flex items-start gap-3 p-4 rounded-lg ${state.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
@@ -135,10 +141,10 @@ const CustomerSelector = ({ customer, onSelect }: { customer: Customer, onSelect
     </div>
 );
 
-const SubmitButton = () => {
+const SubmitButton = ({ disabled }: { disabled: boolean }) => {
     const { pending } = useFormStatus();
     return (
-        <button type="submit" disabled={pending} className="w-full mt-6 flex items-center justify-center gap-2 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors disabled:bg-red-400 disabled:cursor-not-allowed">
+        <button type="submit" disabled={pending || disabled} className="w-full mt-6 flex items-center justify-center gap-2 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors disabled:bg-red-400 disabled:cursor-not-allowed">
             {pending ? (
                 <>
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -154,17 +160,13 @@ const SubmitButton = () => {
     );
 }
 
-const OrderSummary = ({  itemCount }: {  itemCount: number }) => (
+const OrderSummary = ({  itemCount, disabled }: {  itemCount: number, disabled: boolean }) => (
     <div className="bg-white p-6 rounded-xl shadow-md">
         <h3 className="font-bold text-xl mb-4 text-gray-800">Order Summary</h3>
         <div className="space-y-2 text-gray-600">
             <div className="flex justify-between"><p>Total Items</p><p className="font-medium">{itemCount}</p></div>
-            <div className="flex justify-between"><p>Taxes (Est.)</p><p className="font-medium">$0.00</p></div>
         </div>
-        <div className="flex justify-between items-center mt-4 pt-4 border-t-2 font-bold text-2xl">
-            <p>Total</p>
-        </div>
-        <SubmitButton></SubmitButton>
+        <SubmitButton disabled={disabled} />
     </div>
 );
 

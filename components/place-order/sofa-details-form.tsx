@@ -1,12 +1,7 @@
 import { DetailsFormProps, InputField, ImageUploadField, TextAreaField, ToggleGroupField, ComboboxField } from "./product-fields";
 
-// The DetailsFormProps interface should be updated to include `baseName`
-// export interface DetailsFormProps {
-//     ...
-//     baseName: string;
-// }
+export const SofaDetailsForm: React.FC<DetailsFormProps> = ({ index, product, handleProductChange, disabled, baseName, nameError }) => {
 
-export const SofaDetailsForm: React.FC<DetailsFormProps> = ({ index, product, handleProductChange, disabled, baseName }) => {
     const upholsteryOptions = [
         {value: 'fabric', label: 'Fabric'}, {value: 'pu', label: 'PU'}, {value: 'leather_bloom', label: 'Leather Bloom'},
         {value: 'leather_floater', label: 'Leather Floater'}, {value: 'leather_floater_max', label: 'Leather Floater Max'},
@@ -17,7 +12,12 @@ export const SofaDetailsForm: React.FC<DetailsFormProps> = ({ index, product, ha
     console.log(product)
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <InputField name={`${baseName}.model_name`} label="Model Name" value={product.model_name || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "model_name", e.target.value)} />
+            <InputField name={`${baseName}.model_name`} label="Model Name" value={product.model_name || ''} error={nameError} disabled={disabled} onChange={(e) => handleProductChange(index, "model_name", e.target.value)} />
+            {product.customization && (
+                <span className="text-lg font-semibold text-red-600 bg-red-100 px-2 py-0.5 rounded-md h-min w-min col-span-2">
+                    Customized
+                </span>
+            )}
             <ImageUploadField name={`${baseName}.reference_image_url`} label="Reference Image" value={product.reference_image_url} disabled={disabled} onChange={(file) => handleProductChange(index, "reference_image_url", file?.name)} />
             <ImageUploadField name={`${baseName}.measurement_drawing_url`} label="Measurement Drawing" value={product.measurement_drawing_url} disabled={disabled} onChange={(file) => handleProductChange(index, "measurement_drawing_url", file?.name)} />
             <TextAreaField name={`${baseName}.description`} label="Description" value={product.description || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "description", e.target.value)} />

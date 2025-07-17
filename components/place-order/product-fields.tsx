@@ -16,12 +16,16 @@ export interface DetailsFormProps {
   product: Product;
   handleProductChange: <K extends keyof Product>(index: number, field: K, value: Product[K]) => void;
   disabled: boolean;
+  nameError?: string;
 }
 
-export const InputField = ({ label, name,value, ...props }: { label: string; name: string } & React.InputHTMLAttributes<HTMLInputElement>) => (
+export const InputField = ({ label, name, value, error, ...props }: { label: string; name: string; isCustomized?: boolean, error?: string } & React.InputHTMLAttributes<HTMLInputElement>) => (
     <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+        <div className="flex items-center justify-between mb-1">
+            <label className="block text-sm font-medium text-gray-700">{label}</label>
+        </div>
         <input name={name} value={value} {...props} className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-red-500 disabled:bg-gray-200 disabled:cursor-not-allowed" />
+        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
     </div>
 );
 

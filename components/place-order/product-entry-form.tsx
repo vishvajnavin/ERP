@@ -21,6 +21,10 @@ export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, o
     const [search, setSearch] = useState('');
     const [isSearching, setIsSearching] = useState(false);
 
+    const nameExists = item.isCustom && (item.type == 'Sofa' ? sofaModels.some(p => p.model_name.toLowerCase() === item.details.model_name?.toLowerCase() && p.id !== item.id) :
+        bedModels.some(p => p.model_name.toLowerCase() === item.details.model_name?.toLowerCase() && p.id !== item.id));
+    const nameError = nameExists ? 'Model name already exists.' : "";
+
     const filteredProducts = item.type === 'Sofa' ? sofaModels.filter(p =>
         p.model_name.toLowerCase().includes(search.toLowerCase())||
         p.id.toString().includes(search)
@@ -92,8 +96,8 @@ export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, o
                     </div>
                 </div>
                 {/* Pass the baseName prop to the details forms */}
-                {item.type === 'Sofa' && <SofaDetailsForm baseName={baseName} index={index} product={item.details} handleProductChange={onDetailsChange} disabled={!item.isCustom} />}
-                {item.type === 'Bed' && <BedDetailsForm baseName={baseName} index={index} product={item.details} handleProductChange={onDetailsChange} disabled={!item.isCustom} />}
+                {item.type === 'Sofa' && <SofaDetailsForm baseName={baseName} index={index} product={item.details} nameError={nameError} handleProductChange={onDetailsChange} disabled={!item.isCustom} />}
+                {item.type === 'Bed' && <BedDetailsForm baseName={baseName} index={index} product={item.details} nameError={nameError} handleProductChange={onDetailsChange} disabled={!item.isCustom}  />}
             </div>
             <div className="flex justify-end items-center mt-4 pt-4 border-t">
                 <div className="flex items-center gap-4">

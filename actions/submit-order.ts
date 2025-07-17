@@ -2,7 +2,6 @@
 'use server'; // This directive is crucial for making this a Server Action
 
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server'; // Adjust path if necessary
 
 export interface ProductItem {
@@ -202,10 +201,6 @@ export async function submitOrder(prevState: FormState, formData: FormData) {
         }
     }
 
-    // 3. Success: Revalidate path and redirect
-    revalidatePath('/orders'); // Invalidate cache for the orders list page
-    redirect(`/orders/${orderId}`); // Redirect to the new order's detail page
-    
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
     console.error('Order submission error:', errorMessage);
@@ -217,4 +212,10 @@ export async function submitOrder(prevState: FormState, formData: FormData) {
 
     return { success: false, message: errorMessage };
   }
+
+  // If we reach here, it means the try block completed successfully.
+  // Now we can safely revalidate and redirect.
+  revalidatePath(`/place-order`); // Invalidate cache for the order detail page
+  //redirect(`/view-orders?order_id=${orderId}`); // Redirect to the new order's detail page
+  return { success: true, message: `Order #${orderId} created successfully!` };
 }

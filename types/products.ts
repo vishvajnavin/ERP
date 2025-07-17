@@ -6,7 +6,7 @@ export type ProductType = 'sofa' | 'bed'; // Add other types if needed
 export interface Product {
     product_type?: 'sofa' | 'bed';
     is_existing_model?: boolean;
-    is_customization?: boolean;
+    customization?: boolean;
     quantity?: number;
     // For existing models
     sofa_product_id?: string;
