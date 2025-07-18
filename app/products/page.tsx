@@ -1,56 +1,125 @@
 // app/products/page.tsx
-// NO 'use client' - This is a Server Component
+'use client'; // This component is now interactive
 
+import { useState, useEffect } from 'react';
+import { createClient } from '@/utils/supabase/server';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import ProductHeaderActions from "@/components/products/product-header-actions";
+import EditProductModal from '@/components/products/edit-product-modal';
+import { Product } from '@/types/products';
 
-// NOTE: You would replace this with your actual Supabase fetching logic
-async function getProducts() {
-  console.log("Fetching products on the server...");
-  // Example: const { data: products } = await supabase.from('all_products_view').select('*');
-  // For now, we'll use the static data as a placeholder.
-  return [
-    { id: 1, name: "Classic Sofa", description: "A timeless piece for any living room.", image: "/sofa.jpg" },
-    { id: 2, name: "Modern Armchair", description: "Sleek design with maximum comfort.", image: "/armchair.jpg" },
-    { id: 3, name: "Wooden Coffee Table", description: "Handcrafted from solid oak.", image: "/coffee-table.jpg" },
-    { id: 4, name: "King Size Bed", description: "Sleep like royalty in this spacious bed.", image: "/bed.jpg" },
-    { id: 5, name: "Dining Set", description: "Perfect for family gatherings.", image: "/dining-set.jpg" },
-    { id: 6, name: "Bookshelf", description: "Organize your favorite reads in style.", image: "/bookshelf.jpg" },
-  ];
-}
+// Create the Supabase client once
+const supabase = createClient();
 
-export default async function ProductsPage() {
-  const products = await getProducts();
+export default function ProductsPage() {
+  const [productType, setProductType] = useState<'sofa' | 'bed'>('sofa');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  const handleEditClick = (product: Product) => {
+    setSelectedProduct(product);
+    setIsEditModalOpen(true);
+  };
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      
+      const tableName = productType === 'sofa' ? 'sofa_products' : 'bed_products';
+
+      const { data, error } = await supabase
+        .from(tableName)
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error(`Error fetching ${productType}s:`, error);
+        setProducts([]);
+      } else {
+        setProducts(data as Product[]);
+      }
+      setLoading(false);
+    };
+
+    fetchProducts();
+  }, [productType]); // Re-run this effect whenever productType changes
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <h1 className="text-3xl font-bold">Our Products</h1>
-        {/* All client-side interactivity is handled in this component */}
-        <ProductHeaderActions />
+        <div className="flex-shrink-0">
+            <ProductHeaderActions />
+        </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-        {products.map((product) => (
-          <Card key={product.id}>
-            <CardContent className="p-0">
-              <div className="relative h-64">
-                <Image
-                  src={product.image}
-                  alt={product.name}
-                  fill={true}
-                  style={{objectFit: "cover"}}
-                  className="rounded-t-lg"
-                />
-              </div>
-            </CardContent>
-            <CardHeader>
-              <CardTitle>{product.name}</CardTitle>
-              <CardDescription>{product.description}</CardDescription>
-            </CardHeader>
-          </Card>
-        ))}
+
+      {/* Toggle Buttons */}
+      <div className="flex gap-2 mb-8">
+        <Button 
+          onClick={() => setProductType('sofa')}
+          variant={productType === 'sofa' ? 'default' : 'outline'}
+        >
+          Sofas
+        </Button>
+        <Button 
+          onClick={() => setProductType('bed')}
+          variant={productType === 'bed' ? 'default' : 'outline'}
+        >
+          Beds
+        </Button>
       </div>
+
+      {loading ? (
+        <div className="text-center py-16">
+          <p className="text-gray-500">Loading products...</p>
+        </div>
+      ) : products.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+          {products.map((product) => (
+            <Card key={`${productType}-${product.id}`}>
+              <CardContent className="p-0">
+                <div className="relative h-64 bg-gray-100 ">
+                  {product.reference_image_url ? (
+                    <Image
+                      src={product.reference_image_url}
+                      alt={product.model_name || 'Product Image'}
+                      fill={true}
+                      style={{objectFit: "cover"}}
+                      className="rounded-t-lg"
+                      // Basic fallback in case of image loading error
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-400">
+                      No Image
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+              <CardHeader>
+                <CardTitle>{product.model_name}</CardTitle>
+                <CardDescription>{product.description}</CardDescription>
+                <Button variant="outline" size="sm" className="mt-4" onClick={() => handleEditClick(product)}>
+                  Edit
+                </Button>
+              </CardHeader>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-16">
+          <p className="text-gray-500">No {productType}s found. Add one to get started!</p>
+        </div>
+      )}
+      <EditProductModal 
+        isOpen={isEditModalOpen} 
+        onClose={() => setIsEditModalOpen(false)} 
+        product={selectedProduct} 
+      />
     </div>
   );
 }

@@ -3,14 +3,16 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+// Define the type for the options used in the toggle group
 export type ToggleOption<T> = {
   label: string;
   value: T;
 };
 
-// Your provided ToggleGroupField component
+// Your ToggleGroupField component, which is correctly defined
 export const ToggleGroupField = <T extends string | boolean>({ label, name, value, onValueChange, disabled, options }: { label: string; name: string; value: T | undefined; onValueChange: (value: T) => void; disabled: boolean; options: ToggleOption<T>[]}) => (
     <div>
+        {/* Hidden input holds the name and value for the form submission */}
         <input type="hidden" name={name} value={String(value ?? '')} />
         <Label className="block text-sm font-medium text-gray-700 mb-1">{label}</Label>
         <div className="flex items-center bg-gray-100 rounded-lg p-1">
@@ -21,10 +23,25 @@ export const ToggleGroupField = <T extends string | boolean>({ label, name, valu
     </div>
 );
 
-// A standard text/number input field for cleaner code
-export const InputField = ({ label, name, type = 'text', placeholder, step }: { label: string; name: string; type?: string; placeholder?: string; step?: string }) => (
+// --- CORRECTED INPUT FIELD COMPONENT ---
+// This version is updated to accept defaultValue, type, step, and placeholder props.
+export const InputField = ({ label, name, type = 'text', placeholder, defaultValue, step }: { 
+    label: string; 
+    name: string; 
+    type?: string; 
+    placeholder?: string; 
+    defaultValue?: string | number;
+    step?: string;
+}) => (
     <div>
         <Label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">{label}</Label>
-        <Input type={type} id={name} name={name} placeholder={placeholder} step={step} />
+        <Input 
+            type={type} 
+            id={name} 
+            name={name} 
+            placeholder={placeholder} 
+            defaultValue={defaultValue}
+            step={step}
+        />
     </div>
 );
