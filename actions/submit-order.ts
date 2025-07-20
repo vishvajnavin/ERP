@@ -102,8 +102,15 @@ export async function submitOrder(prevState: FormState, formData: FormData) {
                 quantity: quantity || 1,
             });
             if (orderItemError) throw new Error(`[Item ${i+1}] Failed to add existing product to order: ${orderItemError.message}`);
+
+            // --- Increment purchase count for existing product ---
+            const { error: rpcError } = await supabase.rpc('increment_purchase_count', {
+                p_product_id: parseInt(productId, 10),
+                p_product_type: productType,
+            });
+            if (rpcError) throw new Error(`[Item ${i+1}] Failed to increment purchase count: ${rpcError.message}`);
         
-        // --- Case 2: New or customized product ---
+        // --- Case 2: customized product ---
         } else {
             const model_name = formData.get(`${baseName}.model_name`) as string;
 
@@ -163,6 +170,7 @@ export async function submitOrder(prevState: FormState, formData: FormData) {
                     seat_height: Number(formData.get(`${baseName}.seat_height`)),
                     armrest_width: Number(formData.get(`${baseName}.armrest_width`)),
                     armrest_depth: Number(formData.get(`${baseName}.armrest_depth`)),
+                    purchase_count: 1, // Set purchase count to 1 for new products
                 }).select('id').single();
                 if (error) throw new Error(`[Item ${i+1}] Failed to create new sofa product: ${error.message}`);
                 newProductId = newSofa.id;
@@ -184,6 +192,7 @@ export async function submitOrder(prevState: FormState, formData: FormData) {
                     total_width: Number(formData.get(`${baseName}.total_width`)),
                     total_depth: Number(formData.get(`${baseName}.total_depth`)),
                     total_height: Number(formData.get(`${baseName}.total_height`)),
+                    purchase_count: 1, // Set purchase count to 1 for new products
                 }).select('id').single();
                 if (error) throw new Error(`[Item ${i+1}] Failed to create new bed product: ${error.message}`);
                 newProductId = newBed.id;
