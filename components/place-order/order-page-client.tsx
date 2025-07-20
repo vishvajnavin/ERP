@@ -14,7 +14,6 @@ export type OrderItem = {
     id: string | null;
     uniqueId: number;
     type: 'Sofa' | 'Bed';
-    model_name: string;
     details: Product;
     isCustom: boolean;
     quantity: number;
@@ -24,7 +23,6 @@ const initialProductState: OrderItem = {
     id: null,
     uniqueId: Date.now(),
     type: 'Sofa',
-    model_name: '',
     details: {} as Product, // Initialized as an empty Product object
     isCustom: false,
     quantity: 1,
@@ -70,7 +68,7 @@ const PlaceOrderPage = ({
     const handleProductSelect = async (index: number, product: { id: string; type: 'Sofa' | 'Bed'; model_name: string; }) => {
         const newItems = [...orderItems];
         const productDetails=await getProductDetails(parseInt(product.id),product.type)
-        newItems[index] = { ...newItems[index], id: product.id, type: product.type, model_name: product.model_name, details: productDetails.data?productDetails.data:{}, isCustom: false };
+        newItems[index] = { ...newItems[index], id: product.id, type: product.type, details: productDetails.data?productDetails.data:{}, isCustom: false };
         setOrderItems(newItems);
     };
 

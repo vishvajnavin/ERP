@@ -60,7 +60,7 @@ export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, o
                     <input
                         type="text"
                         placeholder={`Search existing ${item.type.toLowerCase()} models...`}
-                        value={item.id ? item.model_name : search}
+                        value={item.id ? item.details.model_name : search}
                         onChange={e => {
                             setSearch(e.target.value);
                             onItemChange(index, 'id', null);

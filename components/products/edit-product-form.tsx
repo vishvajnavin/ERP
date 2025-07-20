@@ -1,172 +1,177 @@
 // components/products/edit-product-form.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useFormStatus } from 'react-dom';
-import { updateProductAction } from '@/actions/update-product';
-import { Button } from '@/components/ui/button';
-import { ToggleGroupField, InputField, type ToggleOption } from './fields';
-import { toast } from 'sonner';
+import { useState, useTransition } from 'react';
 import { Product } from '@/types/products';
+import { updateProductAction } from '@/actions/update-product';
+import { InputField, ToggleGroupField, ToggleOption } from '@/components/products/fields';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea'; // You may need to create/import this simple component
 
-type ProductType = 'sofa' | 'bed';
+// Helper to create options for ToggleGroupField from an array of values
+const createToggleOptions = <T extends string | boolean>(options: T[], labels?: string[]): ToggleOption<T>[] => {
+  return options.map((opt, index) => ({
+    value: opt,
+    label: labels ? labels[index] : String(opt).charAt(0).toUpperCase() + String(opt).slice(1).replace(/_/g, ' '),
+  }));
+};
 
-// Helper function to create options for ToggleGroupField
-const createOptions = (values: string[]): ToggleOption<string>[] =>
-  values.map(v => ({ label: v.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), value: v }));
+// --- Options based on your SQL Schema ---
+const booleanOptions = createToggleOptions([true, false], ['Yes', 'No']);
+const polishFinishOptions = createToggleOptions(['matt_finish', 'glossy_finish']);
+const upholsteryOptions = createToggleOptions(['fabric', 'pu', 'pu_leather', 'leather_bloom', 'leather_floater', 'leather_floater_max', 'leather_platinum_max', 'leather_european_nappa', 'leather_smoothy_nappa']);
 
-const booleanOptions: ToggleOption<boolean>[] = [
-  { label: 'Yes', value: true },
-  { label: 'No', value: false },
-];
+// Bed Specific Options
+const bedSizeOptions = createToggleOptions(['king', 'queen', 'customized']);
+const headboardTypeOptions = createToggleOptions(['medium_back_4ft', 'high_back_4_5ft']);
+const storageOptions = createToggleOptions(['hydraulic', 'channel', 'motorised', 'without_storage']);
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending} className="w-full sm:w-auto">
-      {pending ? 'Updating Product...' : 'Update Product'}
-    </Button>
-  );
+// Sofa Specific Options
+const reclinerMechanismModeOptions = createToggleOptions(['manual', 'motorized_single', 'motorized_double']);
+const reclinerMechanismFlipOptions = createToggleOptions(['single_flip', 'double_flip', 'double_motor_with_headrest']);
+const headrestModeOptions = createToggleOptions(['manual', 'motorized']);
+const cupHolderOptions = createToggleOptions(['normal_push_back', 'chiller_cup']);
+const daybedPositionOptions = createToggleOptions(['rhs', 'lhs']);
+const storageSideOptions = createToggleOptions(['rhs_arm', 'lhs_arm', 'both_arm']);
+const beltDetailsOptions = createToggleOptions(['elastic_belt', 'zig_zag_spring', 'pocket_spring']);
+const legTypeOptions = createToggleOptions(['wood', 'pvd', 'ss']);
+const chesterOptions = createToggleOptions(['with_button', 'without_button']);
+const bedPortionOptions = createToggleOptions(['single', 'double']);
+
+// --- Component Definition ---
+interface EditProductFormProps {
+  product: Product;
+  productType: 'sofa' | 'bed';
+  onFormSubmit: () => void;
 }
 
-export default function EditProductForm({ onClose, product }: { onClose: () => void, product: Product }) {
-  const [productType, setProductType] = useState<ProductType>(product.product_type as ProductType);
-  const [toggleValues, setToggleValues] = useState<Record<string, string | boolean>>({});
+export default function EditProductForm({ product, productType, onFormSubmit }: EditProductFormProps) {
+  const [isPending, startTransition] = useTransition();
+  // State to manage all controlled components
+  const [formState, setFormState] = useState<Product>(product);
 
-  useEffect(() => {
-    if (product) {
-      setProductType(product.product_type as ProductType);
-      const initialToggleValues: Record<string, string | boolean> = {
-        recliner_mechanism_mode: product.recliner_mechanism_mode || '',
-        recliner_mechanism_flip: product.recliner_mechanism_flip || '',
-        headrest_mode: product.headrest_mode || '',
-        cup_holder: product.cup_holder || '',
-        daybed_headrest_mode: product.daybed_headrest_mode || '',
-        daybed_position: product.daybed_position || '',
-        storage_side: product.storage_side || '',
-        snack_swivel_tray: product.snack_swivel_tray || false,
-        armrest_storage: product.armrest_storage || false,
-        belt_details: product.belt_details || '',
-        leg_type: product.leg_type || '',
-        chester_option: product.chester_option || '',
-        wood_to_floor: product.wood_to_floor || false,
-        bed_size: product.bed_size || '',
-        storage_option: product.storage_option || '',
-        headboard_type: product.headboard_type || '',
-        upholstery: product.upholstery || '',
-        polish_finish: product.polish_finish || '',
-      };
-      setToggleValues(initialToggleValues);
-    }
-  }, [product]);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    // Handle empty string for number inputs as null, otherwise parse it
+    const finalValue = type === 'number' ? (value === '' ? null : parseFloat(value)) : value;
+    setFormState(prevState => ({
+      ...prevState,
+      [name]: finalValue,
+    }));
+  };
 
-  const formAction = async (formData: FormData) => {
-    const result = await updateProductAction(formData);
-    if (result.success) {
-        toast.success(result.message);
-        onClose(); // Close modal on success
-    } else {
-        toast.error(result.message);
-    }
+  const handleToggleChange = (name: keyof Product, value: string | boolean | number | null) => {
+    setFormState(prevState => ({ ...prevState, [name]: value }));
+  };
+
+  // Client-side wrapper for the server action to handle pending state and response
+  const clientAction = async (formData: FormData) => {
+    startTransition(async () => {
+      const result = await updateProductAction(formData);
+      if (result.success) {
+        alert(result.message); // Or use a toast notification
+        onFormSubmit(); // Close modal on success
+      } else {
+        alert(`Error: ${result.message}`);
+      }
+    });
   };
 
   return (
-    <form action={formAction} className="space-y-6">
-      <input type="hidden" name="product_id" value={product.id} />
-      {/* --- PRODUCT TYPE SELECTOR --- */}
-      <ToggleGroupField
-        name="product_type"
-        label="Product Type"
-        value={productType}
-        onValueChange={(value) => setProductType(value as ProductType)}
-        disabled={false}
-        options={[ { label: 'Sofa', value: 'sofa' }, { label: 'Bed', value: 'bed' } ]}
-      />
+    <form action={clientAction} className="space-y-4">
+      {/* Hidden fields to identify the product and its type for the server action */}
+      <input type="hidden" name="id" value={product.id} />
+      <input type="hidden" name="product_type" value={productType} />
+
+      {/* --- General Information Section --- */}
+      <h3 className="text-lg font-medium border-b pb-2">General Information</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+        <InputField name="model_name" label="Model Name" value={formState.model_name || ''} onChange={handleInputChange} placeholder="e.g., Elegance Sofa"/>
+        <div>
+          <Label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Description</Label>
+          <Textarea id="description" name="description" value={formState.description || ''} onChange={handleInputChange} placeholder="A brief description of the product" className="h-24"/>
+        </div>
+        <InputField name="reference_image_url" label="Reference Image URL" value={formState.reference_image_url || ''} onChange={handleInputChange} placeholder="https://example.com/image.jpg"/>
+        <InputField name="measurement_drawing_url" label="Measurement Drawing URL" value={formState.measurement_drawing_url || ''} onChange={handleInputChange} placeholder="https://example.com/drawing.jpg"/>
+      </div>
       
-      <div className="space-y-4 border-t pt-6">
-        {/* --- COMMON FIELDS --- */}
-        <h3 className="text-lg font-semibold col-span-full">General Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <InputField label="Model Name" name="model_name" placeholder="e.g. Royal Oak King" defaultValue={product.model_name} />
-            <InputField label="Description" name="description" placeholder="A brief description" defaultValue={product.description} />
-            <InputField label="Reference Image URL" name="reference_image_url" placeholder="https://example.com/image.jpg" defaultValue={product.reference_image_url} />
-            <InputField label="Measurement Drawing URL" name="measurement_drawing_url" placeholder="https://example.com/drawing.jpg" defaultValue={product.measurement_drawing_url} />
-        </div>
-
-        {/* --- CONDITIONAL SOFA FIELDS --- */}
-        {productType === 'sofa' && (
-          <div className="space-y-4 border-t pt-6">
-            <h3 className="text-lg font-semibold col-span-full">Mechanism Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <ToggleGroupField name="recliner_mechanism_mode" label="Recliner Mechanism" value={toggleValues.recliner_mechanism_mode} onValueChange={(v) => setToggleValues(prev => ({...prev, recliner_mechanism_mode: v}))} disabled={false} options={createOptions(['manual', 'motorized_single', 'motorized_double'])} />
-                <ToggleGroupField name="recliner_mechanism_flip" label="Recliner Flip" value={toggleValues.recliner_mechanism_flip} onValueChange={(v) => setToggleValues(prev => ({...prev, recliner_mechanism_flip: v}))} disabled={false} options={createOptions(['single_flip', 'double_flip', 'double_motor_with_headrest'])} />
-                <ToggleGroupField name="headrest_mode" label="Headrest Mode" value={toggleValues.headrest_mode} onValueChange={(v) => setToggleValues(prev => ({...prev, headrest_mode: v}))} disabled={false} options={createOptions(['manual', 'motorized'])} />
-                <ToggleGroupField name="cup_holder" label="Cup Holder" value={toggleValues.cup_holder} onValueChange={(v) => setToggleValues(prev => ({...prev, cup_holder: v}))} disabled={false} options={createOptions(['normal_push_back', 'chiller_cup'])} />
-                <ToggleGroupField name="daybed_headrest_mode" label="Daybed Headrest" value={toggleValues.daybed_headrest_mode} onValueChange={(v) => setToggleValues(prev => ({...prev, daybed_headrest_mode: v}))} disabled={false} options={createOptions(['manual', 'motorized'])} />
-                <ToggleGroupField name="daybed_position" label="Daybed Position" value={toggleValues.daybed_position} onValueChange={(v) => setToggleValues(prev => ({...prev, daybed_position: v}))} disabled={false} options={createOptions(['rhs', 'lhs'])} />
-                <ToggleGroupField name="storage_side" label="Armrest Storage Side" value={toggleValues.storage_side} onValueChange={(v) => setToggleValues(prev => ({...prev, storage_side: v}))} disabled={false} options={createOptions(['rhs_arm', 'lhs_arm', 'both_arm'])} />
-                <ToggleGroupField name="snack_swivel_tray" label="Snack Swivel Tray" value={toggleValues.snack_swivel_tray} onValueChange={(v) => setToggleValues(prev => ({...prev, snack_swivel_tray: v}))} disabled={false} options={booleanOptions} />
-                <ToggleGroupField name="armrest_storage" label="Has Armrest Storage" value={toggleValues.armrest_storage} onValueChange={(v) => setToggleValues(prev => ({...prev, armrest_storage: v}))} disabled={false} options={booleanOptions} />
-            </div>
-
-            <h3 className="text-lg font-semibold col-span-full pt-4">Comfort & Cushion</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <InputField label="Foam Density (Seating)" name="foam_density_seating" type="number" step="0.01" placeholder="e.g. 32.50" defaultValue={product.foam_density_seating} />
-                <InputField label="Foam Density (Backrest)" name="foam_density_backrest" type="number" step="0.01" placeholder="e.g. 28.00" defaultValue={product.foam_density_backrest} />
-                <ToggleGroupField name="belt_details" label="Support System" value={toggleValues.belt_details} onValueChange={(v) => setToggleValues(prev => ({...prev, belt_details: v}))} disabled={false} options={createOptions(['elastic_belt', 'zig_zag_spring', 'pocket_spring'])} />
-            </div>
-
-            <h3 className="text-lg font-semibold col-span-full pt-4">Legs & Finishes</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <ToggleGroupField name="leg_type" label="Leg Type" value={toggleValues.leg_type} onValueChange={(v) => setToggleValues(prev => ({...prev, leg_type: v}))} disabled={false} options={createOptions(['wood', 'pvd', 'ss'])} />
-                <InputField label="PVD Color" name="pvd_color" placeholder="e.g. Gold, Rose Gold" defaultValue={product.pvd_color} />
-                <ToggleGroupField name="chester_option" label="Chesterfield Buttons" value={toggleValues.chester_option} onValueChange={(v) => setToggleValues(prev => ({...prev, chester_option: v}))} disabled={false} options={createOptions(['with_button', 'without_button'])} />
-                <InputField label="Armrest Panel Details" name="armrest_panels" placeholder="e.g. Vertical lines" defaultValue={product.armrest_panels} />
-                <ToggleGroupField name="wood_to_floor" label="Wood to Floor" value={toggleValues.wood_to_floor} onValueChange={(v) => setToggleValues(prev => ({...prev, wood_to_floor: v}))} disabled={false} options={booleanOptions} />
-            </div>
-
-            <h3 className="text-lg font-semibold col-span-full pt-4">Dimensions (in.)</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <InputField label="Total Width" name="total_width" type="number" step="0.01" placeholder="e.g. 84.50" defaultValue={product.total_width} />
-                <InputField label="Total Depth" name="total_depth" type="number" step="0.01" placeholder="e.g. 40.00" defaultValue={product.total_depth} />
-                <InputField label="Total Height" name="total_height" type="number" step="0.01" placeholder="e.g. 38.00" defaultValue={product.total_height} />
-                <InputField label="Seat Height" name="seat_height" type="number" step="0.01" placeholder="e.g. 18.00" defaultValue={product.seat_height} />
-                <InputField label="Seat Depth" name="seat_depth" type="number" step="0.01" placeholder="e.g. 22.50" defaultValue={product.seat_depth} />
-                <InputField label="Seat Width" name="seat_width" type="number" step="0.01" placeholder="e.g. 70.00" defaultValue={product.seat_width} />
-                <InputField label="Armrest Width" name="armrest_width" type="number" step="0.01" placeholder="e.g. 7.25" defaultValue={product.armrest_width} />
-                <InputField label="Armrest Depth" name="armrest_depth" type="number" step="0.01" placeholder="e.g. 38.00" defaultValue={product.armrest_depth} />
-            </div>
+      {/* --- Bed Specific Fields --- */}
+      {productType === 'bed' && (
+        <>
+          <h3 className="text-lg font-medium border-b pb-2 pt-4">Bed Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            <ToggleGroupField label="Bed Size" name="bed_size" options={bedSizeOptions} value={formState.bed_size} onValueChange={(v) => handleToggleChange('bed_size', v)} disabled={isPending}/>
+            {formState.bed_size === 'customized' && (
+              <InputField name="customized_mattress_size" label="Custom Mattress Size" value={formState.customized_mattress_size || ''} onChange={handleInputChange} placeholder="e.g., 75x70 inches"/>
+            )}
+            <ToggleGroupField label="Headboard Type" name="headboard_type" options={headboardTypeOptions} value={formState.headboard_type} onValueChange={(v) => handleToggleChange('headboard_type', v)} disabled={isPending}/>
+            <ToggleGroupField label="Storage Option" name="storage_option" options={storageOptions} value={formState.storage_option} onValueChange={(v) => handleToggleChange('storage_option', v)} disabled={isPending}/>
+            <ToggleGroupField label="Bed Portion" name="bed_portion" options={bedPortionOptions} value={formState.bed_portion} onValueChange={(v) => handleToggleChange('bed_portion', v)} disabled={isPending}/>
           </div>
-        )}
+          <h3 className="text-lg font-medium border-b pb-2 pt-4">Bed Dimensions (in inches)</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-2">
+            <InputField name="total_width" label="Total Width" type="number" step="0.1" value={formState.total_width ?? ''} onChange={handleInputChange} />
+            <InputField name="total_depth" label="Total Depth" type="number" step="0.1" value={formState.total_depth ?? ''} onChange={handleInputChange} />
+            <InputField name="total_height" label="Total Height" type="number" step="0.1" value={formState.total_height ?? ''} onChange={handleInputChange} />
+          </div>
+        </>
+      )}
 
-        {/* --- CONDITIONAL BED FIELDS --- */}
-        {productType === 'bed' && (
-           <div className="space-y-4 border-t pt-6">
-            <h3 className="text-lg font-semibold col-span-full">Bed Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <ToggleGroupField name="bed_size" label="Bed Size" value={toggleValues.bed_size} onValueChange={(v) => setToggleValues(prev => ({...prev, bed_size: v}))} disabled={false} options={createOptions(['king', 'queen', 'customized'])} />
-                <ToggleGroupField name="storage_option" label="Storage Option" value={toggleValues.storage_option} onValueChange={(v) => setToggleValues(prev => ({...prev, storage_option: v}))} disabled={false} options={createOptions(['hydraulic', 'channel', 'motorised', 'without_storage'])} />
-                <ToggleGroupField name="headboard_type" label="Headboard Type" value={toggleValues.headboard_type} onValueChange={(v) => setToggleValues(prev => ({...prev, headboard_type: v}))} disabled={false} options={createOptions(['medium_back_4ft', 'high_back_4_5ft'])} />
-                <InputField label="Custom Mattress Size" name="customized_mattress_size" placeholder="e.g. 75x70 inches" defaultValue={product.customized_mattress_size} />
-            </div>
-          </div>
-        )}
-        
-        {/* --- COMMON UPHOLSTERY & FINISH FIELDS --- */}
-        <div className="space-y-4 border-t pt-6">
-          <h3 className="text-lg font-semibold col-span-full">Upholstery & Finish</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <ToggleGroupField name="upholstery" label="Upholstery Material" value={toggleValues.upholstery} onValueChange={(v) => setToggleValues(prev => ({...prev, upholstery: v}))} disabled={false} options={createOptions(['fabric', 'pu', 'leather_bloom', 'leather_floater', 'leather_smoothy_nappa', 'pu_leather'])} />
-              <InputField label="Upholstery Color" name="upholstery_color" placeholder="e.g. Beige, Charcoal Grey" defaultValue={product.upholstery_color} />
-              <ToggleGroupField name="polish_finish" label="Polish Finish" value={toggleValues.polish_finish} onValueChange={(v) => setToggleValues(prev => ({...prev, polish_finish: v}))} disabled={false} options={createOptions(['matt_finish', 'glossy_finish'])} />
-              <InputField label="Polish Color" name="polish_color" placeholder="e.g. Walnut, Teak" defaultValue={product.polish_color} />
-          </div>
-        </div>
+      {/* --- Sofa Specific Fields --- */}
+      {productType === 'sofa' && (
+         <>
+          <h3 className="text-lg font-medium border-b pb-2 pt-4">Sofa Configuration</h3>
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              <ToggleGroupField label="Recliner Mechanism" name="recliner_mechanism_mode" options={reclinerMechanismModeOptions} value={formState.recliner_mechanism_mode} onValueChange={(v) => handleToggleChange('recliner_mechanism_mode', v)} disabled={isPending} />
+              <ToggleGroupField label="Recliner Flip" name="recliner_mechanism_flip" options={reclinerMechanismFlipOptions} value={formState.recliner_mechanism_flip} onValueChange={(v) => handleToggleChange('recliner_mechanism_flip', v)} disabled={isPending} />
+              <ToggleGroupField label="Headrest Mode" name="headrest_mode" options={headrestModeOptions} value={formState.headrest_mode} onValueChange={(v) => handleToggleChange('headrest_mode', v)} disabled={isPending} />
+              <ToggleGroupField label="Daybed Headrest" name="daybed_headrest_mode" options={headrestModeOptions} value={formState.daybed_headrest_mode} onValueChange={(v) => handleToggleChange('daybed_headrest_mode', v)} disabled={isPending} />
+              <ToggleGroupField label="Cup Holder" name="cup_holder" options={cupHolderOptions} value={formState.cup_holder} onValueChange={(v) => handleToggleChange('cup_holder', v)} disabled={isPending} />
+              <ToggleGroupField label="Snack Swivel Tray" name="snack_swivel_tray" options={booleanOptions} value={formState.snack_swivel_tray} onValueChange={(v) => handleToggleChange('snack_swivel_tray', v)} disabled={isPending} />
+              <ToggleGroupField label="Daybed Position" name="daybed_position" options={daybedPositionOptions} value={formState.daybed_position} onValueChange={(v) => handleToggleChange('daybed_position', v)} disabled={isPending} />
+              <ToggleGroupField label="Armrest Storage" name="armrest_storage" options={booleanOptions} value={formState.armrest_storage} onValueChange={(v) => handleToggleChange('armrest_storage', v)} disabled={isPending} />
+              <ToggleGroupField label="Storage Side" name="storage_side" options={storageSideOptions} value={formState.storage_side} onValueChange={(v) => handleToggleChange('storage_side', v)} disabled={isPending} />
+              <ToggleGroupField label="Belt Details" name="belt_details" options={beltDetailsOptions} value={formState.belt_details} onValueChange={(v) => handleToggleChange('belt_details', v)} disabled={isPending} />
+              <ToggleGroupField label="Leg Type" name="leg_type" options={legTypeOptions} value={formState.leg_type} onValueChange={(v) => handleToggleChange('leg_type', v)} disabled={isPending} />
+              {formState.leg_type === 'pvd' && (<InputField name="pvd_color" label="PVD Color" value={formState.pvd_color || ''} onChange={handleInputChange} placeholder="e.g., Gold, Rose Gold"/> )}
+              <ToggleGroupField label="Chester Option" name="chester_option" options={chesterOptions} value={formState.chester_option} onValueChange={(v) => handleToggleChange('chester_option', v)} disabled={isPending} />
+              <InputField name="armrest_panels" label="Armrest Panels" value={formState.armrest_panels || ''} onChange={handleInputChange} placeholder="e.g., Tufting, Fluting"/>
+              <ToggleGroupField label="Wood to Floor" name="wood_to_floor" options={booleanOptions} value={formState.wood_to_floor} onValueChange={(v) => handleToggleChange('wood_to_floor', v)} disabled={isPending} />
+              <InputField name="foam_density_seating" label="Foam Density (Seating)" type="number" step="0.1" value={formState.foam_density_seating ?? ''} onChange={handleInputChange} placeholder="e.g., 40.5" />
+              <InputField name="foam_density_backrest" label="Foam Density (Backrest)" type="number" step="0.1" value={formState.foam_density_backrest ?? ''} onChange={handleInputChange} placeholder="e.g., 32.0" />
+           </div>
+           <h3 className="text-lg font-medium border-b pb-2 pt-4">Sofa Dimensions (in inches)</h3>
+           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+              <InputField name="total_width" label="Total Width" type="number" step="0.1" value={formState.total_width ?? ''} onChange={handleInputChange} />
+              <InputField name="total_depth" label="Total Depth" type="number" step="0.1" value={formState.total_depth ?? ''} onChange={handleInputChange} />
+              <InputField name="total_height" label="Total Height" type="number" step="0.1" value={formState.total_height ?? ''} onChange={handleInputChange} />
+              <InputField name="seat_height" label="Seat Height" type="number" step="0.1" value={formState.seat_height ?? ''} onChange={handleInputChange} />
+              <InputField name="seat_width" label="Seat Width" type="number" step="0.1" value={formState.seat_width ?? ''} onChange={handleInputChange} />
+              <InputField name="seat_depth" label="Seat Depth" type="number" step="0.1" value={formState.seat_depth ?? ''} onChange={handleInputChange} />
+              <InputField name="armrest_width" label="Armrest Width" type="number" step="0.1" value={formState.armrest_width ?? ''} onChange={handleInputChange} />
+              <InputField name="armrest_depth" label="Armrest Depth" type="number" step="0.1" value={formState.armrest_depth ?? ''} onChange={handleInputChange} />
+           </div>
+         </>
+      )}
+
+      {/* --- Upholstery & Finish Section (Common to both) --- */}
+      <h3 className="text-lg font-medium border-b pb-2 pt-4">Upholstery & Finish</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+        <ToggleGroupField label="Upholstery Material" name="upholstery" options={upholsteryOptions} value={formState.upholstery} onValueChange={(v) => handleToggleChange('upholstery', v)} disabled={isPending}/>
+        <InputField name="upholstery_color" label="Upholstery Color" value={formState.upholstery_color || ''} onChange={handleInputChange} placeholder="e.g., Charcoal Grey"/>
+        <InputField name="polish_color" label="Polish Color" value={formState.polish_color || ''} onChange={handleInputChange} placeholder="e.g., Walnut, Teak"/>
+        <ToggleGroupField label="Polish Finish" name="polish_finish" options={polishFinishOptions} value={formState.polish_finish} onValueChange={(v) => handleToggleChange('polish_finish', v)} disabled={isPending}/>
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-end gap-2 pt-6 border-t">
-        <Button type="button" variant="ghost" onClick={onClose} className="w-full sm:w-auto">Cancel</Button>
-        <SubmitButton />
+      {/* --- Form Action Buttons --- */}
+      <div className="flex justify-end gap-2 pt-4 border-t mt-6">
+        <Button type="button" variant="outline" onClick={onFormSubmit} disabled={isPending}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isPending}>
+          {isPending ? 'Saving...' : 'Save Changes'}
+        </Button>
       </div>
     </form>
   );

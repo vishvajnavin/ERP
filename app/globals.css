@@ -3,6 +3,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+*{
+  box-sizing: border-box;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

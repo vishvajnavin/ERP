@@ -16,10 +16,16 @@ export async function updateProductAction(formData: FormData) {
     const supabase=createClient();
 
     const productType = formData.get('product_type');
-    const id = formData.get('product_id');
+    const idValue = formData.get('id');
 
-    if (!id || !productType) {
+    if (!idValue || !productType) {
         return { success: false, message: 'Missing product ID or type.' };
+    }
+
+    const id = parseInt(String(idValue), 10);
+
+    if (isNaN(id)) {
+        return { success: false, message: 'Invalid product ID.' };
     }
 
     try {
@@ -72,6 +78,10 @@ export async function updateProductAction(formData: FormData) {
                 customized_mattress_size: getNullIfEmpty(formData.get('customized_mattress_size')),
                 headboard_type: getNullIfEmpty(formData.get('headboard_type')),
                 storage_option: getNullIfEmpty(formData.get('storage_option')),
+                bed_portion: getNullIfEmpty(formData.get('bed_portion')),
+                total_width: getNumberOrNull(formData.get('total_width')),
+                total_depth: getNumberOrNull(formData.get('total_depth')),
+                total_height: getNumberOrNull(formData.get('total_height')),
                 upholstery: getNullIfEmpty(formData.get('upholstery')),
                 upholstery_color: getNullIfEmpty(formData.get('upholstery_color')),
                 polish_color: getNullIfEmpty(formData.get('polish_color')),
@@ -79,11 +89,13 @@ export async function updateProductAction(formData: FormData) {
             };
         }
 
-        const { error } = await supabase
+        console.log(id, updateData)
+        const { data, error } = await supabase
             .from(tableName)
             .update(updateData)
-            .eq('id', id);
-
+            .eq('id', id)
+            .select();
+        console.log(data)
         if (error) throw error;
 
         revalidatePath('/products');

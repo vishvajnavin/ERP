@@ -1,7 +1,15 @@
 // components/products/edit-product-modal.tsx
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import EditProductForm from "./edit-product-form";
-import { Product } from "@/types/products";
+'use client';
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Product } from '@/types/products';
+import EditProductForm from './edit-product-form';
 
 interface EditProductModalProps {
   isOpen: boolean;
@@ -14,16 +22,24 @@ export default function EditProductModal({ isOpen, onClose, product }: EditProdu
     return null;
   }
 
+  // Determine product type. 'bed_size' is a property unique to beds in your schema.
+  const productType = 'bed_size' in product ? 'bed' : 'sofa';
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Product</DialogTitle>
+          <DialogTitle>Edit Product: {product.model_name}</DialogTitle>
           <DialogDescription>
-            Update the details for the product below.
+            Make changes to the product details below. Click save when you{"'"}re done.
           </DialogDescription>
         </DialogHeader>
-        <EditProductForm onClose={onClose} product={product} />
+        {/* The form receives the product data and a callback to close the modal */}
+        <EditProductForm
+          product={product}
+          productType={productType}
+          onFormSubmit={onClose}
+        />
       </DialogContent>
     </Dialog>
   );
