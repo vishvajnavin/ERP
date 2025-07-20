@@ -8,6 +8,7 @@ import { InputField, ToggleGroupField, ToggleOption } from '@/components/product
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea'; // You may need to create/import this simple component
+import { toast } from 'sonner';
 
 // Helper to create options for ToggleGroupField from an array of values
 const createToggleOptions = <T extends string | boolean>(options: T[], labels?: string[]): ToggleOption<T>[] => {
@@ -70,10 +71,10 @@ export default function EditProductForm({ product, productType, onFormSubmit }: 
     startTransition(async () => {
       const result = await updateProductAction(formData);
       if (result.success) {
-        alert(result.message); // Or use a toast notification
+        toast.success(result.message); // Or use a toast notification
         onFormSubmit(); // Close modal on success
       } else {
-        alert(`Error: ${result.message}`);
+        toast.error(`Error: ${result.message}`);
       }
     });
   };
