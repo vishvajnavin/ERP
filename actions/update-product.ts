@@ -89,13 +89,10 @@ export async function updateProductAction(formData: FormData) {
             };
         }
 
-        console.log(id, updateData)
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from(tableName)
             .update(updateData)
             .eq('id', id)
-            .select();
-        console.log(data)
         if (error) throw error;
 
         revalidatePath('/products');
