@@ -1,21 +1,22 @@
 // app/products/page.tsx
-'use client'; // This component is now interactive
+'use client';
 
-import { useState, useEffect } from 'react';
-import { createClient } from '@/utils/supabase/server';
+import { useState, useEffect, useCallback } from 'react';
+import { createClient } from '@/utils/supabase/client'; // Correct: Use the client-side createClient
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import ProductHeaderActions from "@/components/products/product-header-actions";
 import EditProductModal from '@/components/products/edit-product-modal';
 import { Product } from '@/types/products';
+import { SearchBar } from '@/components/products/search-bar';
 
-// Create the Supabase client once
-const supabase = createClient();
+// Note: Supabase client is now initialized inside the function that uses it.
 
 export default function ProductsPage() {
   const [productType, setProductType] = useState<'sofa' | 'bed'>('sofa');
   const [products, setProducts] = useState<Product[]>([]);
+  const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -25,35 +26,50 @@ export default function ProductsPage() {
     setIsEditModalOpen(true);
   };
 
+  const fetchInitialProducts = useCallback(async () => {
+    setLoading(true);
+    const supabase = createClient(); // Initialize client here
+    const tableName = productType === 'sofa' ? 'sofa_products' : 'bed_products';
+
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (error) {
+      console.error(`Error fetching ${productType}s:`, error);
+      setProducts([]);
+      setDisplayedProducts([]);
+    } else {
+      const fetchedProducts = data as Product[];
+      setProducts(fetchedProducts);
+      setDisplayedProducts(fetchedProducts);
+    }
+    setLoading(false);
+  }, [productType]);
+
   useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      
-      const tableName = productType === 'sofa' ? 'sofa_products' : 'bed_products';
+    fetchInitialProducts();
+  }, [fetchInitialProducts]);
 
-      const { data, error } = await supabase
-        .from(tableName)
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error(`Error fetching ${productType}s:`, error);
-        setProducts([]);
-      } else {
-        setProducts(data as Product[]);
-      }
-      setLoading(false);
-    };
-
-    fetchProducts();
-  }, [productType]); // Re-run this effect whenever productType changes
+  // NEW: Create a stable search handler function with useCallback.
+  // This function will be passed to the SearchBar component.
+  const handleSearch = useCallback((searchResults: Product[]) => {
+    setDisplayedProducts(searchResults);
+  }, []); // Dependency array is empty as setDisplayedProducts is stable.
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <h1 className="text-3xl font-bold">Our Products</h1>
-        <div className="flex-shrink-0">
-            <ProductHeaderActions />
+        <div className="flex items-center gap-4">
+          <SearchBar
+            initialProducts={products}
+            onSearch={handleSearch} // UPDATED: Use the new stable handler
+            productType={productType}
+          />
+          <ProductHeaderActions />
         </div>
       </div>
 
@@ -77,9 +93,9 @@ export default function ProductsPage() {
         <div className="text-center py-16">
           <p className="text-gray-500">Loading products...</p>
         </div>
-      ) : products.length > 0 ? (
+      ) : displayedProducts.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {products.map((product) => (
+          {displayedProducts.map((product) => (
             <Card key={`${productType}-${product.id}`}>
               <CardContent className="p-0">
                 <div className="relative h-64 bg-gray-100 ">
@@ -90,7 +106,6 @@ export default function ProductsPage() {
                       fill={true}
                       style={{objectFit: "cover"}}
                       className="rounded-t-lg"
-                      // Basic fallback in case of image loading error
                       onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
                   ) : (
