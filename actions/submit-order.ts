@@ -137,6 +137,7 @@ export async function submitOrder(prevState: FormState, formData: FormData) {
 
             if (productType === 'sofa') {
                 const { data: newSofa, error } = await supabase.from('sofa_products').insert({
+                    customization: isCustomization,
                     model_name,
                     reference_image_url,
                     measurement_drawing_url,
@@ -176,6 +177,7 @@ export async function submitOrder(prevState: FormState, formData: FormData) {
                 newProductId = newSofa.id;
             } else { // productType === 'bed'
                  const { data: newBed, error } = await supabase.from('bed_products').insert({
+                    customization: isCustomization,
                     model_name,
                     reference_image_url,
                     measurement_drawing_url,
