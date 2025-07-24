@@ -1,9 +1,10 @@
-import { SofaDetailsForm } from "./sofa-details-form";
-import { BedDetailsForm } from "./bed-details-form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { OrderItem } from "./order-page-client";
 import { Product } from "@/types/products";
-import { Search, Plus, Minus, Sofa, Bed, Trash2 } from 'lucide-react'
+import { searchProducts } from "@/actions/search-products"; // Import the server action
+import { SofaDetailsForm } from "./sofa-details-form";
+import { BedDetailsForm } from "./bed-details-form";
+import { Search, Plus, Minus, Sofa, Bed, Trash2 } from 'lucide-react';
 
 type ProductEntryFormProps = {
     item: OrderItem;
@@ -13,25 +14,38 @@ type ProductEntryFormProps = {
     onProductSelect: (index: number, product: { id: string; type: 'Sofa' | 'Bed'; model_name: string; }) => void;
     onRemove: (index: number) => void;
     isOnlyItem: boolean;
-    sofaModels: { id: string; model_name: string; }[];
-    bedModels: { id: string; model_name: string; }[];
+    // REMOVED: sofaModels and bedModels are no longer needed
 };
 
-export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, onProductSelect, onRemove, isOnlyItem, sofaModels, bedModels }: ProductEntryFormProps) => {
+export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, onProductSelect, onRemove, isOnlyItem }: ProductEntryFormProps) => {
     const [search, setSearch] = useState('');
     const [isSearching, setIsSearching] = useState(false);
+    const [searchResults, setSearchResults] = useState<Product[]>([]);
+    const [isApiSearching, setIsApiSearching] = useState(false);
 
-    const nameExists = item.isCustom && (item.type == 'Sofa' ? sofaModels.some(p => p.model_name.toLowerCase() === item.details.model_name?.toLowerCase() && p.id !== item.id) :
-        bedModels.some(p => p.model_name.toLowerCase() === item.details.model_name?.toLowerCase() && p.id !== item.id));
-    const nameError = nameExists ? 'Model name already exists.' : "";
+    // This validation logic is best handled on the server during form submission
+    // to ensure data integrity and avoid race conditions.
+    const nameError = "";
 
-    const filteredProducts = item.type === 'Sofa' ? sofaModels.filter(p =>
-        p.model_name.toLowerCase().includes(search.toLowerCase())||
-        p.id.toString().includes(search)
-    ) : bedModels.filter(p =>
-        p.model_name.toLowerCase().includes(search.toLowerCase()) ||
-        p.id.toString().includes(search)
-    );
+    // Effect for debounced database search
+    useEffect(() => {
+        if (search.trim() === '' || !isSearching) {
+            setSearchResults([]);
+            return;
+        }
+
+        const handler = setTimeout(async () => {
+            setIsApiSearching(true);
+            const results = await searchProducts(search, item.type.toLowerCase() as 'sofa' | 'bed');
+            setSearchResults(results);
+            setIsApiSearching(false);
+        }, 300); // 300ms debounce
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [search, item.type, isSearching]);
+
 
     // Construct the base name for input fields in this product entry
     const baseName = `products[${index}]`;
@@ -60,26 +74,40 @@ export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, o
                     <input
                         type="text"
                         placeholder={`Search existing ${item.type.toLowerCase()} models...`}
-                        value={item.id ? item.details.model_name : search}
+                        value={item.id ? item.details.model_name ?? '' : search}
                         onChange={e => {
-                            setSearch(e.target.value);
-                            onItemChange(index, 'id', null);
-                            onDetailsChange(index, 'model_name', e.target.value);
+                            const newSearch = e.target.value;
+                            setSearch(newSearch);
+                            // If user starts typing, it's a new search, so clear existing selection
+                            if (item.id) {
+                                onItemChange(index, 'id', null);
+                            }
                         }}
                         onFocus={() => setIsSearching(true)}
                         onBlur={() => setTimeout(() => setIsSearching(false), 200)}
                         className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                        autoComplete="off"
                     />
                     {isSearching && search && (
                         <div className="absolute z-10 top-full mt-1 w-full bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                            {filteredProducts.length > 0 ? filteredProducts.map(p => (
-                                <div key={p.id} onClick={() => {
-                                        onProductSelect(index,{...p, type: item.type, })
-                                    setSearch(p.model_name); 
-                                    setIsSearching(false); 
-                                }} 
-                                className="p-3 hover:bg-red-50 cursor-pointer">{p.model_name}</div>
-                            )) : <div className="p-3 text-gray-500">No models found.</div>}
+                            {isApiSearching ? (
+                                <div className="p-3 text-gray-500">Searching...</div>
+                            ) : searchResults.length > 0 ? (
+                                searchResults.map(p => (
+                                    <div key={p.id} onClick={() => {
+                                            onProductSelect(index, { id: p.id.toString(), model_name: p.model_name ?? '', type: item.type });
+                                            setSearch(p.model_name ?? '');
+                                            setIsSearching(false);
+                                        }}
+                                        className="p-3 hover:bg-red-50 cursor-pointer">
+                                        <span>{p.model_name}</span>
+                                        <span className="text-xs text-gray-500 ml-2">(ID: {p.id})</span>
+                                        {p.customization && <span className="text-xs text-red-500 ml-2">(Customized)</span>}
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="p-3 text-gray-500">No models found.</div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -90,14 +118,13 @@ export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, o
                     <div className="flex items-center gap-2">
                         <span className={`font-semibold ${item.isCustom ? 'text-red-600' : 'text-gray-500'}`}>Customize</span>
                         <label className="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" checked={item.isCustom} onChange={e => onItemChange(index, 'isCustom', e.target.checked)} className="sr-only peer" disabled={!item.id && !item.details.model_name?.trim()} />
+                            <input type="checkbox" checked={item.isCustom} onChange={e => onItemChange(index, 'isCustom', e.target.checked)} className="sr-only peer" />
                             <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-red-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
                         </label>
                     </div>
                 </div>
-                {/* Pass the baseName prop to the details forms */}
                 {item.type === 'Sofa' && <SofaDetailsForm baseName={baseName} index={index} product={item.details} nameError={nameError} handleProductChange={onDetailsChange} disabled={!item.isCustom} />}
-                {item.type === 'Bed' && <BedDetailsForm baseName={baseName} index={index} product={item.details} nameError={nameError} handleProductChange={onDetailsChange} disabled={!item.isCustom}  />}
+                {item.type === 'Bed' && <BedDetailsForm baseName={baseName} index={index} product={item.details} nameError={nameError} handleProductChange={onDetailsChange} disabled={!item.isCustom} />}
             </div>
             <div className="flex justify-end items-center mt-4 pt-4 border-t">
                 <div className="flex items-center gap-4">

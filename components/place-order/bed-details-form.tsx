@@ -5,6 +5,7 @@ export const BedDetailsForm: React.FC<DetailsFormProps> = ({ index, product, han
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {product.id && <InputField name={`${baseName}.id`} label="Product ID" value={product.id} disabled={true} />}
             <InputField name={`${baseName}.model_name`} label="Model Name" value={product.model_name || ''} error={nameError} disabled={disabled} onChange={(e) => handleProductChange(index, "model_name", e.target.value)} />
             <ImageUploadField name={`${baseName}.reference_image_url`} label="Reference Image" value={product.reference_image_url} disabled={disabled} onChange={(file) => handleProductChange(index, "reference_image_url", file?.name)} />
             <ImageUploadField name={`${baseName}.measurement_drawing_url`} label="Measurement Drawing" value={product.measurement_drawing_url} disabled={disabled} onChange={(file) => handleProductChange(index, "measurement_drawing_url", file?.name)} />

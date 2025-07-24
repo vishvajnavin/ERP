@@ -55,6 +55,14 @@ const PlaceOrderPage = ({
     const handleItemChange = <K extends keyof OrderItem>(index: number, field: K, value: OrderItem[K]) => {
         const newItems = [...orderItems];
         newItems[index][field] = value;
+
+        // If the type is changed, reset the product details
+        if (field === 'type') {
+            newItems[index].id = null;
+            newItems[index].details = {} as Product;
+            newItems[index].isCustom = false;
+        }
+
         setOrderItems(newItems);
     };
 
@@ -98,8 +106,6 @@ const PlaceOrderPage = ({
                                 onProductSelect={handleProductSelect}
                                 onRemove={removeItem}
                                 isOnlyItem={orderItems.length === 1}
-                                sofaModels={initialSofaModels}
-                                bedModels={initialBedModels}
                             />
                         ))}
                         <button type="button" onClick={addNewItem} className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-300 text-gray-500 font-semibold rounded-lg hover:bg-gray-200 hover:border-gray-400 transition">

@@ -12,6 +12,7 @@ export const SofaDetailsForm: React.FC<DetailsFormProps> = ({ index, product, ha
     console.log(product)
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {product.id && <InputField name={`${baseName}.id`} label="Product ID" value={product.id} disabled={true} />}
             <InputField name={`${baseName}.model_name`} label="Model Name" value={product.model_name || ''} error={nameError} disabled={disabled} onChange={(e) => handleProductChange(index, "model_name", e.target.value)} />
             {product.customization && (
                 <span className="text-lg font-semibold text-red-600 bg-red-100 px-2 py-0.5 rounded-md h-min w-min col-span-2">
