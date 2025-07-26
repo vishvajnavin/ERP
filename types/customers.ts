@@ -4,7 +4,7 @@ export interface Customer {
   company: string;
   email: string;
   phone: string;
-  location: string;
+  address: string;
   avatar: string;
   status: 'VIP' | 'Active' | 'New';
   dateAdded: string;

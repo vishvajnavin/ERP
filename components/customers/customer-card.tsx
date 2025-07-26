@@ -30,7 +30,7 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onSelect }) => {
                     <div className="flex justify-between items-center text-sm">
                         <span className="flex items-center text-gray-500">
                             <MapPin size={14} className="mr-1.5" />
-                            {customer.location}
+                            {customer.address}
                         </span>
                         <span className={`px-2.5 py-1 font-semibold rounded-full text-xs flex items-center gap-1
                             ${customer.status === 'VIP' ? 'bg-yellow-100 text-yellow-800' : ''}

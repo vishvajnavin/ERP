@@ -48,7 +48,7 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customer, onC
                     <div className="space-y-4">
                         <DetailItem Icon={Mail} label="Email" value={customer.email} />
                         <DetailItem Icon={Phone} label="Phone" value={customer.phone} />
-                        <DetailItem Icon={MapPin} label="Location" value={customer.location} />
+                        <DetailItem Icon={MapPin} label="Location" value={customer.address} />
                     </div>
                 </div>
 
