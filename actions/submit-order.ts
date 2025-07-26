@@ -24,7 +24,7 @@ export interface ProductItem {
   headrest_mode?: string;
   cup_holder?: string;
   snack_swivel_tray?: boolean;
-  daybed_headrest_mode?: string;
+  daybed_headrest_mode?: string;  
   daybed_position?: string;
   armrest_storage?: boolean;
   storage_side?: string;
@@ -139,6 +139,9 @@ export async function submitOrder(prevState: FormState, formData: FormData) {
                 const { data: newSofa, error } = await supabase.from('sofa_products').insert({
                     customization: isCustomization,
                     model_name,
+                    model_family_configuration: formData.get(`${baseName}.model_family_configuration`) as string | undefined,
+                    "2_seater_length": Number(formData.get(`${baseName}.2_seater_length`)) || null,
+                    "1_seater_length": Number(formData.get(`${baseName}.1_seater_length`)) || null,
                     reference_image_url,
                     measurement_drawing_url,
                     description: formData.get(`${baseName}.description`) as string | undefined,

@@ -8,12 +8,34 @@ export const SofaDetailsForm: React.FC<DetailsFormProps> = ({ index, product, ha
         {value: 'leather_platinum_max', label: 'Leather Platinum Max'}, {value: 'leather_european_nappa', label: 'Leather European Nappa'},
         {value: 'leather_smoothy_nappa', label: 'Leather Smoothy Nappa'}, {value: 'pu_leather', label: 'PU Leather'}
     ];
+
+    const modelFamilyOptions = [
+        { value: '1 str', label: '1 STR' },
+        { value: '2 str', label: '2 STR' },
+        { value: '3 str', label: '3 STR' },
+        { value: '3+2 str', label: '3+2 STR' },
+        { value: '3+daybed', label: '3+Daybed' },
+        { value: '2+daybed', label: '2+Daybed' },
+        { value: '3+cnr+3', label: '3+CNR+3' },
+        { value: '3+cnr+2', label: '3+CNR+2' },
+        { value: '2+cnr+2', label: '2+CNR+2' },
+        { value: '3+cnr+1', label: '3+CNR+1' },
+        { value: '2+cnr+1', label: '2+CNR+1' },
+        { value: '3+2+1', label: '3+2+1' },
+    ];
     
     console.log(product)
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {product.id && <InputField name={`${baseName}.id`} label="Product ID" value={product.id} disabled={true} />}
             <InputField name={`${baseName}.model_name`} label="Model Name" value={product.model_name || ''} error={nameError} disabled={disabled} onChange={(e) => handleProductChange(index, "model_name", e.target.value)} />
+            <ComboboxField name={`${baseName}.model_family_configuration`} label="Model Family Configuration" placeholder="Select Configuration" value={product.model_family_configuration} disabled={disabled} onValueChange={(val) => handleProductChange(index, "model_family_configuration", val)} options={modelFamilyOptions} />
+            {(product.model_family_configuration === '3+2 str' || product.model_family_configuration === '3+2+1') && (
+                <InputField name={`${baseName}.2_seater_length`} label="2 Seater Length (cm)" type="number" value={product['2_seater_length'] || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "2_seater_length", Number(e.target.value))} />
+            )}
+            {product.model_family_configuration === '3+2+1' && (
+                <InputField name={`${baseName}.1_seater_length`} label="1 Seater Length (cm)" type="number" value={product['1_seater_length'] || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "1_seater_length", Number(e.target.value))} />
+            )}
             {product.customization && (
                 <span className="text-lg font-semibold text-red-600 bg-red-100 px-2 py-0.5 rounded-md h-min w-min col-span-2">
                     Customized

@@ -15,6 +15,9 @@ export interface Product {
     bed_product_id?: string;
     // For new sofa
     model_name?: string;
+    model_family_configuration?: string;
+    "2_seater_length"?: number;
+    "1_seater_length"?: number;
     reference_image_url?: string;
     measurement_drawing_url?: string;
     description?: string;
