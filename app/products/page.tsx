@@ -11,6 +11,7 @@ import EditProductModal from '@/components/products/edit-product-modal';
 import { Product } from '@/types/products';
 import { SearchBar } from '@/components/products/search-bar';
 import FilterPopover from '@/components/products/filter-popover';
+import ProductDetailPanel from '@/components/products/product-detail-panel';
 
 // Note: Supabase client is now initialized inside the function that uses it.
 
@@ -21,10 +22,19 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [viewedProduct, setViewedProduct] = useState<Product | null>(null);
 
   const handleEditClick = (product: Product) => {
     setSelectedProduct(product);
     setIsEditModalOpen(true);
+  };
+
+  const handleViewClick = (product: Product) => {
+    setViewedProduct(product);
+  };
+
+  const handleClosePanel = () => {
+    setViewedProduct(null);
   };
 
   const fetchProducts = useCallback(async () => {
@@ -67,9 +77,10 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-        <h1 className="text-3xl font-bold">Our Products</h1>
+    <div className="flex h-full">
+      <div className="flex-1 container mx-auto px-4 py-8 transition-all duration-300 ease-in-out">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <h1 className="text-3xl font-bold">Our Products</h1>
         <div className="flex items-center gap-4">
           <SearchBar
             onSearch={handleSearch} // UPDATED: Use the new stable handler
@@ -102,7 +113,7 @@ export default function ProductsPage() {
           <p className="text-gray-500">Loading products...</p>
         </div>
       ) : displayedProducts.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        <div className={`grid gap-8 ${viewedProduct ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'}`}>
           {displayedProducts.map((product) => (
             <Card key={`${productType}-${product.id}`}>
               <CardContent className="p-0">
@@ -126,9 +137,14 @@ export default function ProductsPage() {
               <CardHeader>
                 <CardTitle>{product.model_name}</CardTitle>
                 <CardDescription>{product.description}</CardDescription>
-                <Button variant="outline" size="sm" className="mt-4" onClick={() => handleEditClick(product)}>
-                  Edit
-                </Button>
+                <div className="flex gap-2 mt-4">
+                  <Button variant="outline" size="sm" onClick={() => handleViewClick(product)}>
+                    View
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => handleEditClick(product)}>
+                    Edit
+                  </Button>
+                </div>
               </CardHeader>
             </Card>
           ))}
@@ -143,6 +159,12 @@ export default function ProductsPage() {
         onClose={() => setIsEditModalOpen(false)} 
         product={selectedProduct} 
       />
+      </div>
+      <div className={`transition-all ease-in-out ${viewedProduct ? 'w-full max-w-md' : 'max-w-0'} overflow-hidden`}>
+        <div className="w-full">
+          <ProductDetailPanel product={viewedProduct} onClose={handleClosePanel} />
+        </div>
+      </div>
     </div>
   );
 }
