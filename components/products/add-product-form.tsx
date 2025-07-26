@@ -71,6 +71,16 @@ export default function AddProductForm({ onClose }: { onClose: () => void }) {
         {/* --- CONDITIONAL SOFA FIELDS --- */}
         {productType === 'sofa' && (
           <div className="space-y-4 border-t pt-6">
+            <h3 className="text-lg font-semibold col-span-full">Sofa Configuration</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <ToggleGroupField name="model_family_configuration" label="Model Family Configuration" value={toggleValues.model_family_configuration} onValueChange={(v) => handleToggleChange('model_family_configuration', v)} disabled={false} options={createOptions(['1 str', '2 str', '3 str', '3+2 str', '3+ daybed', '2+daybed', '3+cnr+3', '3+cnr+2', '2+cnr+2', '3+cnr+1', '2+cnr+1', '3+2+1'])} />
+                {(toggleValues.model_family_configuration === '3+2 str' || toggleValues.model_family_configuration === '3+2+1') && (
+                    <InputField label="2 Seater Length (in.)" name="2_seater_length" type="number" step="0.01" placeholder="e.g. 60.00" />
+                )}
+                {toggleValues.model_family_configuration === '3+2+1' && (
+                    <InputField label="1 Seater Length (in.)" name="1_seater_length" type="number" step="0.01" placeholder="e.g. 36.00" />
+                )}
+            </div>
             <h3 className="text-lg font-semibold col-span-full">Mechanism Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <ToggleGroupField name="recliner_mechanism_mode" label="Recliner Mechanism" value={toggleValues.recliner_mechanism_mode} onValueChange={(v) => handleToggleChange('recliner_mechanism_mode', v)} disabled={false} options={createOptions(['manual', 'motorized_single', 'motorized_double'])} />

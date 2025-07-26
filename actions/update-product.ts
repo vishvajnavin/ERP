@@ -35,6 +35,9 @@ export async function updateProductAction(formData: FormData) {
         if (productType === 'sofa') {
             updateData = {
                 model_name: formData.get('model_name'),
+                model_family_configuration: getNullIfEmpty(formData.get('model_family_configuration')),
+                "2_seater_length": getNumberOrNull(formData.get('2_seater_length')),
+                "1_seater_length": getNumberOrNull(formData.get('1_seater_length')),
                 description: getNullIfEmpty(formData.get('description')),
                 reference_image_url: getNullIfEmpty(formData.get('reference_image_url')),
                 measurement_drawing_url: getNullIfEmpty(formData.get('measurement_drawing_url')),

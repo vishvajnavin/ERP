@@ -7,32 +7,27 @@ import { searchProducts } from "@/actions/search-products";
 
 interface SearchBarProps {
   onSearch: (filteredProducts: Product[]) => void;
-  initialProducts: Product[];
   productType: "sofa" | "bed";
+  filters?: Record<string, string>;
 }
 
 export function SearchBar({
   onSearch,
-  initialProducts,
   productType,
+  filters,
 }: SearchBarProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    if (searchQuery.trim() === "") {
-      onSearch(initialProducts);
-      return;
-    }
-
     const handler = setTimeout(async () => {
-      const filtered = await searchProducts(searchQuery, productType);
+      const filtered = await searchProducts(searchQuery, productType, filters);
       onSearch(filtered);
     }, 300); // 300ms debounce
 
     return () => {
       clearTimeout(handler);
     };
-  }, [searchQuery, onSearch, initialProducts, productType]);
+  }, [searchQuery, onSearch, productType, filters]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);

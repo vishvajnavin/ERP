@@ -124,6 +124,13 @@ export default function EditProductForm({ product, productType, onFormSubmit }: 
          <>
           <h3 className="text-lg font-medium border-b pb-2 pt-4">Sofa Configuration</h3>
            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <ToggleGroupField label="Model Family Configuration" name="model_family_configuration" options={createToggleOptions(['1 str', '2 str', '3 str', '3+2 str', '3+ daybed', '2+daybed', '3+cnr+3', '3+cnr+2', '2+cnr+2', '3+cnr+1', '2+cnr+1', '3+2+1'])} value={formState.model_family_configuration} onValueChange={(v) => handleToggleChange('model_family_configuration', v)} disabled={isPending} />
+                {(formState.model_family_configuration === '3+2 str' || formState.model_family_configuration === '3+2+1') && (
+                    <InputField name="2_seater_length" label="2 Seater Length (in.)" type="number" step="0.01" value={formState['2_seater_length'] ?? ''} onChange={handleInputChange} />
+                )}
+                {formState.model_family_configuration === '3+2+1' && (
+                    <InputField name="1_seater_length" label="1 Seater Length (in.)" type="number" step="0.01" value={formState['1_seater_length'] ?? ''} onChange={handleInputChange} />
+                )}
               <ToggleGroupField label="Recliner Mechanism" name="recliner_mechanism_mode" options={reclinerMechanismModeOptions} value={formState.recliner_mechanism_mode} onValueChange={(v) => handleToggleChange('recliner_mechanism_mode', v)} disabled={isPending} />
               <ToggleGroupField label="Recliner Flip" name="recliner_mechanism_flip" options={reclinerMechanismFlipOptions} value={formState.recliner_mechanism_flip} onValueChange={(v) => handleToggleChange('recliner_mechanism_flip', v)} disabled={isPending} />
               <ToggleGroupField label="Headrest Mode" name="headrest_mode" options={headrestModeOptions} value={formState.headrest_mode} onValueChange={(v) => handleToggleChange('headrest_mode', v)} disabled={isPending} />

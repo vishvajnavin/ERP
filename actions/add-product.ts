@@ -42,6 +42,10 @@ export async function addProductAction(formData: FormData) {
         description: getNullIfEmpty(formData.get('description')),
         reference_image_url: getNullIfEmpty(formData.get('reference_image_url')),
         measurement_drawing_url: getNullIfEmpty(formData.get('measurement_drawing_url')),
+        // Sofa Configuration
+        model_family_configuration: getNullIfEmpty(formData.get('model_family_configuration')),
+        "2_seater_length": getNumberOrNull(formData.get('2_seater_length')),
+        "1_seater_length": getNumberOrNull(formData.get('1_seater_length')),
         // Mechanism
         recliner_mechanism_mode: getNullIfEmpty(formData.get('recliner_mechanism_mode')),
         recliner_mechanism_flip: getNullIfEmpty(formData.get('recliner_mechanism_flip')),

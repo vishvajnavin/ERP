@@ -10,12 +10,13 @@ import ProductHeaderActions from "@/components/products/product-header-actions";
 import EditProductModal from '@/components/products/edit-product-modal';
 import { Product } from '@/types/products';
 import { SearchBar } from '@/components/products/search-bar';
+import FilterPopover from '@/components/products/filter-popover';
 
 // Note: Supabase client is now initialized inside the function that uses it.
 
 export default function ProductsPage() {
   const [productType, setProductType] = useState<'sofa' | 'bed'>('sofa');
-  const [products, setProducts] = useState<Product[]>([]);
+  const [filters, setFilters] = useState<Record<string, string>>({});
   const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -26,32 +27,34 @@ export default function ProductsPage() {
     setIsEditModalOpen(true);
   };
 
-  const fetchInitialProducts = useCallback(async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true);
-    const supabase = createClient(); // Initialize client here
-    const tableName = productType === 'sofa' ? 'sofa_products' : 'bed_products';
+    const supabase = createClient();
+    let queryBuilder = supabase.from(productType === 'sofa' ? 'sofa_products' : 'bed_products').select('*');
 
-    const { data, error } = await supabase
-      .from(tableName)
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(10);
+    if (filters) {
+        for (const [key, value] of Object.entries(filters)) {
+            if (value && value !== 'all') {
+                queryBuilder = queryBuilder.eq(key, value);
+            }
+        }
+    }
+    
+    const { data, error } = await queryBuilder.order('created_at', { ascending: false }).limit(10);
 
     if (error) {
       console.error(`Error fetching ${productType}s:`, error);
-      setProducts([]);
       setDisplayedProducts([]);
     } else {
       const fetchedProducts = data as Product[];
-      setProducts(fetchedProducts);
       setDisplayedProducts(fetchedProducts);
     }
     setLoading(false);
-  }, [productType]);
+  }, [productType, filters]);
 
   useEffect(() => {
-    fetchInitialProducts();
-  }, [fetchInitialProducts]);
+    fetchProducts();
+  }, [fetchProducts]);
 
   // NEW: Create a stable search handler function with useCallback.
   // This function will be passed to the SearchBar component.
@@ -59,16 +62,21 @@ export default function ProductsPage() {
     setDisplayedProducts(searchResults);
   }, []); // Dependency array is empty as setDisplayedProducts is stable.
 
+  const handleFilterChange = (newFilters: Record<string, string>) => {
+    setFilters(prevFilters => ({ ...prevFilters, ...newFilters }));
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <h1 className="text-3xl font-bold">Our Products</h1>
         <div className="flex items-center gap-4">
           <SearchBar
-            initialProducts={products}
             onSearch={handleSearch} // UPDATED: Use the new stable handler
             productType={productType}
+            filters={filters}
           />
+          {productType === 'sofa' && <FilterPopover onFilterChange={handleFilterChange} />}
           <ProductHeaderActions />
         </div>
       </div>

@@ -5,25 +5,28 @@ import { Product } from "@/types/products";
 
 export async function searchProducts(
   query: string,
-  productType: "sofa" | "bed"
+  productType: "sofa" | "bed",
+  filters?: Record<string, string>
 ): Promise<Product[]> {
-  // Return empty if the query is empty after trimming
-  if (!query.trim()) {
-    // When the search is cleared, the parent component will handle
-    // showing the initial list. Returning an empty array is correct here.
-    return [];
+  const supabase = createClient();
+  let queryBuilder = supabase.from(productType === 'sofa' ? 'sofa_products' : 'bed_products').select('*');
+
+  if (query.trim()) {
+    queryBuilder = queryBuilder.ilike('model_name', `%${query}%`);
   }
 
-  const supabase = createClient();
+  if (filters) {
+    for (const [key, value] of Object.entries(filters)) {
+      if (value && value !== 'all') {
+        queryBuilder = queryBuilder.eq(key, value);
+      }
+    }
+  }
 
-  // Call the new database function with the correct parameters
-  const { data: products, error } = await supabase.rpc("search_products_by_type", {
-    search_query: query,
-    p_type: productType,
-  });
+  const { data: products, error } = await queryBuilder;
 
   if (error) {
-    console.error("Error searching products via RPC:", error);
+    console.error("Error searching products:", error);
     return [];
   }
 
