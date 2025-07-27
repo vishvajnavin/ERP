@@ -19,12 +19,12 @@ export interface DetailsFormProps {
   nameError?: string;
 }
 
-export const InputField = ({ label, name, value, error, ...props }: { label: string; name: string; isCustomized?: boolean, error?: string } & React.InputHTMLAttributes<HTMLInputElement>) => (
+export const InputField = ({ label, name, value, error, required, ...props }: { label: string; name: string; isCustomized?: boolean, error?: string, required?: boolean } & React.InputHTMLAttributes<HTMLInputElement>) => (
     <div>
         <div className="flex items-center justify-between mb-1">
-            <label className="block text-sm font-medium text-gray-700">{label}</label>
+            <label className="block text-sm font-medium text-gray-700">{label}{required && <span className="text-red-500">*</span>}</label>
         </div>
-        <input name={name} value={value} {...props} className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-red-500 disabled:bg-gray-200 disabled:cursor-not-allowed" />
+        <input name={name} value={value} required={required} {...props} className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-red-500 disabled:bg-gray-200 disabled:cursor-not-allowed" />
         {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
     </div>
 );
@@ -34,11 +34,11 @@ type ToggleOption<T extends string | boolean> = {
     label: string;
 };
 
-export const ToggleGroupField = <T extends string | boolean>({ label, name, value, onValueChange, disabled, options }: { label: string; name: string; value: T | undefined; onValueChange: (value: T) => void; disabled: boolean; options: ToggleOption<T>[]}) => (
+export const ToggleGroupField = <T extends string | boolean>({ label, name, value, onValueChange, disabled, options, required }: { label: string; name: string; value: T | undefined; onValueChange: (value: T) => void; disabled: boolean; options: ToggleOption<T>[], required?: boolean}) => (
     <div>
         {/* Hidden input holds the name and value for the form submission */}
-        <input type="hidden" name={name} value={String(value ?? '')} />
-        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+        <input type="hidden" name={name} value={String(value ?? '')} required={required} />
+        <label className="block text-sm font-medium text-gray-700 mb-1">{label}{required && <span className="text-red-500">*</span>}</label>
         <div className="flex items-center bg-gray-100 rounded-lg p-1">
             {options.map(option => (
                 <button type="button" key={String(option.value)} onClick={() => !disabled && onValueChange(option.value)} disabled={disabled} className={`flex-1 text-sm text-center py-2 px-2 rounded-md transition-all duration-200 ${value === option.value ? 'bg-white shadow font-semibold text-gray-800' : 'bg-transparent text-gray-600 hover:bg-gray-200'} disabled:cursor-not-allowed`}>{option.label}</button>
@@ -47,13 +47,13 @@ export const ToggleGroupField = <T extends string | boolean>({ label, name, valu
     </div>
 );
 
-export const ComboboxField = ({ label, name, value, onValueChange, disabled, options, placeholder }: { label: string; name: string; value: string | undefined; onValueChange: (value: string) => void; disabled: boolean; options: {value: string, label: string}[]; placeholder: string }) => {
+export const ComboboxField = ({ label, name, value, onValueChange, disabled, options, placeholder, required }: { label: string; name: string; value: string | undefined; onValueChange: (value: string) => void; disabled: boolean; options: {value: string, label: string}[]; placeholder: string, required?: boolean }) => {
     const [open, setOpen] = useState(false);
     return (
         <div>
             {/* Hidden input holds the name and value for the form submission */}
-            <input type="hidden" name={name} value={value ?? ''} />
-            <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+            <input type="hidden" name={name} value={value ?? ''} required={required} />
+            <label className="block text-sm font-medium text-gray-700 mb-1">{label}{required && <span className="text-red-500">*</span>}</label>
             <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                     <Button type="button" variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between bg-gray-50 disabled:bg-gray-200 disabled:cursor-not-allowed" disabled={disabled}>
@@ -71,10 +71,10 @@ export const ComboboxField = ({ label, name, value, onValueChange, disabled, opt
     );
 };
 
-export const TextAreaField = ({ label, name, ...props }: { label: string; name: string } & React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+export const TextAreaField = ({ label, name, required, ...props }: { label: string; name: string, required?: boolean } & React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
     <div className="md:col-span-3">
-        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-        <Textarea name={name} {...props} className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-red-500 disabled:bg-gray-200 disabled:cursor-not-allowed" />
+        <label className="block text-sm font-medium text-gray-700 mb-1">{label}{required && <span className="text-red-500">*</span>}</label>
+        <Textarea name={name} required={required} {...props} className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-red-500 disabled:bg-gray-200 disabled:cursor-not-allowed" />
     </div>
 );
 
