@@ -1,36 +1,11 @@
 // app/place-order/page.tsx
 // This file will act as your Server Component wrapper
 
-import { createClient as createServerClientForPage } from '@/utils/supabase/server';
 import PlaceOrderPage from '@/components/place-order/order-page-client'; // Corrected import path
-import { Product } from '@/types/products';
 
-type ProductModel = Product & { id: string; model_name: string };
-
-// This is the **Server Component** responsible for fetching data
 export default async function OrderPageServer() {
-  const supabase = createServerClientForPage();
-
-  // Fetch data directly on the server
-  const { data: sofaData, error: sofaError } = await supabase.from('sofa_products').select('id,model_name');
-  const { data: bedData, error: bedError } = await supabase.from('bed_products').select('id,model_name');
-
-
-  // Basic error logging
-  if (sofaError) console.error('Error fetching sofa models:', sofaError.message);
-  if (bedError) console.error('Error fetching bed models:', bedError.message);
-
-  // Type assertion for safety, assuming the data structure is correct
-  const sofaModels: ProductModel[] = sofaData as ProductModel[] || [];
-  const bedModels: ProductModel[] = bedData as ProductModel[] || [];
-
-
-  // Pass the fetched data as props to your client component
   return (
-    <PlaceOrderPage
-      initialSofaModels={sofaModels}
-      initialBedModels={bedModels}
-    />
+    <PlaceOrderPage/>
   );
 }
 

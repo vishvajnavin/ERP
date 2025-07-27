@@ -23,9 +23,7 @@ export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, o
     const [searchResults, setSearchResults] = useState<Product[]>([]);
     const [isApiSearching, setIsApiSearching] = useState(false);
 
-    // This validation logic is best handled on the server during form submission
-    // to ensure data integrity and avoid race conditions.
-    const nameError = "";
+    const nameError = item.nameError;
 
     // Effect for debounced database search
     useEffect(() => {
@@ -45,6 +43,27 @@ export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, o
             clearTimeout(handler);
         };
     }, [search, item.type, isSearching]);
+
+    useEffect(() => {
+        if (!item.isCustom || !item.details.model_name) {
+            onItemChange(index, 'nameError', '');
+            return;
+        }
+
+        const checkName = async () => {
+            const existingProducts = await searchProducts(item.details.model_name!, item.type.toLowerCase() as 'sofa' | 'bed');
+            const isNameTaken = existingProducts.some(p => p.model_name?.toLowerCase() === item.details.model_name?.toLowerCase() && p.id.toString() !== item.id);
+            if (isNameTaken) {
+                onItemChange(index, 'nameError', `A ${item.type.toLowerCase()} with this name already exists.`);
+            } else {
+                onItemChange(index, 'nameError', '');
+            }
+        };
+
+        const debounceTimeout = setTimeout(checkName, 500);
+        return () => clearTimeout(debounceTimeout);
+
+    }, [item.details.model_name, item.isCustom, item.type, item.id, index, onItemChange]);
 
 
     // Construct the base name for input fields in this product entry
@@ -129,7 +148,7 @@ export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, o
             <div className="flex justify-end items-center mt-4 pt-4 border-t">
                 <div className="flex items-center gap-8">
                     <div className="flex items-center gap-4">
-                        <label htmlFor={`due_date_${index}`} className="font-semibold text-gray-600">Due Date</label>
+                        <label htmlFor={`due_date_${index}`} className="font-semibold text-gray-600">Due Date<span className="text-red-500">*</span></label>
                         <input
                             type="date"
                             id={`due_date_${index}`}

@@ -23,8 +23,7 @@ export const SofaDetailsForm: React.FC<DetailsFormProps> = ({ index, product, ha
         { value: '2+cnr+1', label: '2+CNR+1' },
         { value: '3+2+1', label: '3+2+1' },
     ];
-    
-    console.log(product)
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {product.id && <InputField name={`${baseName}.id`} label="Product ID" value={product.id} disabled={true} required/>}

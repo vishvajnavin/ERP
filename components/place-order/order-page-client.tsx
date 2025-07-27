@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useActionState, useEffect, useRef } from 'react';
+import React, { useState, useActionState, useEffect, useRef, useCallback } from 'react';
 import { Plus, CheckCircle, Search, X } from 'lucide-react';
 import Image from 'next/image';
 import { Customer } from '@/types/customers';
@@ -20,26 +20,22 @@ export type OrderItem = {
     isCustom: boolean;
     quantity: number;
     due_date: Date | null;
+    nameError?: string;
 };
 
 const initialProductState: OrderItem = {
     id: null,
     uniqueId: Date.now(),
     type: 'Sofa',
-    details: {} as Product, // Initialized as an empty Product object
+    details: {} as Product,
     isCustom: false,
     quantity: 1,
     due_date: null,
+    nameError: '',
 };
 
 // --- Main Page Component ---
-const PlaceOrderPage = ({
-    initialSofaModels,
-    initialBedModels,
-}: {
-    initialSofaModels: ({ id: string; model_name: string })[];
-    initialBedModels: ({ id: string; model_name: string })[];
-}) => {
+const PlaceOrderPage = () => {
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [orderItems, setOrderItems] = useState<OrderItem[]>([
         { ...initialProductState, uniqueId: Date.now() }
@@ -48,39 +44,50 @@ const PlaceOrderPage = ({
     // React 19: useActionState hook to handle server action state
     const [state, formAction] = useActionState(submitOrder, { success: false, message: '' });
 
-    const hasNameError = orderItems.some(item => {
-        const nameExists = item.isCustom && (item.type == 'Sofa' ? initialSofaModels.some(p => p.model_name.toLowerCase() === item.details.model_name?.toLowerCase() && p.id !== item.id) :
-        initialBedModels.some(p => p.model_name.toLowerCase() === item.details.model_name?.toLowerCase() && p.id !== item.id));
-        return nameExists;
-    });
+    const hasNameError = orderItems.some(item => item.nameError);
 
-    const handleItemChange = <K extends keyof OrderItem>(index: number, field: K, value: OrderItem[K]) => {
-        const newItems = [...orderItems];
-        newItems[index][field] = value;
+    const handleItemChange = useCallback(<K extends keyof OrderItem>(index: number, field: K, value: OrderItem[K]) => {
+        setOrderItems(currentItems => {
+            const newItems = [...currentItems];
+            const updatedItem = { ...newItems[index], [field]: value };
 
-        // If the type is changed, reset the product details
-        if (field === 'type') {
-            newItems[index].id = null;
-            newItems[index].details = {} as Product;
-            newItems[index].isCustom = false;
-        }
+            if (field === 'type') {
+                updatedItem.id = null;
+                updatedItem.details = {} as Product;
+                updatedItem.isCustom = false;
+                updatedItem.nameError = '';
+            }
+            
+            newItems[index] = updatedItem;
+            return newItems;
+        });
+    }, []);
 
-        setOrderItems(newItems);
-    };
+    const handleDetailsChange = useCallback(<K extends keyof Product>(index: number, detailField: K, value: Product[K]) => {
+        setOrderItems(currentItems => {
+            const newItems = [...currentItems];
+            const itemToUpdate = newItems[index];
+            const newDetails = { ...itemToUpdate.details, [detailField]: value };
+            newItems[index] = { ...itemToUpdate, details: newDetails };
+            return newItems;
+        });
+    }, []);
 
-    const handleDetailsChange = <K extends keyof Product>(index: number, detailField: K, value: Product[K]) => {
-        const newItems = [...orderItems];
-        if (!newItems[index].details) newItems[index].details = {} as Product;
-        newItems[index].details[detailField] = value;
-        setOrderItems(newItems);
-    };
-
-    const handleProductSelect = async (index: number, product: { id: string; type: 'Sofa' | 'Bed'; model_name: string; }) => {
-        const newItems = [...orderItems];
-        const productDetails=await getProductDetails(parseInt(product.id),product.type)
-        newItems[index] = { ...newItems[index], id: product.id, type: product.type, details: productDetails.data?productDetails.data:{}, isCustom: false };
-        setOrderItems(newItems);
-    };
+    const handleProductSelect = useCallback(async (index: number, product: { id: string; type: 'Sofa' | 'Bed'; model_name: string; }) => {
+        const productDetails = await getProductDetails(parseInt(product.id), product.type);
+        setOrderItems(currentItems => {
+            const newItems = [...currentItems];
+            newItems[index] = { 
+                ...newItems[index], 
+                id: product.id, 
+                type: product.type, 
+                details: productDetails.data ? productDetails.data : {}, 
+                isCustom: false,
+                nameError: ''
+            };
+            return newItems;
+        });
+    }, []);
 
 
     const addNewItem = () => setOrderItems([...orderItems, { ...initialProductState, uniqueId: Date.now() }]);
