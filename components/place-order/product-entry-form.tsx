@@ -127,12 +127,26 @@ export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, o
                 {item.type === 'Bed' && <BedDetailsForm baseName={baseName} index={index} product={item.details} nameError={nameError} handleProductChange={onDetailsChange} disabled={!item.isCustom} />}
             </div>
             <div className="flex justify-end items-center mt-4 pt-4 border-t">
-                <div className="flex items-center gap-4">
-                    <span className="font-semibold text-gray-600">Quantity</span>
-                    <div className="flex items-center">
-                        <button type="button" onClick={() => onItemChange(index, 'quantity', Math.max(1, item.quantity - 1))} className="p-2 bg-gray-200 rounded-full"><Minus size={16} /></button>
-                        <span className="w-16 text-center font-bold text-lg">{item.quantity}</span>
-                        <button type="button" onClick={() => onItemChange(index, 'quantity', item.quantity + 1)} className="p-2 bg-gray-200 rounded-full"><Plus size={16} /></button>
+                <div className="flex items-center gap-8">
+                    <div className="flex items-center gap-4">
+                        <label htmlFor={`due_date_${index}`} className="font-semibold text-gray-600">Due Date</label>
+                        <input
+                            type="date"
+                            id={`due_date_${index}`}
+                            name={`${baseName}.due_date`}
+                            value={item.due_date ? item.due_date.toISOString().split('T')[0] : ''}
+                            onChange={e => onItemChange(index, 'due_date', e.target.value ? new Date(e.target.value) : null)}
+                            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500"
+                            required
+                        />
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <span className="font-semibold text-gray-600">Quantity</span>
+                        <div className="flex items-center">
+                            <button type="button" onClick={() => onItemChange(index, 'quantity', Math.max(1, item.quantity - 1))} className="p-2 bg-gray-200 rounded-full"><Minus size={16} /></button>
+                            <span className="w-16 text-center font-bold text-lg">{item.quantity}</span>
+                            <button type="button" onClick={() => onItemChange(index, 'quantity', item.quantity + 1)} className="p-2 bg-gray-200 rounded-full"><Plus size={16} /></button>
+                        </div>
                     </div>
                 </div>
             </div>

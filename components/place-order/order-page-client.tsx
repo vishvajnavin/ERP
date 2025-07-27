@@ -19,6 +19,7 @@ export type OrderItem = {
     details: Product;
     isCustom: boolean;
     quantity: number;
+    due_date: Date | null;
 };
 
 const initialProductState: OrderItem = {
@@ -28,6 +29,7 @@ const initialProductState: OrderItem = {
     details: {} as Product, // Initialized as an empty Product object
     isCustom: false,
     quantity: 1,
+    due_date: null,
 };
 
 // --- Main Page Component ---
@@ -181,13 +183,13 @@ const CustomerSelector = ({ customer, onSelect }: { customer: Customer | null, o
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
-            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+            if (customer && searchRef.current && !searchRef.current.contains(event.target as Node)) {
                 setIsSearching(false);
             }
         }
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [searchRef]);
+    }, [searchRef, customer]);
 
 
     const handleSelectCustomer = (selected: Customer) => {

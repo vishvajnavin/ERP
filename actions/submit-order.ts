@@ -88,6 +88,7 @@ export async function submitOrder(prevState: FormState, formData: FormData) {
         const isExistingModel = formData.get(`${baseName}.is_existing_model`) === 'true';
         const isCustomization = formData.get(`${baseName}.is_customization`) === 'true';
         const quantity = parseInt(formData.get(`${baseName}.quantity`) as string, 10);
+        const dueDate = formData.get(`${baseName}.due_date`) as string || null;
 
         // --- Case 1: Existing, non-customized product ---
         if (isExistingModel && !isCustomization) {
@@ -100,6 +101,7 @@ export async function submitOrder(prevState: FormState, formData: FormData) {
                 sofa_product_id: productType === 'sofa' ? productId : null,
                 bed_product_id: productType === 'bed' ? productId : null,
                 quantity: quantity || 1,
+                due_date: dueDate,
             });
             if (orderItemError) throw new Error(`[Item ${i+1}] Failed to add existing product to order: ${orderItemError.message}`);
 
@@ -210,6 +212,7 @@ export async function submitOrder(prevState: FormState, formData: FormData) {
               sofa_product_id: productType === 'sofa' ? newProductId : null,
               bed_product_id: productType === 'bed' ? newProductId : null,
               quantity: quantity || 1,
+              due_date: dueDate,
             });
             if (orderItemError) throw new Error(`[Item ${i+1}] Failed to link new ${productType} to order: ${orderItemError.message}`);
         }
