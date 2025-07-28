@@ -1,9 +1,28 @@
 "use client";
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Order, View, Stage, Priority } from './types';
-import { sampleOrders, PRIORITY_CONFIG, STAGE_CONFIG } from './data';
+import { PRIORITY_CONFIG, STAGE_CONFIG } from './data';
+import { getOrderItems } from '@/actions/get-order-items';
 import Header from './Header';
+const STAGE_CHECKLISTS: Record<Stage, { key: string; label: string }[]> = {
+  carpentry: [
+    { key: 'frame_assembled', label: 'Frame assembled' },
+    { key: 'joints_secured', label: 'Joints secured' },
+    { key: 'wood_quality_checked', label: 'Wood quality checked' },
+  ],
+  webbing: [{ key: 'springs_attached', label: 'Springs attached' }],
+  marking_cutting: [{ key: 'all_pieces_cut', label: 'All pieces cut' }],
+  stitching: [
+    { key: 'seams_strong', label: 'Seams are strong' },
+    { key: 'no_loose_threads', label: 'No loose threads' },
+  ],
+  cladding: [
+    { key: 'fabric_smooth', label: 'Fabric smooth' },
+    { key: 'no_wrinkles', label: 'No wrinkles' },
+  ],
+  final_qc: [{ key: 'mechanism_works', label: 'Mechanism works' }],
+};
 import OrderTable from './OrderTable';
 import KanbanBoard from './KanbanBoard';
 import OrderModal from './OrderModal';
@@ -13,12 +32,33 @@ const ViewOrdersClient = () => {
   const [search, setSearch] = useState('');
   const [activeFilters, setActiveFilters] = useState<{
     stage: Partial<Record<Stage, boolean>>;
-    priority: Partial<Record<Priority, boolean>>;
+    priority: Partial<Record<string, boolean>>;
     overdue: { true?: boolean };
   }>({ stage: {}, priority: {}, overdue: {} });
   const [sortConfig, setSortConfig] = useState({ key: 'priority', direction: 'desc' });
-  const [orders, setOrders] = useState<Order[]>(sampleOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      const fetchedOrders = await getOrderItems();
+      const ordersWithChecklist = fetchedOrders.map((o) => ({
+        ...o,
+        qc_checklist:
+          o.qc_checklist ||
+          Object.fromEntries(
+            Object.keys(STAGE_CHECKLISTS).map((stage) => [
+              stage,
+              Object.fromEntries(
+                (STAGE_CHECKLISTS[stage as Stage] || []).map((item) => [item.key, false])
+              ),
+            ])
+          ),
+      }));
+      setOrders(ordersWithChecklist);
+    };
+    fetchOrders();
+  }, []);
 
   const filteredAndSortedOrders = useMemo(() => {
     const today = new Date();
@@ -28,8 +68,8 @@ const ViewOrdersClient = () => {
       const stageKeys = Object.keys(activeFilters.stage).filter(k => activeFilters.stage[k as Stage]);
       if (stageKeys.length > 0 && !stageKeys.includes(o.stage)) return false;
       
-      const priorityKeys = Object.keys(activeFilters.priority).filter(k => activeFilters.priority[k as Priority]);
-      if (priorityKeys.length > 0 && !priorityKeys.includes(o.priority)) return false;
+      const priorityKeys = Object.keys(activeFilters.priority).filter(k => activeFilters.priority[k]);
+      if (priorityKeys.length > 0 && !priorityKeys.includes(o.priority.toString())) return false;
 
       if (activeFilters.overdue.true && new Date(o.dueDate) >= today) return false;
       
