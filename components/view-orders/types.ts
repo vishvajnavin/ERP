@@ -1,21 +1,23 @@
-import { LucideIcon } from 'lucide-react';
+// --- TYPE DEFINITIONS ---
+export type Stage = 'carpentry' | 'webbing' | 'marking_cutting' | 'stitching' | 'cladding' | 'final_qc';
+export type Priority = 'Urgent' | 'High' | 'Medium' | 'Low';
+export type SortKey = 'dueDate' | 'priority' | 'id';
+export type View = 'list' | 'kanban';
 
-export interface ProductionStage {
-    name: string;
-    Icon: LucideIcon;
-}
-
-export interface ProgressState {
-    name: string;
-    Icon: LucideIcon;
-}
+export type QCItems = { [item: string]: boolean };
+export type QCChecklist = { [key in Stage]?: QCItems };
 
 export interface Order {
-    orderId: string;
-    customer: string;
-    model: string;
-    stage: string;
-    progress: string;
-    dueDate: string;
-    employees: string[];
+  id: string;
+  customer: string;
+  product: string;
+  description: string;
+  config: string;
+  upholsteryColor: string;
+  legType: string;
+  placedAt: string;
+  dueDate: string;
+  stage: Stage;
+  qc_checklist: QCChecklist;
+  priority: Priority;
 }

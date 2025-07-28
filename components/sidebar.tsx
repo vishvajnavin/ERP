@@ -66,7 +66,11 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
             title={isCollapsed ? item.name : ''}
           >
             <item.icon className={`h-6 w-6 ${isCollapsed ? '' : 'mr-4'}`} />
-            <span className={`font-medium transition-opacity duration-200 ${isCollapsed ? 'sr-only' : 'opacity-100'}`}>
+            <span
+              className={`font-medium transition-all duration-200 ease-in-out whitespace-nowrap ${
+                isCollapsed ? 'opacity-0 invisible w-0' : 'opacity-100 visible w-auto'
+              }`}
+            >
               {item.name}
             </span>
           </Link>
@@ -83,9 +87,13 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
             height={40}
             className="h-10 w-10 rounded-full object-cover"
           />
-          <div className={`ml-4 transition-opacity duration-200 ${isCollapsed ? 'sr-only' : 'opacity-100'}`}>
-            <p className="font-semibold text-white">Admin User</p>
-            <p className="text-sm text-gray-400">admin@example.com</p>
+          <div
+            className={`ml-4 transition-all duration-200 ease-in-out ${
+              isCollapsed ? 'opacity-0 invisible w-0' : 'opacity-100 visible w-auto'
+            }`}
+          >
+            <p className="font-semibold text-white whitespace-nowrap">Admin User</p>
+            <p className="text-sm text-gray-400 whitespace-nowrap">admin@example.com</p>
           </div>
         </div>
       </div>

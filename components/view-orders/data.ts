@@ -1,25 +1,26 @@
-import { Order, ProductionStage, ProgressState } from './types';
-import { Scissors, Hammer, Wrench, CheckCircle, Truck, Circle, Loader, Check } from 'lucide-react';
+import { Stage, Priority, Order } from './types';
 
-export const productionStages: ProductionStage[] = [
-    { name: "Cutting", Icon: Scissors },
-    { name: "Framing", Icon: Hammer },
-    { name: "Upholstery", Icon: Wrench },
-    { name: "Finishing & QC", Icon: CheckCircle },
-    { name: "Ready for Delivery", Icon: Truck },
-];
+export const STAGE_CONFIG: Record<Stage, { label: string; color: string; }> = {
+  carpentry: { label: 'Carpentry', color: '#b91c1c' },       // Red-700
+  webbing: { label: 'Webbing', color: '#dc2626' },         // Red-600
+  marking_cutting: { label: 'Marking', color: '#ef4444' }, // Red-500
+  stitching: { label: 'Stitching', color: '#f87171' },     // Red-400
+  cladding: { label: 'Cladding', color: '#fca5a5' },       // Red-300
+  final_qc: { label: 'Final QC', color: '#fecaca' },         // Red-200
+};
 
-export const progressStates: ProgressState[] = [
-    { name: "Not Started", Icon: Circle },
-    { name: "In Progress", Icon: Loader },
-    { name: "Completed", Icon: Check },
-];
+export const PRIORITY_CONFIG: Record<Priority, { label: string; color: string; value: number }> = {
+  Urgent: { label: 'Urgent', color: '#b91c1c', value: 4 },
+  High: { label: 'High', color: '#ef4444', value: 3 },
+  Medium: { label: 'Medium', color: '#9ca3af', value: 2 },
+  Low: { label: 'Low', color: '#6b7280', value: 1 },
+};
 
-export const initialOrdersData: Order[] = [
-    { orderId: '#SOFA-8462', customer: 'John Doe', model: 'Chesterfield Classic', stage: 'Upholstery', progress: 'In Progress', dueDate: '2025-07-20', employees: ['Alice', 'Bob'] },
-    { orderId: '#SOFA-8460', customer: 'Emily White', model: 'Velvet Loveseat', stage: 'Cutting', progress: 'Completed', dueDate: '2025-07-25', employees: ['Charlie'] },
-    { orderId: '#SOFA-8457', customer: 'David Kim', model: 'Sectional Sleeper', stage: 'Framing', progress: 'Not Started', dueDate: '2025-07-22', employees: [] },
-    { orderId: '#SOFA-8455', customer: 'Maria Garcia', model: 'Leather Recliner', stage: 'Ready for Delivery', progress: 'Completed', dueDate: '2025-07-15', employees: ['David', 'Eve'] },
-    { orderId: '#SOFA-8454', customer: 'Tom Williams', model: 'Mid-Century Modern', stage: 'Finishing & QC', progress: 'In Progress', dueDate: '2025-07-18', employees: ['Frank'] },
-    { orderId: '#SOFA-8452', customer: 'Linda Chen', model: 'Modern L-Shape', stage: 'Cutting', progress: 'Completed', dueDate: '2025-08-01', employees: ['Grace', 'Heidi'] },
+export const sampleOrders: Order[] = [
+  { id: 'OCF-001', customer: 'Rajesh Kumar', product: 'Royal Recliner', description: 'A luxurious reclining sofa with an adjustable headrest and premium leather.', config: '3 Seater', upholsteryColor: 'Crimson Red', legType: 'Wood', placedAt: '2025-07-01', dueDate: '2025-07-29', stage: 'carpentry', qc_checklist: { carpentry: { 'Frame assembled': false, 'Joints secured': false, 'Wood quality checked': false } }, priority: 'High' },
+  { id: 'OCF-002', customer: 'Anita Desai', product: 'L-Corner Static', description: 'Modern L-shaped static sofa, perfect for contemporary living rooms.', config: 'Left-Hand Corner', upholsteryColor: 'Jet Black', legType: 'PVD', placedAt: '2025-07-02', dueDate: '2025-08-05', stage: 'stitching', qc_checklist: { stitching: { 'Seams are strong': false, 'No loose threads': false } }, priority: 'Medium' },
+  { id: 'OCF-003', customer: 'Vikram Singh', product: '3+2 Sofa Set', description: 'A classic 3+2 sofa combination for family seating.', config: 'Standard', upholsteryColor: 'Ivory White', legType: 'SS', placedAt: '2025-07-03', dueDate: '2025-07-26', stage: 'cladding', qc_checklist: { cladding: { 'Fabric smooth': false, 'No wrinkles': false } }, priority: 'Urgent' },
+  { id: 'OCF-004', customer: 'Priya Sharma', product: 'Chesterfield', description: 'An iconic Chesterfield sofa with deep button tufting and rolled arms.', config: '2 Seater', upholsteryColor: 'Oxford Blue', legType: 'Wood', placedAt: '2025-07-05', dueDate: '2025-08-10', stage: 'webbing', qc_checklist: { webbing: { 'Springs attached': false } }, priority: 'Medium' },
+  { id: 'OCF-005', customer: 'Sanjay Gupta', product: 'Modular Sectional', description: 'A versatile modular sectional that can be rearranged to fit any space.', config: '5-piece Sectional', upholsteryColor: 'Graphite Gray', legType: 'SS', placedAt: '2025-07-08', dueDate: '2025-08-15', stage: 'marking_cutting', qc_checklist: { marking_cutting: { 'All pieces cut': false } }, priority: 'Low' },
+  { id: 'OCF-006', customer: 'Meera Iyer', product: 'Sofa Bed', description: 'A functional and stylish sofa bed with an easy-to-use pull-out mechanism.', config: 'Queen Size', upholsteryColor: 'Beige', legType: 'PVD', placedAt: '2025-07-10', dueDate: '2025-07-28', stage: 'final_qc', qc_checklist: { final_qc: { 'Mechanism works': false } }, priority: 'High' },
 ];
