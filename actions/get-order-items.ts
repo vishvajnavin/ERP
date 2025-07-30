@@ -1,7 +1,7 @@
 // "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { Order, Priority } from "@/components/view-orders/types";
+import { Order, Priority, Stage } from "@/components/view-orders/types";
 
 export async function getOrderItems(): Promise<Order[]> {
   const supabase = createClient();
@@ -20,45 +20,61 @@ export async function getOrderItems(): Promise<Order[]> {
         )
       ),
       sofa_products (
+        id,
         model_name,
         upholstery,
         upholstery_color
       ),
       bed_products (
+        id,
         model_name,
         upholstery,
         upholstery_color
       )
     `
     );
-
   if (error) {
     console.error("Error fetching order items:", error);
     return [];
   }
 
   return data.map((item) => {
-    // FIX 1: Access related records directly as objects, not arrays.
-    const product = item.sofa_products || item.bed_products;
-    
-    // FIX 2: Access the nested customer details object directly.
-    const customerName =
-      item.orders?.[0]?.customer_details?.[0]?.customer_name || "N/A";
+    console.log(item);
+    const correctedItem = item as unknown as {
+      id: number;
+      due_date: string;
+      production_stage: Stage;
+      priority: Priority;
+      orders: { customer_details: { customer_name: string } };
+      sofa_products: { id: number; model_name: string; upholstery: string; upholstery_color: string; } | null;
+      bed_products: { id: number; model_name: string; upholstery: string; upholstery_color: string; } | null;
+    };
 
-    const productName = product?.[0]?.model_name || "N/A";
-    const upholstery = product && product[0]
-      ? `${product[0].upholstery} - ${product[0].upholstery_color}`
+    // Access related records directly as objects.
+    const product = correctedItem.sofa_products || correctedItem.bed_products;
+
+    // Access the nested customer details object directly.
+    const customerName =
+      correctedItem.orders?.customer_details?.customer_name || "N/A";
+
+    const productName = product?.model_name || "N/A";
+    const upholstery = product
+      ? `${product.upholstery} - ${product.upholstery_color}`
       : "N/A";
 
+    const productType = correctedItem.sofa_products ? 'Sofa' : 'Bed';
+
     return {
-      id: item.id.toString(),
+      id: correctedItem.id.toString(),
       customer: customerName,
       product: productName,
       upholstery,
-      dueDate: item.due_date,
-      stage: item.production_stage,
-      priority: Number(item.priority) as Priority,
+      dueDate: correctedItem.due_date,
+      stage: correctedItem.production_stage,
+      priority: Number(correctedItem.priority) as Priority,
       qc_checklist: {},
+      productId: product!.id,
+      productType: productType,
     };
   });
 }

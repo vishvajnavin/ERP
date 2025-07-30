@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Order, Stage, Priority } from './types';
 import { STAGE_CONFIG, PRIORITY_CONFIG } from './data';
 import { icons } from './icons';
+import getProductDetails from '@/actions/get-product-details';
+import ProductDetails from './ProductDetails';
 
 interface OrderModalProps {
   order: Order;
@@ -14,6 +16,8 @@ interface OrderModalProps {
 }
 
 const OrderModal: React.FC<OrderModalProps> = ({ order, onClose, onChecklistChange, onProceed, onPriorityChange }) => {
+  const [productDetails, setProductDetails] = useState<Record<string, unknown> | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [isQCChecklistVisible, setQCChecklistVisible] = useState(false);
   const allStages = Object.keys(STAGE_CONFIG) as Stage[];
   const activeStepIndex = allStages.indexOf(order.stage);
@@ -26,8 +30,9 @@ const OrderModal: React.FC<OrderModalProps> = ({ order, onClose, onChecklistChan
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4"
       onClick={onClose}
+      suppressHydrationWarning
     >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
@@ -41,7 +46,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ order, onClose, onChecklistChan
             <h2 className="text-2xl font-bold text-black">
               {order.id} - <span className="text-red-600">{order.product}</span>
             </h2>
-            <p className="text-sm text-gray-600">{order.description}</p>
+            <p className="text-sm text-gray-600">{order.customer}</p>
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-black">
             <icons.close />
@@ -83,17 +88,25 @@ const OrderModal: React.FC<OrderModalProps> = ({ order, onClose, onChecklistChan
                         <p>{order.customer}</p>
                       </div>
                       <div>
-                        <span className="font-semibold text-gray-600 block">Config</span>
-                        <p>{order.config}</p>
+                        <button
+                          onClick={async () => {
+                            setIsLoading(true);
+                            const details = await getProductDetails(order.productId, order.productType);
+                            console.log(details)
+                            setProductDetails(details.data);
+                            setIsLoading(false);
+                          }}
+                          className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition-colors"
+                          disabled={isLoading}
+                        >
+                          {isLoading ? 'Loading...' : 'View Details'}
+                        </button>
                       </div>
-                      <div>
-                        <span className="font-semibold text-gray-600 block">Upholstery</span>
-                        <p>{order.upholsteryColor}</p>
-                      </div>
-                      <div>
-                        <span className="font-semibold text-gray-600 block">Leg Type</span>
-                        <p>{order.legType}</p>
-                      </div>
+                      {productDetails && (
+                        <div className="col-span-2 mt-4">
+                          <ProductDetails details={productDetails} productType={order.productType} />
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="space-y-4">
@@ -109,7 +122,7 @@ const OrderModal: React.FC<OrderModalProps> = ({ order, onClose, onChecklistChan
                         <label className="font-semibold text-gray-600 block mb-1">Priority</label>
                         <select
                           value={order.priority}
-                          onChange={e => onPriorityChange(order.id, e.target.value as Priority)}
+                          onChange={e => onPriorityChange(order.id, Number(e.target.value) as Priority)}
                           className="w-full bg-gray-200 border border-gray-300 rounded-md p-2 focus:ring-red-500 focus:border-red-500"
                         >
                           {Object.keys(PRIORITY_CONFIG).map(p => (

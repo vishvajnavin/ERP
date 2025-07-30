@@ -15,7 +15,6 @@ export default async function getProductDetails(id: number, type: 'Sofa' | 'Bed'
     id: id,
     type: type,
   });
-
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,

@@ -16,4 +16,6 @@ export interface Order {
   stage: Stage;
   qc_checklist: QCChecklist;
   priority: Priority;
+  productId: number;
+  productType: 'Sofa' | 'Bed';
 }
