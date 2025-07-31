@@ -24,7 +24,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
 
   return (
     <aside
-      className={`flex flex-col bg-black text-white transition-all duration-300 ease-in-out h-screen sticky top-0 ${
+      className={`flex flex-col bg-black text-white transition-all duration-300 ease-in-out h-screen sticky top-0 z-10 ${
         isCollapsed ? 'w-20' : 'w-64'
       }`}
     >

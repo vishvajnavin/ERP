@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Order, View, Stage, Priority } from './types';
 import { PRIORITY_CONFIG, STAGE_CONFIG } from './data';
@@ -7,12 +7,16 @@ import Header from './Header';
 import OrderTable from './OrderTable';
 import KanbanBoard from './KanbanBoard';
 import OrderModal from './OrderModal';
+import { getOrderItems } from '@/actions/get-order-items';
+import { searchOrderItems } from '@/actions/search-order-items';
+import { Button } from '../ui/button';
 
 interface ViewOrdersClientProps {
   initialOrders: Order[];
+  totalCount: number;
 }
 
-const ViewOrdersClient: React.FC<ViewOrdersClientProps> = ({ initialOrders }) => {
+const ViewOrdersClient: React.FC<ViewOrdersClientProps> = ({ initialOrders, totalCount }) => {
   const [view, setView] = useState<View>('list');
   const [search, setSearch] = useState('');
   const [activeFilters, setActiveFilters] = useState<{
@@ -23,6 +27,31 @@ const ViewOrdersClient: React.FC<ViewOrdersClientProps> = ({ initialOrders }) =>
   const [sortConfig, setSortConfig] = useState({ key: 'priority', direction: 'desc' });
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(Math.ceil(totalCount / itemsPerPage));
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      setLoading(true);
+      let result;
+      if (search) {
+        result = await searchOrderItems(search, currentPage, itemsPerPage);
+      } else {
+        result = await getOrderItems(currentPage, itemsPerPage);
+      }
+      setOrders(result.orders);
+      setTotalPages(Math.ceil(result.totalCount / itemsPerPage));
+      setLoading(false);
+    };
+
+    const debounceFetch = setTimeout(() => {
+      fetchOrders();
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(debounceFetch);
+  }, [search, currentPage, itemsPerPage]);
 
   const filteredAndSortedOrders = useMemo(() => {
     const today = new Date();
@@ -37,8 +66,7 @@ const ViewOrdersClient: React.FC<ViewOrdersClientProps> = ({ initialOrders }) =>
 
       if (activeFilters.overdue.true && new Date(o.dueDate) >= today) return false;
       
-      const q = search.toLowerCase();
-      return !q || o.id.toLowerCase().includes(q) || o.customer.toLowerCase().includes(q) || o.product.toLowerCase().includes(q);
+      return true;
     });
 
     return filtered.sort((a, b) => {
@@ -57,7 +85,7 @@ const ViewOrdersClient: React.FC<ViewOrdersClientProps> = ({ initialOrders }) =>
       if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [orders, search, activeFilters, sortConfig]);
+  }, [orders, activeFilters, sortConfig]);
 
   const handleChecklistChange = (orderId: string, stage: Stage, itemKey: string, isChecked: boolean) => {
     setOrders(prev =>
@@ -113,8 +141,19 @@ const ViewOrdersClient: React.FC<ViewOrdersClientProps> = ({ initialOrders }) =>
             transition={{ duration: 0.2 }}
           >
             {view === 'list' && (
-              <div className="p-6">
+              <div className="p-6 pb-20">
                 <OrderTable orders={filteredAndSortedOrders} onOrderSelect={setSelectedOrder} />
+                <div className="absolute bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200 flex justify-center items-center space-x-2">
+                  <Button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1 || loading}>
+                    Previous
+                  </Button>
+                  <span>
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages || loading}>
+                    Next
+                  </Button>
+                </div>
               </div>
             )}
             {view === 'kanban' && (

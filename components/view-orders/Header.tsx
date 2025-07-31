@@ -48,7 +48,7 @@ const Header: React.FC<HeaderProps> = ({
         return { ...newFilters, stage: newStageFilters };
       }
       if (filter === 'priority') {
-        const key = value as Priority;
+        const key = value as unknown as Priority;
         const newPriorityFilters = { ...newFilters.priority };
         if (newPriorityFilters[key]) {
           delete newPriorityFilters[key];
@@ -130,7 +130,7 @@ const Header: React.FC<HeaderProps> = ({
                       <label key={key} className="flex items-center gap-2 text-sm cursor-pointer text-black">
                         <input
                           type="checkbox"
-                          checked={!!activeFilters.priority[key as Priority]}
+                          checked={!!activeFilters.priority[key as unknown as Priority]}
                           onChange={() => toggleFilter('priority', key)}
                           className="h-4 w-4 rounded bg-gray-200 border-gray-300 text-red-500 focus:ring-red-500"
                         />

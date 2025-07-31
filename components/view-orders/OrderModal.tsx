@@ -92,7 +92,6 @@ const OrderModal: React.FC<OrderModalProps> = ({ order, onClose, onChecklistChan
                           onClick={async () => {
                             setIsLoading(true);
                             const details = await getProductDetails(order.productId, order.productType);
-                            console.log(details)
                             setProductDetails(details.data);
                             setIsLoading(false);
                           }}

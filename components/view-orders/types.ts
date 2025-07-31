@@ -11,7 +11,6 @@ export interface Order {
   id: string;
   customer: string;
   product: string;
-  upholstery: string;
   dueDate: string;
   stage: Stage;
   qc_checklist: QCChecklist;

@@ -41,7 +41,7 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, onOrderSelect }) => (
               <td className="px-6 py-5 whitespace-nowrap text-sm font-medium text-black">{order.id}</td>
               <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-800">{order.product}</td>
               <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-600">{order.customer}</td>
-              <td className={`px-6 py-5 whitespace-nowrap text-sm ${isOverdue ? 'text-red-500 font-semibold' : 'text-gray-600'}`}>
+              <td className={`px-6 py-5 whitespace-nowrap text-sm ${isOverdue ? 'text-red-500 font-semibold' : 'text-gray-600'}`} suppressHydrationWarning>
                 {new Date(order.dueDate).toLocaleDateString()}
               </td>
               <td className="px-6 py-5 whitespace-nowrap">

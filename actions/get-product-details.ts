@@ -21,6 +21,7 @@ export default async function getProductDetails(id: number, type: 'Sofa' | 'Bed'
     };
   }
   const tableName= validatedFields.data.type === 'Sofa' ? 'sofa_products' : 'bed_products';
+  console.log('hi')
 
   const { data, error } = await supabase
     .from(tableName)
