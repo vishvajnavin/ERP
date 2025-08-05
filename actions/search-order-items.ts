@@ -17,7 +17,13 @@ interface OrderDetailFromRPC {
 export async function searchOrderItems(
   query: string,
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
+  activeFilters: {
+    stage: Partial<Record<Stage, boolean>>;
+    priority: Partial<Record<string, boolean>>;
+    overdue: { true?: boolean };
+  },
+  sortConfig: { key: string; direction: string }
 ): Promise<{ orders: Order[]; totalCount: number }> {
   const supabase = createClient();
   const offset = (page - 1) * limit;
@@ -27,6 +33,8 @@ export async function searchOrderItems(
     p_search_term: query,
     p_limit: limit,
     p_offset: offset,
+    p_filters: activeFilters,
+    p_sort: sortConfig,
   });
 
   if (error) {
@@ -53,7 +61,6 @@ export async function searchOrderItems(
       dueDate: item.due_date,
       stage: item.production_stage as Stage,
       priority: Number(item.priority) as Priority,
-      qc_checklist: {},
       productId: 0,
       productType: "Sofa" as const,
     };

@@ -13,7 +13,6 @@ export interface Order {
   product: string;
   dueDate: string;
   stage: Stage;
-  qc_checklist: QCChecklist;
   priority: Priority;
   productId: number;
   productType: 'Sofa' | 'Bed';

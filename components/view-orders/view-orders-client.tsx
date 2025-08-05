@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Order, View, Stage, Priority } from './types';
-import { PRIORITY_CONFIG, STAGE_CONFIG } from './data';
+import { STAGE_CONFIG } from './data';
 import Header from './Header';
 import OrderTable from './OrderTable';
 import KanbanBoard from './KanbanBoard';
@@ -37,8 +37,9 @@ const ViewOrdersClient: React.FC<ViewOrdersClientProps> = ({ initialOrders, tota
       setLoading(true);
       let result;
       if (search) {
-        result = await searchOrderItems(search, currentPage, itemsPerPage);
+        result = await searchOrderItems(search, currentPage, itemsPerPage, activeFilters, sortConfig);
       } else {
+        // When not searching, we don't need to pass filters and sorting
         result = await getOrderItems(currentPage, itemsPerPage);
       }
       setOrders(result.orders);
@@ -51,56 +52,12 @@ const ViewOrdersClient: React.FC<ViewOrdersClientProps> = ({ initialOrders, tota
     }, 500); // 500ms debounce
 
     return () => clearTimeout(debounceFetch);
-  }, [search, currentPage, itemsPerPage]);
+  }, [search, currentPage, itemsPerPage, activeFilters, sortConfig]);
 
   const filteredAndSortedOrders = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    return orders;
+  }, [orders]);
 
-    const filtered = orders.filter(o => {
-      const stageKeys = Object.keys(activeFilters.stage).filter(k => activeFilters.stage[k as Stage]);
-      if (stageKeys.length > 0 && !stageKeys.includes(o.stage)) return false;
-      
-      const priorityKeys = Object.keys(activeFilters.priority).filter(k => activeFilters.priority[k]);
-      if (priorityKeys.length > 0 && !priorityKeys.includes(o.priority.toString())) return false;
-
-      if (activeFilters.overdue.true && new Date(o.dueDate) >= today) return false;
-      
-      return true;
-    });
-
-    return filtered.sort((a, b) => {
-      let valA, valB;
-      if (sortConfig.key === 'priority') {
-        valA = PRIORITY_CONFIG[a.priority].value;
-        valB = PRIORITY_CONFIG[b.priority].value;
-      } else if (sortConfig.key === 'dueDate') {
-        valA = new Date(a.dueDate).getTime();
-        valB = new Date(b.dueDate).getTime();
-      } else {
-        valA = a.id;
-        valB = b.id;
-      }
-      if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
-      if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }, [orders, activeFilters, sortConfig]);
-
-  const handleChecklistChange = (orderId: string, stage: Stage, itemKey: string, isChecked: boolean) => {
-    setOrders(prev =>
-      prev.map(o =>
-        o.id === orderId
-          ? { ...o, qc_checklist: { ...o.qc_checklist, [stage]: { ...o.qc_checklist[stage], [itemKey]: isChecked } } }
-          : o
-      )
-    );
-    setSelectedOrder(prev =>
-      prev && prev.id === orderId
-        ? { ...prev, qc_checklist: { ...prev.qc_checklist, [stage]: { ...prev.qc_checklist[stage], [itemKey]: isChecked } } }
-        : prev
-    );
-  };
 
   const handlePriorityChange = (orderId: string, priority: Priority) => {
     setOrders(prev => prev.map(o => (o.id === orderId ? { ...o, priority } : o)));
@@ -169,7 +126,6 @@ const ViewOrdersClient: React.FC<ViewOrdersClientProps> = ({ initialOrders, tota
           <OrderModal
             order={selectedOrder}
             onClose={() => setSelectedOrder(null)}
-            onChecklistChange={handleChecklistChange}
             onProceed={handleProceedToNextStage}
             onPriorityChange={handlePriorityChange}
           />

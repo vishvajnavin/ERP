@@ -24,6 +24,15 @@ CREATE TABLE public.bed_products (
   purchase_count integer NOT NULL DEFAULT 0,
   CONSTRAINT bed_products_pkey PRIMARY KEY (id)
 );
+CREATE TABLE public.checks (
+  check_id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  stage_id smallint NOT NULL,
+  name text NOT NULL,
+  sequence integer,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT checks_pkey PRIMARY KEY (check_id),
+  CONSTRAINT checks_stage_id_fkey FOREIGN KEY (stage_id) REFERENCES public.stages(stage_id)
+);
 CREATE TABLE public.customer_details (
   id integer NOT NULL DEFAULT nextval('customer_details_id_seq'::regclass),
   customer_name text NOT NULL,
@@ -51,6 +60,16 @@ CREATE TABLE public.customer_details (
   customer_type USER-DEFINED NOT NULL,
   CONSTRAINT customer_details_pkey PRIMARY KEY (id)
 );
+CREATE TABLE public.order_item_stage_status (
+  order_item_id bigint NOT NULL,
+  stage_id bigint NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  status USER-DEFINED NOT NULL DEFAULT 'pending'::stage_status_enum,
+  CONSTRAINT order_item_stage_status_pkey PRIMARY KEY (order_item_id, stage_id),
+  CONSTRAINT order_item_stage_status_order_item_id_fkey FOREIGN KEY (order_item_id) REFERENCES public.order_items(id),
+  CONSTRAINT order_item_stage_status_stage_id_fkey FOREIGN KEY (stage_id) REFERENCES public.stages(stage_id)
+);
 CREATE TABLE public.order_items (
   id integer NOT NULL DEFAULT nextval('order_items_id_seq'::regclass),
   order_id integer,
@@ -59,6 +78,10 @@ CREATE TABLE public.order_items (
   bed_product_id integer,
   no_of_pillow integer DEFAULT 0,
   quantity integer DEFAULT 1,
+  due_date date NOT NULL DEFAULT CURRENT_DATE,
+  delivery_date date,
+  production_stage USER-DEFINED DEFAULT 'carpentry'::production_stage_enum,
+  priority integer NOT NULL DEFAULT 1,
   CONSTRAINT order_items_pkey PRIMARY KEY (id),
   CONSTRAINT order_items_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id),
   CONSTRAINT order_items_sofa_product_id_fkey FOREIGN KEY (sofa_product_id) REFERENCES public.sofa_products(id),
@@ -71,6 +94,17 @@ CREATE TABLE public.orders (
   order_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT orders_pkey PRIMARY KEY (id),
   CONSTRAINT orders_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.customer_details(id)
+);
+CREATE TABLE public.product_checklist_progress (
+  order_item_id integer NOT NULL,
+  check_id integer NOT NULL,
+  status USER-DEFINED NOT NULL DEFAULT 'pending'::check_status,
+  notes text,
+  inspected_by uuid,
+  updated_at timestamp with time zone,
+  CONSTRAINT product_checklist_progress_pkey PRIMARY KEY (order_item_id, check_id),
+  CONSTRAINT product_checklist_progress_check_id_fkey FOREIGN KEY (check_id) REFERENCES public.checks(check_id),
+  CONSTRAINT product_checklist_progress_order_item_id_fkey FOREIGN KEY (order_item_id) REFERENCES public.order_items(id)
 );
 CREATE TABLE public.sofa_products (
   id integer NOT NULL DEFAULT nextval('sofa_products_id_seq'::regclass),
@@ -110,5 +144,22 @@ CREATE TABLE public.sofa_products (
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   customization boolean NOT NULL DEFAULT true,
   purchase_count integer NOT NULL DEFAULT 0,
+  model_family_configuration USER-DEFINED NOT NULL,
+  2_seater_length integer NOT NULL DEFAULT 0,
+  1_seater_length integer NOT NULL DEFAULT 0,
   CONSTRAINT sofa_products_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.stage_dependencies (
+  stage_id bigint NOT NULL,
+  depends_on_stage_id bigint NOT NULL,
+  CONSTRAINT stage_dependencies_pkey PRIMARY KEY (stage_id, depends_on_stage_id),
+  CONSTRAINT stage_dependencies_stage_id_fkey FOREIGN KEY (stage_id) REFERENCES public.stages(stage_id),
+  CONSTRAINT stage_dependencies_depends_on_stage_id_fkey FOREIGN KEY (depends_on_stage_id) REFERENCES public.stages(stage_id)
+);
+CREATE TABLE public.stages (
+  stage_id smallint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  name text NOT NULL,
+  description text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT stages_pkey PRIMARY KEY (stage_id)
 );

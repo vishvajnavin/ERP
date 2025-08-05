@@ -95,16 +95,35 @@ export async function submitOrder(prevState: FormState, formData: FormData) {
             const productIdKey = productType === 'sofa' ? 'sofa_product_id' : 'bed_product_id';
             const productId = formData.get(`${baseName}.${productIdKey}`) as string;
 
-            const { error: orderItemError } = await supabase.from('order_items').insert({
+            const { data: newOrderItem, error: orderItemError } = await supabase.from('order_items').insert({
                 order_id: orderId,
                 product_type: productType,
                 sofa_product_id: productType === 'sofa' ? productId : null,
                 bed_product_id: productType === 'bed' ? productId : null,
                 quantity: quantity || 1,
                 due_date: dueDate,
-            });
-            if (orderItemError) throw new Error(`[Item ${i+1}] Failed to add existing product to order: ${orderItemError.message}`);
+            })
+            .select("id")
+            .single();
 
+            if (orderItemError) throw new Error(`[Item ${i+1}] Failed to add existing product to order: ${orderItemError.message}`);
+            if (!newOrderItem)
+              throw new Error(
+                `[Item ${i + 1}] Failed to retrieve new order item ID.`
+              );
+            // --- NEW: Initialize QC Checklist for this order item ---
+            const { error: qcError } = await supabase.rpc(
+              "start_order_item_qc",
+              {
+                p_order_item_id: newOrderItem.id,
+              }
+            );
+            if (qcError)
+              throw new Error(
+                `[Item ${i + 1}] Failed to initialize QC checklist: ${
+                  qcError.message
+                }`
+              );
             // --- Increment purchase count for existing product ---
             const { error: rpcError } = await supabase.rpc('increment_purchase_count', {
                 p_product_id: parseInt(productId, 10),
@@ -206,15 +225,38 @@ export async function submitOrder(prevState: FormState, formData: FormData) {
             }
 
             // --- Link the newly created product to the order ---
-            const { error: orderItemError } = await supabase.from('order_items').insert({
+            const { data:newOrderItem, error: orderItemError } = await supabase.from('order_items').insert({
               order_id: orderId,
               product_type: productType,
               sofa_product_id: productType === 'sofa' ? newProductId : null,
               bed_product_id: productType === 'bed' ? newProductId : null,
               quantity: quantity || 1,
               due_date: dueDate,
-            });
+            })
+            .select("id")
+            .single();
+
             if (orderItemError) throw new Error(`[Item ${i+1}] Failed to link new ${productType} to order: ${orderItemError.message}`);
+
+            if (!newOrderItem)
+              throw new Error(
+                `[Item ${i + 1}] Failed to retrieve new order item ID.`
+              );
+            console.log(newOrderItem)
+
+            // --- NEW: Initialize QC Checklist for this new product order item ---
+            const { error: qcError } = await supabase.rpc(
+              "start_order_item_qc",
+              {
+                p_order_item_id: newOrderItem.id,
+              }
+            );
+            if (qcError)
+              throw new Error(
+                `[Item ${i + 1}] Failed to initialize QC checklist: ${
+                  qcError.message
+                }`
+              );
         }
     }
 
