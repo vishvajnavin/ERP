@@ -62,13 +62,13 @@ CREATE TABLE public.customer_details (
 );
 CREATE TABLE public.order_item_stage_status (
   order_item_id bigint NOT NULL,
-  stage_id bigint NOT NULL,
+  stage_id smallint NOT NULL,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   status USER-DEFINED NOT NULL DEFAULT 'pending'::stage_status_enum,
   CONSTRAINT order_item_stage_status_pkey PRIMARY KEY (order_item_id, stage_id),
-  CONSTRAINT order_item_stage_status_order_item_id_fkey FOREIGN KEY (order_item_id) REFERENCES public.order_items(id),
-  CONSTRAINT order_item_stage_status_stage_id_fkey FOREIGN KEY (stage_id) REFERENCES public.stages(stage_id)
+  CONSTRAINT order_item_stage_status_stage_id_fkey FOREIGN KEY (stage_id) REFERENCES public.stages(stage_id),
+  CONSTRAINT order_item_stage_status_order_item_id_fkey FOREIGN KEY (order_item_id) REFERENCES public.order_items(id)
 );
 CREATE TABLE public.order_items (
   id integer NOT NULL DEFAULT nextval('order_items_id_seq'::regclass),

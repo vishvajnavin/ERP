@@ -6,12 +6,25 @@ import { STAGE_CONFIG, PRIORITY_CONFIG } from "./data";
 import { icons } from "./icons";
 import getProductDetails from "@/actions/get-product-details";
 import ProductDetails from "./ProductDetails";
-import {
-  getQcChecklist,
-  QcChecklist,
-  CheckItem,
-} from "@/actions/get-qc-checklist";
-import { updateCheckStatus } from "@/actions/update-check-status";
+import Diagram from "./production-flow";
+import { getChecklistForStage } from "@/actions/get-checklist-for-stage";
+import { Checklist } from "./Checklist";
+import { Button } from "../ui/button";
+import { Node } from "@xyflow/react";
+
+type CheckItem = {
+  check_id: number;
+  name: string;
+  status: 'completed' | 'pending' | 'rejected';
+  notes?: string;
+  inspected_by?: string;
+  updated_at?: string;
+};
+
+type NodeData = {
+  label: string;
+  status: 'pending' | 'active' | 'completed';
+};
 
 interface OrderModalProps {
   order: Order;
@@ -29,60 +42,34 @@ const OrderModal: React.FC<OrderModalProps> = ({
   const [productDetails, setProductDetails] =
     useState<Record<string, unknown> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [showQcChecklist, setShowQcChecklist] = useState(false);
-  const [checklistData, setChecklistData] = useState<QcChecklist | null>(null);
-  const [isQcLoading, setIsQcLoading] = useState(false);
+  const [showDiagram, setShowDiagram] = useState(false);
+  const [view, setView] = useState<'details' | 'flow' | 'checklist'>('details');
+  const [checklistData, setChecklistData] = useState<CheckItem[]>([]);
+  const [selectedStage, setSelectedStage] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
+  const handleNodeClick = async (node: Node<NodeData>) => {
+    setIsLoading(true);
+    try {
+      const checklist = await getChecklistForStage(
+        Number(order.id),
+        parseInt(node.id, 10)
+      );
+      setChecklistData(checklist);
+      setSelectedStage({ id: node.id, name: node.data.label });
+      setView('checklist');
+    } catch (error) {
+      console.error('Failed to fetch checklist:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const allStages = Object.keys(STAGE_CONFIG) as Stage[];
   const activeStepIndex = allStages.indexOf(order.stage);
   const isFinalStage = activeStepIndex === allStages.length - 1;
-
-  const handleFetchQcChecklist = async () => {
-    setIsQcLoading(true);
-    const { data, error } = await getQcChecklist(parseInt(order.id, 10));
-    if (error) {
-      console.error(error);
-    } else {
-      setChecklistData(data);
-    }
-    setIsQcLoading(false);
-    setShowQcChecklist(true);
-  };
-
-  const handleUpdateCheck = async (
-    checkId: number,
-    newStatus: CheckItem["status"]
-  ) => {
-    // Optimistically update UI
-    if (checklistData) {
-      const updatedData = { ...checklistData };
-      let found = false;
-      for (const stageName in updatedData) {
-        const checkIndex = updatedData[stageName].findIndex(
-          (c) => c.check_id === checkId
-        );
-        if (checkIndex !== -1) {
-          updatedData[stageName][checkIndex].status = newStatus;
-          found = true;
-          break;
-        }
-      }
-      if (found) {
-        setChecklistData(updatedData);
-      }
-    }
-
-    // Call server action
-    await updateCheckStatus(parseInt(order.id, 10), checkId, newStatus);
-    // No need to re-fetch, revalidation will handle it if optimistic update fails
-  };
-
-  const statusOptions: CheckItem["status"][] = [
-    "pending",
-    "passed",
-    "failed",
-    "skipped",
-  ];
 
   return (
     <motion.div
@@ -114,85 +101,69 @@ const OrderModal: React.FC<OrderModalProps> = ({
 
         <div className="p-6 flex-grow overflow-y-auto">
           <AnimatePresence mode="wait">
-            {showQcChecklist ? (
-              // QC CHECKLIST VIEW
+            {view === 'flow' && (
               <motion.div
-                key="qc"
+                key="diagram"
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -50 }}
+                className="h-[60vh]"
               >
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-xl font-bold text-red-600">
-                    Active QC Checklists
+                    Production Flow
                   </h3>
                   <button
-                    onClick={() => setShowQcChecklist(false)}
-                    className="text-sm text-gray-600 hover:text-red-600 flex items-center gap-1"
+                    onClick={() => setView('details')}
+                    className="text-sm text-gray-600 hover:text-red-600 flex items-center gap-1 ml-auto"
                   >
-                    Back to Details
+                    &larr; Back to Details
                   </button>
                 </div>
-                <div className="space-y-6">
-                  {isQcLoading ? (
-                    <p className="text-center text-gray-500">Loading...</p>
-                  ) : checklistData &&
-                    Object.keys(checklistData).length > 0 ? (
-                    Object.entries(checklistData).map(([stageName, checks]) => (
-                      <div
-                        key={stageName}
-                        className="bg-gray-50 p-4 rounded-lg border"
-                      >
-                        <h4 className="font-bold text-lg mb-3 text-black">
-                          {stageName}
-                        </h4>
-                        <div className="space-y-2">
-                          {checks.map((item) => (
-                            <div
-                              key={item.check_id}
-                              className="flex items-center justify-between p-2 rounded-md hover:bg-gray-100"
-                            >
-                              <span className="text-sm text-gray-800">
-                                {item.name}
-                              </span>
-                              <div className="flex items-center gap-2">
-                                {statusOptions.map((status) => (
-                                  <label
-                                    key={status}
-                                    className="flex items-center cursor-pointer text-xs"
-                                  >
-                                    <input
-                                      type="radio"
-                                      name={`check-${item.check_id}`}
-                                      value={status}
-                                      checked={item.status === status}
-                                      onChange={() =>
-                                        handleUpdateCheck(
-                                          item.check_id,
-                                          status
-                                        )
-                                      }
-                                      className="h-4 w-4 mr-1"
-                                    />
-                                    {status.charAt(0).toUpperCase() +
-                                      status.slice(1)}
-                                  </label>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500 italic text-center py-4">
-                      No active QC checklists for this order.
-                    </p>
-                  )}
+                <div className="w-full h-full bg-white">
+                  <Diagram
+                    orderItemId={Number(order.id)}
+                    onNodeClick={handleNodeClick}
+                  />
                 </div>
               </motion.div>
-            ) : (
-              // ORDER DETAILS VIEW
+            )}
+
+            {view === 'checklist' && selectedStage && (
+              <motion.div
+                key="checklist"
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -50 }}
+                className="h-[60vh] flex flex-col"
+              >
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-bold">
+                    Checklist for {selectedStage.name}
+                  </h2>
+                  <div className="flex gap-2">
+                    <Button onClick={() => setView('flow')} variant="outline">
+                      &larr; Back to Flow
+                    </Button>
+                    <Button
+                      onClick={() => setView('details')}
+                      variant="outline"
+                    >
+                      &larr; Back to Details
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex-grow overflow-y-auto">
+                  <Checklist
+                    checklist={checklistData}
+                    onBack={() => setView('flow')}
+                    stageName={selectedStage.name}
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {view === 'details' && (
               <motion.div
                 key="details"
                 initial={{ opacity: 0, x: 50 }}
@@ -293,10 +264,10 @@ const OrderModal: React.FC<OrderModalProps> = ({
             </div>
             <div className="flex gap-2">
               <button
-                onClick={handleFetchQcChecklist}
+                onClick={() => setView('flow')}
                 className="px-4 py-2 rounded-lg text-sm font-medium text-red-600 bg-red-100 hover:bg-red-200 transition-colors"
               >
-                QC Checklist
+                View Flow
               </button>
               {!isFinalStage && (
                 <button
