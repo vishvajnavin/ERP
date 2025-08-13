@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Order, Stage, Priority } from "./types";
+import { Order, Stage, Priority, CheckItem } from "./types";
 import { STAGE_CONFIG, PRIORITY_CONFIG } from "./data";
 import { icons } from "./icons";
 import getProductDetails from "@/actions/get-product-details";
@@ -11,15 +11,6 @@ import { getChecklistForStage } from "@/actions/get-checklist-for-stage";
 import { Checklist } from "./Checklist";
 import { Button } from "../ui/button";
 import { Node } from "@xyflow/react";
-
-type CheckItem = {
-  check_id: number;
-  name: string;
-  status: 'completed' | 'pending' | 'rejected';
-  notes?: string;
-  inspected_by?: string;
-  updated_at?: string;
-};
 
 type NodeData = {
   label: string;
@@ -84,20 +75,22 @@ const OrderModal: React.FC<OrderModalProps> = ({
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl text-black border border-gray-200 flex flex-col max-h-[90vh]"
+        className={`bg-white rounded-2xl shadow-2xl w-full ${view === 'checklist' ? 'max-w-6xl' : 'max-w-4xl'} text-black border border-gray-200 flex flex-col max-h-[90vh] transition-all duration-300`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6 border-b border-gray-200 flex justify-between items-start">
-          <div>
-            <h2 className="text-2xl font-bold text-black">
-              {order.id} - <span className="text-red-600">{order.product}</span>
-            </h2>
-            <p className="text-sm text-gray-600">{order.customer}</p>
+        {view !== 'checklist' && (
+          <div className="p-6 border-b border-gray-200 flex justify-between items-start">
+            <div>
+              <h2 className="text-2xl font-bold text-black">
+                {order.id} - <span className="text-red-600">{order.product}</span>
+              </h2>
+              <p className="text-sm text-gray-600">{order.customer}</p>
+            </div>
+            <button onClick={onClose} className="text-gray-500 hover:text-black">
+              <icons.close />
+            </button>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-black">
-            <icons.close />
-          </button>
-        </div>
+        )}
 
         <div className="p-6 flex-grow overflow-y-auto">
           <AnimatePresence mode="wait">
@@ -132,31 +125,34 @@ const OrderModal: React.FC<OrderModalProps> = ({
             {view === 'checklist' && selectedStage && (
               <motion.div
                 key="checklist"
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -50 }}
-                className="h-[60vh] flex flex-col"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col h-full"
               >
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl font-bold">
-                    Checklist for {selectedStage.name}
-                  </h2>
-                  <div className="flex gap-2">
-                    <Button onClick={() => setView('flow')} variant="outline">
-                      &larr; Back to Flow
-                    </Button>
-                    <Button
-                      onClick={() => setView('details')}
-                      variant="outline"
-                    >
-                      &larr; Back to Details
-                    </Button>
+                <div className="p-6 border-b border-gray-200 bg-gray-50">
+                  <div className="flex justify-between items-center mb-4">
+                    <div>
+                      <h2 className="text-2xl font-bold text-black">
+                        {order.id} - <span className="text-red-600">{order.product}</span>
+                      </h2>
+                      <p className="text-sm text-gray-600">{order.customer}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={() => setView('flow')} variant="outline">
+                        &larr; Back to Flow
+                      </Button>
+                      <Button onClick={() => setView('details')} variant="outline">
+                        &larr; Back to Details
+                      </Button>
+                    </div>
                   </div>
+                   <h3 className="text-xl font-semibold text-gray-800">Checklist for {selectedStage.name}</h3>
                 </div>
-                <div className="flex-grow overflow-y-auto">
+                <div className="p-6 flex-grow overflow-y-auto">
                   <Checklist
                     checklist={checklistData}
-                    onBack={() => setView('flow')}
+                    orderItemId={Number(order.id)}
                     stageName={selectedStage.name}
                   />
                 </div>

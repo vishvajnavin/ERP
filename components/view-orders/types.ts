@@ -17,3 +17,15 @@ export interface Order {
   productId: number;
   productType: 'Sofa' | 'Bed';
 }
+
+// --- CHECKLIST TYPES ---
+export type CheckStatus = 'passed' | 'failed' | 'pending' | 'skipped';
+
+export type CheckItem = {
+  check_id: number;
+  name: string;
+  status: CheckStatus;
+  notes?: string;
+  inspected_by?: string;
+  updated_at?: string;
+};
