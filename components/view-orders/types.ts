@@ -25,7 +25,7 @@ export type CheckItem = {
   check_id: number;
   name: string;
   status: CheckStatus;
-  notes?: string;
+  failure_report?: string;
   inspected_by?: string;
   updated_at?: string;
 };

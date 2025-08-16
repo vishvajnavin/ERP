@@ -15,7 +15,7 @@ interface OrderDetailFromRPC {
 }
 
 export async function searchOrderItems(
-  query: string,
+  query: string | null = null, // Make query optional and default to null
   page: number = 1,
   limit: number = 10,
   activeFilters: {
@@ -30,7 +30,7 @@ export async function searchOrderItems(
 
   // Call the new, powerful database function with all necessary parameters
   const { data, error } = await supabase.rpc('search_and_paginate_orders', {
-    p_search_term: query,
+    p_search_term: query, // Pass query directly, which can now be null
     p_limit: limit,
     p_offset: offset,
     p_filters: activeFilters,

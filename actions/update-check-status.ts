@@ -7,13 +7,27 @@ import { CheckItem } from "./get-qc-checklist"; // Reuse the type
 export async function updateCheckStatus(
   orderItemId: number,
   checkId: number,
-  newStatus: CheckItem["status"]
+  newStatus: CheckItem["status"],
+  failure_report?: string
 ): Promise<{ success: boolean; error: string | null }> {
   const supabase = createClient();
 
+  const updateData: {
+    status: CheckItem["status"];
+    updated_at: string;
+    failure_report?: string;
+  } = {
+    status: newStatus,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (newStatus === "failed" && failure_report) {
+    updateData.failure_report = failure_report;
+  }
+
   const { error } = await supabase
     .from("product_checklist_progress")
-    .update({ status: newStatus, updated_at: new Date().toISOString() })
+    .update(updateData)
     .eq("order_item_id", orderItemId)
     .eq("check_id", checkId);
 

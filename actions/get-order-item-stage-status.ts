@@ -3,27 +3,21 @@
 import { createClient } from '@/utils/supabase/server'
 
 export async function getOrderItemStageStatus(orderItemId: number) {
-  const supabase = createClient()
+  const supabase = createClient();
 
-  const { data, error } = await supabase
-    .from('order_item_stage_status')
-    .select(
-      `
-      status,
-      stages (
-        name
-      )
-    `,
-    )
-    .eq('order_item_id', orderItemId)
+  // Call the optimized RPC function
+  const { data, error } = await supabase.rpc(
+    'get_order_item_stage_status_with_delivery_check',
+    {
+      p_order_item_id: orderItemId,
+    }
+  );
 
   if (error) {
-    console.error('Error fetching order item stage status:', error)
-    return []
+    console.error('Error fetching order item stage status:', error);
+    return [];
   }
 
-  return data.map((item: any) => ({
-    stage: item.stages.name,
-    status: item.status,
-  }))
+  // The RPC function returns the data in the desired format
+  return data;
 }

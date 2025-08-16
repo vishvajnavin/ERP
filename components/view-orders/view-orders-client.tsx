@@ -7,7 +7,6 @@ import Header from './Header';
 import OrderTable from './OrderTable';
 import KanbanBoard from './KanbanBoard';
 import OrderModal from './OrderModal';
-import { getOrderItems } from '@/actions/get-order-items';
 import { searchOrderItems } from '@/actions/search-order-items';
 import { Button } from '../ui/button';
 
@@ -35,13 +34,8 @@ const ViewOrdersClient: React.FC<ViewOrdersClientProps> = ({ initialOrders, tota
   useEffect(() => {
     const fetchOrders = async () => {
       setLoading(true);
-      let result;
-      if (search) {
-        result = await searchOrderItems(search, currentPage, itemsPerPage, activeFilters, sortConfig);
-      } else {
-        // When not searching, we don't need to pass filters and sorting
-        result = await getOrderItems(currentPage, itemsPerPage);
-      }
+      // Always use searchOrderItems, passing null for query if no search term is provided
+      const result = await searchOrderItems(search || null, currentPage, itemsPerPage, activeFilters, sortConfig);
       setOrders(result.orders);
       setTotalPages(Math.ceil(result.totalCount / itemsPerPage));
       setLoading(false);

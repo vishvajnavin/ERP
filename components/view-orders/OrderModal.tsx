@@ -113,7 +113,7 @@ const OrderModal: React.FC<OrderModalProps> = ({
                     &larr; Back to Details
                   </button>
                 </div>
-                <div className="w-full h-full bg-white">
+                <div className="w-full h-full bg-white relative overflow-hidden">
                   <Diagram
                     orderItemId={Number(order.id)}
                     onNodeClick={handleNodeClick}
@@ -130,7 +130,12 @@ const OrderModal: React.FC<OrderModalProps> = ({
                 exit={{ opacity: 0 }}
                 className="flex flex-col h-full"
               >
-                <div className="p-6 border-b border-gray-200 bg-gray-50">
+                <div className="p-6 border-b border-gray-200 bg-gray-50 rounded-2xl">
+                  <div className="flex justify-end">
+                    <button onClick={onClose} className="text-gray-500 hover:text-black">
+                      <icons.close />
+                    </button>
+                  </div>
                   <div className="flex justify-between items-center mb-4">
                     <div>
                       <h2 className="text-2xl font-bold text-black">
@@ -138,7 +143,7 @@ const OrderModal: React.FC<OrderModalProps> = ({
                       </h2>
                       <p className="text-sm text-gray-600">{order.customer}</p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2">
                       <Button onClick={() => setView('flow')} variant="outline">
                         &larr; Back to Flow
                       </Button>
@@ -147,13 +152,15 @@ const OrderModal: React.FC<OrderModalProps> = ({
                       </Button>
                     </div>
                   </div>
-                   <h3 className="text-xl font-semibold text-gray-800">Checklist for {selectedStage.name}</h3>
+                  <h3 className="text-xl font-semibold text-gray-800">Checklist for {selectedStage.name}</h3>
                 </div>
                 <div className="p-6 flex-grow overflow-y-auto">
                   <Checklist
                     checklist={checklistData}
                     orderItemId={Number(order.id)}
                     stageName={selectedStage.name}
+                    stageId={parseInt(selectedStage.id, 10)}
+                    onProceed={() => setView('flow')}
                   />
                 </div>
               </motion.div>
@@ -265,14 +272,6 @@ const OrderModal: React.FC<OrderModalProps> = ({
               >
                 View Flow
               </button>
-              {!isFinalStage && (
-                <button
-                  onClick={() => onProceed(order.id)}
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-                >
-                  Proceed
-                </button>
-              )}
             </div>
           </div>
         </div>

@@ -19,7 +19,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
     { name: 'Products', icon: Package, href: "/products" },
     { name: 'Place Order', icon: ShoppingCart, href: "/place-order" },
     { name: 'View Orders', icon: ClipboardList, href: "/view-orders" },
-    { name: 'Order History', icon: History, href: "" },
+    { name: 'Order History', icon: History, href: "/order-history" },
   ];
 
   return (

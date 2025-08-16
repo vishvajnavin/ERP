@@ -13,7 +13,7 @@ export async function getChecklistForStage(orderItemId: number, stageId: number)
       sequence,
       product_checklist_progress (
         status,
-        notes,
+        failure_report,
         inspected_by,
         updated_at
       )
@@ -27,8 +27,13 @@ export async function getChecklistForStage(orderItemId: number, stageId: number)
     return [];
   }
 
-  return data.map(item => ({
-    ...item,
-    status: item.product_checklist_progress[0]?.status || 'pending',
-  }));
+  return data.map(item => {
+    const progress = item.product_checklist_progress[0];
+    return {
+      ...item,
+      status: progress?.status || 'pending',
+      failure_report: progress?.failure_report,
+      updated_at: progress?.updated_at,
+    };
+  });
 }

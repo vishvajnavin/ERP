@@ -99,7 +99,7 @@ CREATE TABLE public.product_checklist_progress (
   order_item_id integer NOT NULL,
   check_id integer NOT NULL,
   status USER-DEFINED NOT NULL DEFAULT 'pending'::check_status,
-  notes text,
+  failure_report text,
   inspected_by uuid,
   updated_at timestamp with time zone,
   CONSTRAINT product_checklist_progress_pkey PRIMARY KEY (order_item_id, check_id),
