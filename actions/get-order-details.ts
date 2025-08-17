@@ -59,7 +59,6 @@ export async function getOrderDetails(orderId: number): Promise<OrderDetails | n
     dueDate: new Date(item.due_date).toLocaleDateString(),
     deliveryDate: item.delivery_date ? new Date(item.delivery_date).toLocaleDateString() : null,
     status: item.delivery_date ? "Delivered" : item.production_stage,
-    total: lineTotal,
     productName:
       item.product_type === "sofa"
         ? (item.sofa_products as any).model_name

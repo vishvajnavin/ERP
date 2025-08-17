@@ -20,14 +20,12 @@ type NodeData = {
 interface OrderModalProps {
   order: Order;
   onClose: () => void;
-  onProceed: (orderId: string) => void;
   onPriorityChange: (orderId: string, priority: Priority) => void;
 }
 
 const OrderModal: React.FC<OrderModalProps> = ({
   order,
   onClose,
-  onProceed,
   onPriorityChange,
 }) => {
   const [productDetails, setProductDetails] =
@@ -58,9 +56,7 @@ const OrderModal: React.FC<OrderModalProps> = ({
     }
   };
 
-  const allStages = Object.keys(STAGE_CONFIG) as Stage[];
-  const activeStepIndex = allStages.indexOf(order.stage);
-  const isFinalStage = activeStepIndex === allStages.length - 1;
+  const allStages = Object.keys(STAGE_CONFIG) as (Stage | 'delivered')[];
 
   return (
     <motion.div

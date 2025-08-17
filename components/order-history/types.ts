@@ -5,7 +5,6 @@ export type OrderHistory = {
   dueDate: string;
   deliveryDate: string | null;
   status: string;
-  total: number;
   productName: string;
   productType: 'Sofa' | 'Bed';
 };

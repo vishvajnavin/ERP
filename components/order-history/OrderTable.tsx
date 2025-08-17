@@ -58,6 +58,7 @@ export default function OrderTable({ orders, sort, setSort, onViewOrder }: Order
           <thead className="bg-gray-50 sticky top-0 z-10">
             <tr>
               <Th label="Order ID" />
+              <Th label="Product Name" />
               <Th label="Customer" />
               <ThSort
                 label="Order Date"
@@ -77,12 +78,6 @@ export default function OrderTable({ orders, sort, setSort, onViewOrder }: Order
                 dir={sort.dir}
                 onClick={() => handleSort("deliveryDate")}
               />
-              <ThSort
-                label="Total"
-                active={sort.by === "total"}
-                dir={sort.dir}
-                onClick={() => handleSort("total")}
-              />
               <Th label="Status" />
               <th className="p-3 text-right">Actions</th>
             </tr>
@@ -91,19 +86,24 @@ export default function OrderTable({ orders, sort, setSort, onViewOrder }: Order
             {orders.map((r) => (
               <tr key={r.id} className="hover:bg-slate-50">
                 <td className="p-3 font-medium">{r.id}</td>
+                <td className="p-3">{r.productName}</td>
                 <td className="p-3">{r.customerName}</td>
                 <td className="p-3">{r.orderDate}</td>
                 <td className="p-3">{r.dueDate}</td>
                 <td className="p-3">{r.deliveryDate ?? 'Not Delivered'}</td>
-                <td className="p-3 text-right font-mono">{r.total}</td>
                 <td className="p-3">
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-xs ${
-                      r.status === 'Delivered' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
-                    {r.status}
-                  </span>
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {r.status.split(',').map(stage => (
+                      <span
+                        key={stage}
+                        className={`px-2 py-0.5 rounded-full text-xs ${
+                          stage.trim() === 'Delivered' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {stage.trim()}
+                      </span>
+                    ))}
+                  </div>
                 </td>
                 <td className="p-3 text-right">
                   <button

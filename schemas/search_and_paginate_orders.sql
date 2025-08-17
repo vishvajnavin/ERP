@@ -8,7 +8,7 @@ CREATE OR REPLACE FUNCTION search_and_paginate_orders(
 RETURNS TABLE (
     id int,
     due_date date,
-    production_stage production_stage_enum,
+    production_stage text,
     priority int,
     customer_name text,
     product_model_name text,
@@ -36,7 +36,6 @@ BEGIN
       SELECT
         oi.id,
         oi.due_date,
-        oi.production_stage,
         oi.priority,
         cd.customer_name,
         COALESCE(sp.model_name, bp.model_name) AS product_model_name
@@ -59,32 +58,56 @@ BEGIN
             bp.model_name ILIKE ('%' || p_search_term || '%')
           )
         )
-        AND (array_length(stage_keys, 1) IS NULL OR oi.production_stage::TEXT = ANY(stage_keys))
+        AND (
+            array_length(stage_keys, 1) IS NULL OR
+            EXISTS (
+                SELECT 1
+                FROM public.order_item_stage_status oiss
+                JOIN public.stages s ON oiss.stage_id = s.stage_id
+                WHERE oiss.order_item_id = oi.id
+                  AND oiss.status = 'active'
+                  AND s.name = ANY(stage_keys)
+            )
+        )
         AND (array_length(priority_keys, 1) IS NULL OR oi.priority::TEXT = ANY(priority_keys))
         AND (is_overdue IS NOT TRUE OR oi.due_date < CURRENT_DATE)
+    ),
+    paginated_orders AS (
+        SELECT *
+        FROM filtered_orders
+        ORDER BY
+          CASE
+            WHEN sort_key = 'priority' AND sort_direction = 'asc' THEN filtered_orders.priority END ASC,
+          CASE
+            WHEN sort_key = 'priority' AND sort_direction = 'desc' THEN filtered_orders.priority END DESC,
+          CASE
+            WHEN sort_key = 'dueDate' AND sort_direction = 'asc' THEN filtered_orders.due_date END ASC,
+          CASE
+            WHEN sort_key = 'dueDate' AND sort_direction = 'desc' THEN filtered_orders.due_date END DESC,
+          CASE
+            WHEN sort_key = 'id' AND sort_direction = 'asc' THEN filtered_orders.id END ASC,
+          CASE
+            WHEN sort_key = 'id' AND sort_direction = 'desc' THEN filtered_orders.id END DESC
+        LIMIT p_limit
+        OFFSET p_offset
     )
     SELECT
-      *,
+      po.id,
+      po.due_date,
+      COALESCE(
+          (SELECT string_agg(s.name, ', ')
+           FROM public.order_item_stage_status oiss
+           JOIN public.stages s ON oiss.stage_id = s.stage_id
+           WHERE oiss.order_item_id = po.id AND oiss.status = 'active'
+          ),
+          'delivered'
+      ) AS production_stage,
+      po.priority,
+      po.customer_name,
+      po.product_model_name,
       (SELECT COUNT(*) FROM filtered_orders) AS total_count
     FROM
-      filtered_orders
-    ORDER BY
-      CASE
-        WHEN sort_key = 'priority' AND sort_direction = 'asc' THEN filtered_orders.priority END ASC,
-      CASE
-        WHEN sort_key = 'priority' AND sort_direction = 'desc' THEN filtered_orders.priority END DESC,
-      CASE
-        WHEN sort_key = 'dueDate' AND sort_direction = 'asc' THEN filtered_orders.due_date END ASC,
-      CASE
-        WHEN sort_key = 'dueDate' AND sort_direction = 'desc' THEN filtered_orders.due_date END DESC,
-      CASE
-        WHEN sort_key = 'id' AND sort_direction = 'asc' THEN filtered_orders.id END ASC,
-      CASE
-        WHEN sort_key = 'id' AND sort_direction = 'desc' THEN filtered_orders.id END DESC
-    LIMIT
-      p_limit
-    OFFSET
-      p_offset;
+      paginated_orders po;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

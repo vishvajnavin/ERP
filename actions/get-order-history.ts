@@ -3,50 +3,44 @@
 import { createClient } from "@/utils/supabase/server";
 import { OrderHistory } from "@/components/order-history/types";
 
-export async function getOrderHistory(): Promise<OrderHistory[]> {
+export async function getOrderHistory(
+  filters: { q: string; status: string; date_from?: string; date_to?: string },
+  sort: { by: string; dir: string },
+  page: number,
+  pageSize: number
+): Promise<{ orders: OrderHistory[]; totalCount: number }> {
   const supabase = createClient();
+  const offset = (page - 1) * pageSize;
 
-  const { data, error } = await supabase
-    .from("order_items")
-    .select(
-      `
-      id,
-      due_date,
-      delivery_date,
-      production_stage,
-      product_type,
-      sofa_products (model_name),
-      bed_products (model_name),
-      orders (
-        order_date,
-        customer_details (
-          customer_name,
-          address
-        )
-      )
-    `
-    )
-    .order("due_date", { ascending: false });
+  const { data, error } = await supabase.rpc("search_and_paginate_order_history", {
+    p_search_term: filters.q,
+    p_limit: pageSize,
+    p_offset: offset,
+    p_filters: { status: filters.status, date_from: filters.date_from, date_to: filters.date_to },
+    p_sort: sort,
+  });
 
   if (error) {
     console.error("Error fetching order history:", error);
-    return [];
+    return { orders: [], totalCount: 0 };
   }
+  
+  if (!data || data.length === 0) {
+    return { orders: [], totalCount: 0 };
+  }
+
+  const totalCount = data[0]?.total_count || 0;
 
   const orders: OrderHistory[] = data.map((item: any) => ({
     id: item.id,
-    customerName: item.orders.customer_details.customer_name,
-    orderDate: new Date(item.orders.order_date).toLocaleDateString(),
+    customerName: item.customer_name,
+    orderDate: new Date(item.order_date).toLocaleDateString(),
     dueDate: new Date(item.due_date).toLocaleDateString(),
     deliveryDate: item.delivery_date ? new Date(item.delivery_date).toLocaleDateString() : null,
     status: item.delivery_date ? "Delivered" : item.production_stage,
-    total: 0, // Placeholder, as price is not in the schema
-    productName:
-      item.product_type === "sofa"
-        ? item.sofa_products.model_name
-        : item.bed_products.model_name,
+    productName: item.model_name,
     productType: item.product_type === "sofa" ? "Sofa" : "Bed",
   }));
 
-  return orders;
+  return { orders, totalCount };
 }

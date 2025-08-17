@@ -58,17 +58,6 @@ const ViewOrdersClient: React.FC<ViewOrdersClientProps> = ({ initialOrders, tota
     setSelectedOrder(prev => (prev && prev.id === orderId ? { ...prev, priority } : prev));
   };
 
-  const handleProceedToNextStage = (orderId: string) => {
-    const allStages = Object.keys(STAGE_CONFIG) as Stage[];
-    const order = orders.find(o => o.id === orderId);
-    if (!order) return;
-    const currentStageIndex = allStages.indexOf(order.stage);
-    if (currentStageIndex < allStages.length - 1) {
-      const nextStage = allStages[currentStageIndex + 1];
-      setOrders(prev => prev.map(o => (o.id === orderId ? { ...o, stage: nextStage } : o)));
-      setSelectedOrder(null);
-    }
-  };
 
   return (
     <div className="bg-white min-h-screen text-black font-sans antialiased">
@@ -120,7 +109,6 @@ const ViewOrdersClient: React.FC<ViewOrdersClientProps> = ({ initialOrders, tota
           <OrderModal
             order={selectedOrder}
             onClose={() => setSelectedOrder(null)}
-            onProceed={handleProceedToNextStage}
             onPriorityChange={handlePriorityChange}
           />
         )}

@@ -22,7 +22,7 @@ BEGIN
         RETURN QUERY
         SELECT s.name::TEXT, oiss.status::TEXT
         FROM public.order_item_stage_status oiss
-        JOIN public.stages s ON oiss.stage_id = s.id
+        JOIN public.stages s ON oiss.stage_id = s.stage_id
         WHERE oiss.order_item_id = p_order_item_id;
     END IF;
 END;

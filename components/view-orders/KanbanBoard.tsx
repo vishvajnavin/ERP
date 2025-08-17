@@ -19,7 +19,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onOrderSelect }) => {
       animate={{ opacity: 1 }}
     >
       {allStages.map(stageKey => {
-        const stageOrders = orders.filter(o => o.stage === stageKey);
+        const stageOrders = orders.filter(o => o.stage.includes(stageKey));
         return (
           <div key={stageKey} className="bg-gray-50 rounded-xl flex flex-col border border-gray-200/50">
             <div className="p-4 border-b border-gray-200/50">

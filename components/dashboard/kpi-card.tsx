@@ -6,7 +6,7 @@ import { ArrowUpRight, LucideIcon } from 'lucide-react';
 export interface KpiCardProps {
   title: string;
   value: string;
-  change: string;
+  change?: string;
   Icon: LucideIcon;
   color: string;
   bgColor: string;
@@ -24,13 +24,15 @@ const KpiCard: React.FC<KpiCardProps> = ({ title, value, change, Icon, color, bg
         <Icon className={`h-6 w-6 ${color}`} />
       </div>
     </div>
-    <div className="flex items-center mt-4 text-sm">
-      <span className={`flex items-center ${change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
-        <ArrowUpRight size={16} className={!change.startsWith('+') ? 'rotate-90' : ''} />
-        {change}
-      </span>
-      <span className="text-gray-500 ml-2">vs. last period</span>
-    </div>
+    {change && (
+      <div className="flex items-center mt-4 text-sm">
+        <span className={`flex items-center ${change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
+          <ArrowUpRight size={16} className={!change.startsWith('+') ? 'rotate-90' : ''} />
+          {change}
+        </span>
+        <span className="text-gray-500 ml-2">vs. last period</span>
+      </div>
+    )}
   </div>
 );
 

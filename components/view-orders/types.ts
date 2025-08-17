@@ -12,7 +12,7 @@ export interface Order {
   customer: string;
   product: string;
   dueDate: string;
-  stage: Stage;
+  stage: string;
   priority: Priority;
   productId: number;
   productType: 'Sofa' | 'Bed';

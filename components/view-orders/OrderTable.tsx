@@ -45,12 +45,39 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, onOrderSelect }) => (
                 {new Date(order.dueDate).toLocaleDateString()}
               </td>
               <td className="px-6 py-5 whitespace-nowrap">
-                <span
-                  className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full text-white"
-                  style={{ backgroundColor: STAGE_CONFIG[order.stage].color }}
-                >
-                  {STAGE_CONFIG[order.stage].label}
-                </span>
+                <div className="flex items-center gap-2">
+                  {order.stage.split(',').map(stage => {
+                    const stageKey = stage.trim();
+                    
+                    // Type guard to check if stageKey is a valid key of STAGE_CONFIG
+                    const isValidStage = (key: string): key is keyof typeof STAGE_CONFIG => {
+                      return key in STAGE_CONFIG;
+                    };
+
+                    if (isValidStage(stageKey)) {
+                      const config = STAGE_CONFIG[stageKey];
+                      return (
+                        <span
+                          key={stageKey}
+                          className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full text-white"
+                          style={{ backgroundColor: config.color }}
+                        >
+                          {config.label}
+                        </span>
+                      );
+                    }
+
+                    // Fallback for unknown stages
+                    return (
+                      <span
+                        key={stageKey}
+                        className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full text-white bg-gray-400"
+                      >
+                        {stageKey}
+                      </span>
+                    );
+                  })}
+                </div>
               </td>
             </tr>
           );
