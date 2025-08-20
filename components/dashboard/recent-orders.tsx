@@ -7,7 +7,7 @@ export interface RecentOrderData {
   id: number;
   customer_name: string;
   product_name: string;
-  production_stage: string;
+  active_stages: string[]; // Changed from production_stage to active_stages (array of strings)
   due_date: string;
 }
 
@@ -17,6 +17,16 @@ interface RecentOrdersProps {
 
 // Recent Orders Component
 const RecentOrders: React.FC<RecentOrdersProps> = ({ data }) => {
+  // Handle cases where data might be null or undefined
+  if (!data) {
+    return (
+      <div className="bg-white p-6 rounded-xl shadow-md col-span-1 lg:col-span-3">
+        <h3 className="text-xl font-bold text-gray-900 mb-4">Recent Orders</h3>
+        <p className="text-gray-500">No recent orders to display.</p>
+      </div>
+    );
+  }
+
   const statusColors: Record<string, string> = {
     carpentry: 'bg-yellow-100 text-yellow-800',
     webbing: 'bg-blue-100 text-blue-800',
@@ -48,9 +58,13 @@ const RecentOrders: React.FC<RecentOrdersProps> = ({ data }) => {
                 <td className="py-3 px-4 text-gray-600">{order.product_name}</td>
                 <td className="py-3 px-4 text-gray-800 font-medium">{format(new Date(order.due_date), 'MMM dd, yyyy')}</td>
                 <td className="py-3 pl-4">
-                  <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${statusColors[order.production_stage] ?? 'bg-gray-100 text-gray-800'}`}>
-                    {order.production_stage}
-                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {(order.active_stages || []).map((stage) => (
+                      <span key={stage} className={`px-2.5 py-1 text-xs font-semibold rounded-full ${statusColors[stage] ?? 'bg-gray-100 text-gray-800'}`}>
+                        {stage}
+                      </span>
+                    ))}
+                  </div>
                 </td>
               </tr>
             ))}

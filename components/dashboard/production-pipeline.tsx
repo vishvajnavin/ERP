@@ -6,7 +6,7 @@ import { Stage } from '@/components/view-orders/types';
 // --- Type Definitions ---
 
 interface ProductionPipelineProps {
-  data: Partial<Record<Stage, number>>;
+  data: Partial<Record<string, number>>;
 }
 
 const STAGE_ICONS: Record<Stage, LucideIcon> = {
@@ -18,16 +18,25 @@ const STAGE_ICONS: Record<Stage, LucideIcon> = {
   final_qc: CheckCircle,
 };
 
+// Create a reverse mapping from label to Stage key
+const stageLabelToKey: Record<string, Stage> = Object.entries(STAGE_CONFIG).reduce((acc, [key, value]) => {
+  acc[value.label] = key as Stage;
+  return acc;
+}, {} as Record<string, Stage>);
+
 // Production Pipeline Component
 const ProductionPipeline: React.FC<ProductionPipelineProps> = ({ data }) => {
-  const pipelineData = Object.entries(data).map(([stage, count]) => ({
-    stage: STAGE_CONFIG[stage as Stage].label,
-    count,
-    Icon: STAGE_ICONS[stage as Stage],
-    color: STAGE_CONFIG[stage as Stage].color,
-  }));
+  const pipelineData = Object.entries(data).map(([stageLabel, count]) => {
+    const stageKey = stageLabelToKey[stageLabel];
+    return {
+      stage: stageLabel,
+      count,
+      Icon: STAGE_ICONS[stageKey],
+      color: STAGE_CONFIG[stageKey]?.color, // Use optional chaining in case stageKey is not found
+    };
+  });
   
-  const totalInPipeline = pipelineData.reduce((sum, item) => sum + item.count, 0);
+  const totalInPipeline = pipelineData.reduce((sum, item) => sum + (item.count || 0), 0);
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-md h-full">
@@ -36,7 +45,7 @@ const ProductionPipeline: React.FC<ProductionPipelineProps> = ({ data }) => {
         {pipelineData.map((item) => (
           <div key={item.stage} className="flex items-center">
             <div className="flex items-center justify-center h-10 w-10 rounded-full bg-gray-100 mr-4">
-              <item.Icon className="h-5 w-5 text-gray-600" />
+              {item.Icon && <item.Icon className="h-5 w-5 text-gray-600" />}
             </div>
             <div className="flex-grow">
               <div className="flex justify-between items-center mb-1">
@@ -44,7 +53,7 @@ const ProductionPipeline: React.FC<ProductionPipelineProps> = ({ data }) => {
                 <p className="text-sm font-bold text-gray-800">{item.count} units</p>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div className="bg-blue-500" style={{ width: `${(item.count / totalInPipeline) * 100}%`, height: '100%', borderRadius: '9999px', backgroundColor: item.color }}></div>
+                <div className="bg-blue-500" style={{ width: `${((item.count || 0) / totalInPipeline) * 100}%`, height: '100%', borderRadius: '9999px', backgroundColor: item.color }}></div>
               </div>
             </div>
           </div>

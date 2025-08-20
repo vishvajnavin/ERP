@@ -17,13 +17,15 @@ BEGIN
     SELECT COUNT(*) INTO overdue_orders FROM public.order_items WHERE due_date < NOW() AND delivery_date IS NULL;
 
     -- Production Pipeline
-    SELECT jsonb_object_agg(stage, count)
+    SELECT jsonb_object_agg(name, count)
     INTO production_pipeline
     FROM (
-        SELECT production_stage AS stage, COUNT(*) AS count
-        FROM public.order_items
-        WHERE delivery_date IS NULL
-        GROUP BY production_stage
+        SELECT s.name, COUNT(DISTINCT oi.id) AS count
+        FROM public.order_items oi
+        JOIN public.order_item_stage_status oiss ON oi.id = oiss.order_item_id
+        JOIN public.stages s ON oiss.stage_id = s.stage_id
+        WHERE oi.delivery_date IS NULL AND oiss.status = 'active'
+        GROUP BY s.name
     ) AS pipeline_counts;
 
     -- Production Chart (Orders started in the last 30 days)
@@ -46,7 +48,15 @@ BEGIN
             oi.id,
             cd.customer_name,
             COALESCE(sp.model_name, bp.model_name) AS product_name,
-            oi.production_stage,
+            COALESCE(
+                (
+                    SELECT jsonb_agg(s.name)
+                    FROM public.order_item_stage_status oiss_sub
+                    JOIN public.stages s ON oiss_sub.stage_id = s.stage_id
+                    WHERE oiss_sub.order_item_id = oi.id AND oiss_sub.status = 'active'
+                ),
+                '[]'::jsonb
+            ) AS active_stages,
             oi.due_date
         FROM public.order_items oi
         JOIN public.orders o ON oi.order_id = o.id
