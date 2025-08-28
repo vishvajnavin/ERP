@@ -1,3 +1,12 @@
+export interface CustomerSearchResult {
+  id: string;
+  name: string;
+  company?: string;
+  address: string;
+  avatar?: string;
+  status: 'VIP' | 'Active' | 'New';
+}
+
 export interface Customer {
   id: string;
   name: string;
@@ -7,8 +16,8 @@ export interface Customer {
   address: string;
   avatar: string;
   status: 'VIP' | 'Active' | 'New';
-  dateAdded: string;
-  totalOrders: number;
-  totalSpend: number;
-  lastOrder: string;
+  dateadded: string;
+  totalorders: number;
+  totalspend: number;
+  lastorder: string;
 }

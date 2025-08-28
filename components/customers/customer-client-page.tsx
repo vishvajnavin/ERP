@@ -1,20 +1,21 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Search, ChevronDown, Filter } from 'lucide-react';
-import { Customer } from '@/types/customers';
+import { CustomerSearchResult } from '@/types/customers';
 import CustomerCard from '@/components/customers/customer-card';
 import CustomerDetailPanel from '@/components/customers/customer-detail-panel';
 import AddCustomerModal from '@/components/customers/add-customer-modal';
 import FilterPopover from '@/components/customers/filter-popover';
+import { searchCustomers } from '@/actions/filter-customers'; // Import the server action
 
 interface CustomerClientPageProps {
-    initialCustomers: Customer[];
+    initialCustomers: CustomerSearchResult[];
     initialFilters: {
         searchTerm: string;
         status: string;
-        address: string; // Changed from location
+        address: string;
     };
 }
 
@@ -23,34 +24,65 @@ const CustomerClientPage: React.FC<CustomerClientPageProps> = ({ initialCustomer
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    const [customers, setCustomers] = useState(initialCustomers);
+    const [customerSearchResults, setCustomerSearchResults] = useState<CustomerSearchResult[]>(initialCustomers);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+    const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
     const [isFilterPopoverOpen, setIsFilterPopoverOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
-    // State for filters is now derived from the URL search params.
-    const searchTerm = initialFilters.searchTerm;
-    const statusFilter = initialFilters.status;
-    const advancedFilters = {
-        address: initialFilters.address, // Changed from location
-        minSpend: '', // Not implemented on backend
-        maxSpend: '', // Not implemented on backend
-    };
+    const currentSearchTerm = initialFilters.searchTerm;
+    const currentStatusFilter = initialFilters.status;
+    const currentAddressFilter = initialFilters.address;
 
     const filterPopoverRef = useRef<HTMLDivElement>(null);
 
-    // Update the URL with new filter values.
-    const handleFilterChange = (newFilters: Partial<typeof initialFilters & typeof advancedFilters>) => {
+
+    const fetchCustomers = useCallback(async (filters: { searchTerm?: string; status?: string; address?: string }) => {
+        setIsLoading(true);
+        const fetchedCustomers = await searchCustomers(filters);
+        setCustomerSearchResults(fetchedCustomers);
+        setIsLoading(false);
+    }, []);
+
+    // Update the URL with new filter values and trigger a new search.
+    const handleFilterChange = useCallback((newFilters: Partial<{ searchTerm: string; status: string; address: string }>) => {
         const params = new URLSearchParams(searchParams.toString());
-        Object.entries(newFilters).forEach(([key, value]) => {
-            if (value) {
-                params.set(key, value);
+        let updatedSearchTerm = currentSearchTerm;
+        let updatedStatus = currentStatusFilter;
+        let updatedAddress = currentAddressFilter;
+
+        if (newFilters.searchTerm !== undefined) {
+            updatedSearchTerm = newFilters.searchTerm;
+            if (newFilters.searchTerm) {
+                params.set('searchTerm', newFilters.searchTerm);
             } else {
-                params.delete(key);
+                params.delete('searchTerm');
             }
+        }
+        if (newFilters.status !== undefined) {
+            updatedStatus = newFilters.status;
+            if (newFilters.status && newFilters.status !== 'All') {
+                params.set('status', newFilters.status);
+            } else {
+                params.delete('status');
+            }
+        }
+        if (newFilters.address !== undefined) {
+            updatedAddress = newFilters.address;
+            if (newFilters.address) {
+                params.set('address', newFilters.address);
+            } else {
+                params.delete('address');
+            }
+        }
+
+        // Removed router.push to stop changing the URL pathname during search
+        fetchCustomers({
+            searchTerm: updatedSearchTerm,
+            status: updatedStatus,
+            address: updatedAddress,
         });
-        router.push(`${pathname}?${params.toString()}`);
-    };
+    }, [fetchCustomers, currentSearchTerm, currentStatusFilter, currentAddressFilter]);
     
     // Effect to close popover on outside click.
     useEffect(() => {
@@ -64,11 +96,12 @@ const CustomerClientPage: React.FC<CustomerClientPageProps> = ({ initialCustomer
     }, [filterPopoverRef]);
     
     // When the initialCustomers prop changes (due to navigation), update the state.
+    // This useEffect is now less critical as filters will trigger fetchCustomers directly.
     useEffect(() => {
-        setCustomers(initialCustomers);
+        setCustomerSearchResults(initialCustomers);
     }, [initialCustomers]);
 
-    const activeFilterCount = Object.values(advancedFilters).filter(Boolean).length;
+    const activeFilterCount = [currentSearchTerm, currentStatusFilter, currentAddressFilter].filter(Boolean).length;
 
     return (
         <div className="p-4 sm:p-6 lg:p-8">
@@ -95,14 +128,14 @@ const CustomerClientPage: React.FC<CustomerClientPageProps> = ({ initialCustomer
                         <input
                             type="text"
                             placeholder="Search customers..."
-                            defaultValue={searchTerm}
+                            defaultValue={currentSearchTerm}
                             onChange={(e) => handleFilterChange({ searchTerm: e.target.value })}
                             className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg"
                         />
                     </div>
                     <div className="relative">
                         <select
-                            value={statusFilter}
+                            value={currentStatusFilter}
                             onChange={(e) => handleFilterChange({ status: e.target.value })}
                             className="w-full sm:w-auto appearance-none bg-white pl-4 pr-10 py-3 border border-gray-300 rounded-lg"
                         >
@@ -126,8 +159,8 @@ const CustomerClientPage: React.FC<CustomerClientPageProps> = ({ initialCustomer
                         </button>
                         {isFilterPopoverOpen && (
                             <FilterPopover
-                                initialFilters={advancedFilters}
-                                onApply={(filters) => handleFilterChange(filters)}
+                                initialFilters={{ address: currentAddressFilter, minSpend: '', maxSpend: '' }}
+                                onApply={(filters) => handleFilterChange({ address: filters.address })}
                                 onClose={() => setIsFilterPopoverOpen(false)}
                             />
                         )}
@@ -136,22 +169,28 @@ const CustomerClientPage: React.FC<CustomerClientPageProps> = ({ initialCustomer
 
                 {/* --- Main Content Area --- */}
                 <div className="flex gap-6">
-                    <div className={`transition-all duration-500 ease-in-out ${selectedCustomer ? 'w-full lg:w-2/3' : 'w-full'}`}>
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {customers.map(customer => (
-                                <CustomerCard key={customer.id} customer={customer} onSelect={() => setSelectedCustomer(customer)} />
-                            ))}
-                        </div>
-                        {customers.length === 0 && (
+                    <div className={`transition-all duration-500 ease-in-out ${selectedCustomerId ? 'w-full lg:w-2/3' : 'w-full'}`}>
+                        {isLoading ? (
+                            <div className="text-center py-16 bg-white rounded-lg shadow-sm">
+                                <p className="text-gray-500 font-semibold">Loading customers...</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                {customerSearchResults.map(customer => (
+                                    <CustomerCard key={customer.id} customer={customer} onSelect={() => setSelectedCustomerId(customer.id)} />
+                                ))}
+                            </div>
+                        )}
+                        {customerSearchResults.length === 0 && !isLoading && (
                             <div className="text-center py-16 bg-white rounded-lg shadow-sm">
                                 <p className="text-gray-500 font-semibold">No customers found.</p>
                                 <p className="text-sm text-gray-400 mt-1">Try adjusting your search or filters.</p>
                             </div>
                         )}
                     </div>
-                    {selectedCustomer && (
+                    {selectedCustomerId && (
                         <div className="w-full lg:w-1/3 transition-all duration-500 ease-in-out">
-                            <CustomerDetailPanel customer={selectedCustomer} onClose={() => setSelectedCustomer(null)} />
+                            <CustomerDetailPanel customerId={selectedCustomerId} onClose={() => setSelectedCustomerId(null)} />
                         </div>
                     )}
                 </div>

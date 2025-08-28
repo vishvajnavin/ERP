@@ -1,11 +1,11 @@
 "use client";
 import React from 'react';
-import { Customer } from '@/types/customers';
+import { CustomerSearchResult } from '@/types/customers';
 import { Briefcase, MapPin, Star } from 'lucide-react';
 import Image from 'next/image';
 
 interface CustomerCardProps {
-    customer: Customer;
+    customer: CustomerSearchResult;
     onSelect: () => void;
 }
 
@@ -17,13 +17,21 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onSelect }) => {
         >
             <div className="p-5">
                 <div className="flex items-center">
-                    <Image width={64} height={64} className="h-16 w-16 rounded-full object-cover" src={customer.avatar} alt={`${customer.name}'s avatar`} />
+                    {customer.avatar ? (
+                        <Image width={64} height={64} className="h-16 w-16 rounded-full object-cover" src={customer.avatar} alt={`${customer.name}'s avatar`} />
+                    ) : (
+                        <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xl font-semibold">
+                            {customer.name ? customer.name.charAt(0).toUpperCase() : 'N/A'}
+                        </div>
+                    )}
                     <div className="ml-4">
                         <p className="text-lg font-bold text-gray-900">{customer.name}</p>
-                        <p className="text-sm text-gray-600 flex items-center">
-                            <Briefcase size={14} className="mr-1.5 text-gray-400" />
-                            {customer.company}
-                        </p>
+                        {customer.company && (
+                            <p className="text-sm text-gray-600 flex items-center">
+                                <Briefcase size={14} className="mr-1.5 text-gray-400" />
+                                {customer.company}
+                            </p>
+                        )}
                     </div>
                 </div>
                 <div className="mt-4 pt-4 border-t border-gray-100">
