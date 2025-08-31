@@ -7,7 +7,7 @@ export async function proceedToNextStage(
   orderItemId: number,
   currentStageId: number
 ): Promise<{ success: boolean; error: string | null }> {
-  const supabase = createClient();
+  const supabase = await  createClient();
 
   console.log(orderItemId,currentStageId)
   const { data, error } = await supabase.rpc('proceed_to_next_stage', {

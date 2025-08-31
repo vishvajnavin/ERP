@@ -7,12 +7,6 @@ export interface Product {
     id: string;
     created_at: string;
     product_type?: 'sofa' | 'bed';
-    is_existing_model?: boolean;
-    customization?: boolean;
-    quantity?: number;
-    // For existing models
-    sofa_product_id?: string;
-    bed_product_id?: string;
     // For new sofa
     model_name?: string;
     model_family_configuration?: string;

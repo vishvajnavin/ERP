@@ -1,3 +1,4 @@
+// actions/update-product.ts
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -13,7 +14,7 @@ const getNumberOrNull = (value: FormDataEntryValue | null) => {
 }
 
 export async function updateProductAction(formData: FormData) {
-    const supabase=createClient();
+    const supabase = createClient();
 
     const productType = formData.get('product_type');
     const idValue = formData.get('id');
@@ -36,8 +37,10 @@ export async function updateProductAction(formData: FormData) {
             updateData = {
                 model_name: formData.get('model_name'),
                 model_family_configuration: getNullIfEmpty(formData.get('model_family_configuration')),
-                "2_seater_length": getNumberOrNull(formData.get('2_seater_length')),
-                "1_seater_length": getNumberOrNull(formData.get('1_seater_length')),
+                // --- MODIFIED LINES ---
+                "2_seater_length": getNumberOrNull(formData.get('2_seater_length')) ?? 0,
+                "1_seater_length": getNumberOrNull(formData.get('1_seater_length')) ?? 0,
+                // --- END OF MODIFICATION ---
                 description: getNullIfEmpty(formData.get('description')),
                 reference_image_url: getNullIfEmpty(formData.get('reference_image_url')),
                 measurement_drawing_url: getNullIfEmpty(formData.get('measurement_drawing_url')),
@@ -62,7 +65,7 @@ export async function updateProductAction(formData: FormData) {
                 total_depth: getNumberOrNull(formData.get('total_depth')),
                 total_height: getNumberOrNull(formData.get('total_height')),
                 seat_height: getNumberOrNull(formData.get('seat_height')),
-                seat_depth: getNumberOrNull(formData.get('seat_depth')),
+                seat_depth: getNullIfEmpty(formData.get('seat_depth')),
                 seat_width: getNumberOrNull(formData.get('seat_width')),
                 armrest_width: getNumberOrNull(formData.get('armrest_width')),
                 armrest_depth: getNumberOrNull(formData.get('armrest_depth')),

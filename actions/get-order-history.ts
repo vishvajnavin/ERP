@@ -9,7 +9,7 @@ export async function getOrderHistory(
   page: number,
   pageSize: number
 ): Promise<{ orders: OrderHistory[]; totalCount: number }> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const offset = (page - 1) * pageSize;
 
   const { data, error } = await supabase.rpc("search_and_paginate_order_history", {

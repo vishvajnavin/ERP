@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 
 // This is the server action function that will be called from the form.
 export async function addCustomerAction(prevState: unknown, formData: FormData) {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Map FormData to the structure of your 'customer_details' table.
     const newCustomer = {

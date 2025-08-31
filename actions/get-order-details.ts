@@ -13,7 +13,7 @@ function buildTimeline(orderDate: string, deliveryDate: string | null, status: s
 }
 
 export async function getOrderDetails(orderId: number): Promise<OrderDetails | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("order_items")

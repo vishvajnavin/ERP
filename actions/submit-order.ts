@@ -61,7 +61,7 @@ interface FormState {
 }
 
 export async function submitOrder(prevState: FormState, formData: FormData) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const selectedCustomerId = formData.get('selectedCustomerId') as string;
   const totalProducts = parseInt(formData.get('totalProducts') as string, 10);
 

@@ -12,7 +12,7 @@ type ProductType = 'sofa' | 'bed';
 
 // Helper function to create options for ToggleGroupField
 const createOptions = (values: string[]): ToggleOption<string>[] =>
-  values.map(v => ({ label: v.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), value: v }));
+  values.map(v => ({ label: v.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).replace('3+ Daybed', '3+ daybed').replace('2+ Daybed', '2+ daybed'), value: v }));
 
 const booleanOptions: ToggleOption<boolean>[] = [
   { label: 'Yes', value: true },

@@ -4,7 +4,7 @@ import { createClient } from '@/utils/supabase/server';
 import { Customer } from '@/types/customers';
 
 export async function getCustomerDetails(customerId: string): Promise<Customer | null> {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { data, error } = await supabase
         .rpc('get_customer_details', { p_customer_id: parseInt(customerId) });

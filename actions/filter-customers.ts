@@ -10,7 +10,7 @@ interface SearchFilters {
 }
 
 export async function searchCustomers(filters: SearchFilters): Promise<CustomerSearchResult[]> {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Prepare parameters for the RPC call.
     // Use null for empty strings so the RPC function can handle them.

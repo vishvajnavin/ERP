@@ -15,9 +15,10 @@ interface EditProductModalProps {
   isOpen: boolean;
   onClose: () => void;
   product: Product | null;
+  onProductUpdate: () => void;
 }
 
-export default function EditProductModal({ isOpen, onClose, product }: EditProductModalProps) {
+export default function EditProductModal({ isOpen, onClose, product, onProductUpdate }: EditProductModalProps) {
   if (!product) {
     return null;
   }
@@ -38,7 +39,7 @@ export default function EditProductModal({ isOpen, onClose, product }: EditProdu
         <EditProductForm
           product={product}
           productType={productType}
-          onFormSubmit={onClose}
+          onFormSubmit={onProductUpdate}
         />
       </DialogContent>
     </Dialog>

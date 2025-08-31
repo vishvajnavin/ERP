@@ -25,7 +25,7 @@ export async function searchOrderItems(
   },
   sortConfig: { key: string; direction: string }
 ): Promise<{ orders: Order[]; totalCount: number }> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const offset = (page - 1) * limit;
 
   // Call the new, powerful database function with all necessary parameters

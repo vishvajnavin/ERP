@@ -154,10 +154,14 @@ export default function ProductsPage() {
           <p className="text-gray-500">No {productType}s found. Add one to get started!</p>
         </div>
       )}
-      <EditProductModal 
-        isOpen={isEditModalOpen} 
-        onClose={() => setIsEditModalOpen(false)} 
-        product={selectedProduct} 
+      <EditProductModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        product={selectedProduct}
+        onProductUpdate={() => {
+          setIsEditModalOpen(false);
+          fetchProducts();
+        }}
       />
       </div>
       <div className={`transition-all ease-in-out ${viewedProduct ? 'w-full max-w-md' : 'max-w-0'} overflow-hidden`}>

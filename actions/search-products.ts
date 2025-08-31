@@ -8,7 +8,7 @@ export async function searchProducts(
   productType: "sofa" | "bed",
   filters?: Record<string, string>
 ): Promise<Product[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   let queryBuilder = supabase.from(productType === 'sofa' ? 'sofa_products' : 'bed_products').select('*');
 
   if (query.trim()) {

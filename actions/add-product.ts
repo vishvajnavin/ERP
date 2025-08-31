@@ -14,7 +14,7 @@ const getNumberOrNull = (value: FormDataEntryValue | null) => {
 }
 
 export async function addProductAction(formData: FormData) {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const productType = formData.get('product_type');
   const modelName = formData.get('model_name') as string;
@@ -80,7 +80,6 @@ export async function addProductAction(formData: FormData) {
         upholstery_color: getNullIfEmpty(formData.get('upholstery_color')),
         polish_color: getNullIfEmpty(formData.get('polish_color')),
         polish_finish: getNullIfEmpty(formData.get('polish_finish')),
-        customization: false
       };
       
       const { error } = await supabase.from('sofa_products').insert([sofaData]);

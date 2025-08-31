@@ -3,7 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 
 export async function getDashboardData() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase.rpc("get_dashboard_stats");
 

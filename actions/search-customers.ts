@@ -7,7 +7,7 @@ export async function searchCustomers(query: string) {
         return [];
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { data, error } = await supabase
         .from('customer_details')

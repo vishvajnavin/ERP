@@ -9,7 +9,7 @@ const formSchema = z.object({
 });
 
 export default async function getProductDetails(id: number, type: 'Sofa' | 'Bed') {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const validatedFields = formSchema.safeParse({
     id: id,

@@ -67,8 +67,8 @@ CREATE TABLE public.order_item_stage_status (
   updated_at timestamp with time zone DEFAULT now(),
   status USER-DEFINED NOT NULL DEFAULT 'pending'::stage_status_enum,
   CONSTRAINT order_item_stage_status_pkey PRIMARY KEY (order_item_id, stage_id),
-  CONSTRAINT order_item_stage_status_stage_id_fkey FOREIGN KEY (stage_id) REFERENCES public.stages(stage_id),
-  CONSTRAINT order_item_stage_status_order_item_id_fkey FOREIGN KEY (order_item_id) REFERENCES public.order_items(id)
+  CONSTRAINT order_item_stage_status_order_item_id_fkey FOREIGN KEY (order_item_id) REFERENCES public.order_items(id),
+  CONSTRAINT order_item_stage_status_stage_id_fkey FOREIGN KEY (stage_id) REFERENCES public.stages(stage_id)
 );
 CREATE TABLE public.order_items (
   id integer NOT NULL DEFAULT nextval('order_items_id_seq'::regclass),
@@ -80,12 +80,11 @@ CREATE TABLE public.order_items (
   quantity integer DEFAULT 1,
   due_date date NOT NULL DEFAULT CURRENT_DATE,
   delivery_date date,
-  production_stage USER-DEFINED DEFAULT 'carpentry'::production_stage_enum,
   priority integer NOT NULL DEFAULT 1,
   CONSTRAINT order_items_pkey PRIMARY KEY (id),
+  CONSTRAINT order_items_bed_product_id_fkey FOREIGN KEY (bed_product_id) REFERENCES public.bed_products(id),
   CONSTRAINT order_items_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id),
-  CONSTRAINT order_items_sofa_product_id_fkey FOREIGN KEY (sofa_product_id) REFERENCES public.sofa_products(id),
-  CONSTRAINT order_items_bed_product_id_fkey FOREIGN KEY (bed_product_id) REFERENCES public.bed_products(id)
+  CONSTRAINT order_items_sofa_product_id_fkey FOREIGN KEY (sofa_product_id) REFERENCES public.sofa_products(id)
 );
 CREATE TABLE public.orders (
   id integer NOT NULL DEFAULT nextval('orders_id_seq'::regclass),
@@ -105,6 +104,14 @@ CREATE TABLE public.product_checklist_progress (
   CONSTRAINT product_checklist_progress_pkey PRIMARY KEY (order_item_id, check_id),
   CONSTRAINT product_checklist_progress_check_id_fkey FOREIGN KEY (check_id) REFERENCES public.checks(check_id),
   CONSTRAINT product_checklist_progress_order_item_id_fkey FOREIGN KEY (order_item_id) REFERENCES public.order_items(id)
+);
+CREATE TABLE public.profiles (
+  id uuid NOT NULL,
+  updated_at timestamp with time zone,
+  full_name text,
+  role USER-DEFINED NOT NULL DEFAULT 'employee'::user_role,
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
 );
 CREATE TABLE public.sofa_products (
   id integer NOT NULL DEFAULT nextval('sofa_products_id_seq'::regclass),

@@ -3,7 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 
 export async function getOrderItemStageStatus(orderItemId: number) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Call the optimized RPC function
   const { data, error } = await supabase.rpc(

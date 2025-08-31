@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { Sidebar } from "@/components/sidebar";
 import { useState } from "react";
+import { UserProvider } from "@/context/user-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,14 +27,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <div className="flex">
-          <Sidebar
-            isCollapsed={isCollapsed}
-            setIsCollapsed={setIsCollapsed}
-          />
-          <main className="flex-1">{children}</main>
-        </div>
-        <Toaster position="top-right"/>
+        <UserProvider>
+          <div className="flex">
+            <Sidebar
+              isCollapsed={isCollapsed}
+              setIsCollapsed={setIsCollapsed}
+            />
+            <main className="flex-1">{children}</main>
+          </div>
+          <Toaster position="top-right" />
+        </UserProvider>
       </body>
     </html>
   );
