@@ -136,22 +136,30 @@ export async function submitOrder(prevState: FormState, formData: FormData) {
             const model_name = formData.get(`${baseName}.model_name`) as string;
 
             // --- Handle File Uploads ---
-            const referenceImageFile = formData.get(`${baseName}.reference_image_url`) as File | null;
+            const referenceImageValue = formData.get(`${baseName}.reference_image_url`);
             let reference_image_url: string | undefined = undefined;
-            if (referenceImageFile && referenceImageFile.size > 0) {
-                const filePath = `public/orders/${orderId}/${baseName}-ref-${referenceImageFile.name}`;
-                const { error } = await supabase.storage.from('product-images').upload(filePath, referenceImageFile);
+            if (referenceImageValue instanceof File && referenceImageValue.size > 0) {
+                const fileExtension = referenceImageValue.name.split('.').pop();
+                const fileName = `${Date.now()}.${fileExtension}`;
+                const filePath = `reference/${fileName}`;
+                const { data, error } = await supabase.storage.from('order-images').upload(filePath, referenceImageValue);
                 if (error) throw new Error(`[Item ${i+1}] Failed to upload reference image: ${error.message}`);
-                reference_image_url = supabase.storage.from('product-images').getPublicUrl(filePath).data.publicUrl;
+                reference_image_url = data.path;
+            } else if (typeof referenceImageValue === 'string') {
+                reference_image_url = referenceImageValue;
             }
 
-            const measurementDrawingFile = formData.get(`${baseName}.measurement_drawing_url`) as File | null;
+            const measurementDrawingValue = formData.get(`${baseName}.measurement_drawing_url`);
             let measurement_drawing_url: string | undefined = undefined;
-            if (measurementDrawingFile && measurementDrawingFile.size > 0) {
-                const filePath = `public/orders/${orderId}/${baseName}-measure-${measurementDrawingFile.name}`;
-                const { error } = await supabase.storage.from('product-images').upload(filePath, measurementDrawingFile);
+            if (measurementDrawingValue instanceof File && measurementDrawingValue.size > 0) {
+                const fileExtension = measurementDrawingValue.name.split('.').pop();
+                const fileName = `${Date.now()}.${fileExtension}`;
+                const filePath = `measurement/${fileName}`;
+                const { data, error } = await supabase.storage.from('order-images').upload(filePath, measurementDrawingValue);
                 if (error) throw new Error(`[Item ${i+1}] Failed to upload measurement drawing: ${error.message}`);
-                measurement_drawing_url = supabase.storage.from('product-images').getPublicUrl(filePath).data.publicUrl;
+                measurement_drawing_url = data.path;
+            } else if (typeof measurementDrawingValue === 'string') {
+                measurement_drawing_url = measurementDrawingValue;
             }
             
             let newProductId: string;

@@ -1,6 +1,9 @@
 // components/AddProductForm.tsx
 'use client';
 
+import { Label } from "@/components/ui/label"
+import { cn } from "@/lib/utils"
+import { Upload, X } from "lucide-react"
 import { useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { addProductAction } from '@/actions/add-product';
@@ -28,6 +31,63 @@ function SubmitButton() {
   );
 }
 
+interface FileUploadFieldProps {
+  label: string
+  name: string
+  accept?: string
+}
+
+export function FileUploadField({ label, name, accept }: FileUploadFieldProps) {
+  const [fileName, setFileName] = useState<string | null>(null)
+
+  return (
+    <div className="flex flex-col space-y-2">
+      <Label htmlFor={name}>{label}</Label>
+      <div
+        className={cn(
+          "relative flex items-center justify-center w-full cursor-pointer rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm transition hover:border-indigo-500 hover:bg-indigo-50"
+        )}
+      >
+        <input
+          id={name}
+          name={name}
+          type="file"
+          accept={accept}
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            setFileName(file ? file.name : null)
+          }}
+        />
+
+        {fileName ? (
+          <div className="flex items-center space-x-2">
+            <Upload className="h-5 w-5 text-indigo-500" />
+            <span className="truncate">{fileName}</span>
+            <button
+              type="button"
+              onClick={() => setFileName(null)}
+              className="ml-2 text-gray-500 hover:text-red-500"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center space-y-2 text-gray-500">
+            <Upload className="h-6 w-6" />
+            <span>
+              <span className="font-medium text-indigo-600">Click to upload</span>{" "}
+              or drag & drop
+            </span>
+            <span className="text-xs text-gray-400">PNG, JPG, or PDF</span>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+
 export default function AddProductForm({ onClose }: { onClose: () => void }) {
   const [productType, setProductType] = useState<ProductType>('sofa');
   const [toggleValues, setToggleValues] = useState<Record<string, string | boolean>>({});
@@ -45,6 +105,7 @@ export default function AddProductForm({ onClose }: { onClose: () => void }) {
         toast.error(result.message);
     }
   };
+
 
   return (
     <form action={formAction} className="space-y-6">
@@ -64,8 +125,16 @@ export default function AddProductForm({ onClose }: { onClose: () => void }) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <InputField label="Model Name" name="model_name" placeholder="e.g. Royal Oak King" />
             <InputField label="Description" name="description" placeholder="A brief description" />
-            <InputField label="Reference Image URL" name="reference_image_url" placeholder="https://example.com/image.jpg" />
-            <InputField label="Measurement Drawing URL" name="measurement_drawing_url" placeholder="https://example.com/drawing.jpg" />
+            <FileUploadField 
+              label="Reference Image" 
+              name="reference_image_url" 
+              accept="image/*" 
+            />
+            <FileUploadField 
+              label="Measurement Drawing" 
+              name="measurement_drawing_url" 
+              accept="image/*,.pdf" 
+            />
         </div>
 
         {/* --- CONDITIONAL SOFA FIELDS --- */}

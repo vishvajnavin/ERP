@@ -1,19 +1,25 @@
-CREATE OR REPLACE FUNCTION search_and_paginate_orders(
+-- This command creates or replaces the function 'get_paginated_orders'.
+-- It's designed to be run directly in the Supabase SQL Editor.
+
+CREATE OR REPLACE FUNCTION public.get_paginated_orders(
     p_search_term TEXT,
-    p_limit INT,
-    p_offset INT,
     p_filters JSONB,
-    p_sort JSONB
+    p_sort JSONB,
+    p_limit INT,
+    p_offset INT
 )
-RETURNS TABLE (
-    id int,
-    due_date date,
-    production_stage text,
-    priority int,
-    customer_name text,
-    product_model_name text,
+RETURNS TABLE(
+    id INT,
+    due_date DATE,
+    production_stage TEXT,
+    priority INT,
+    customer_name TEXT,
+    product_model_name TEXT,
+    product_id INT,
+    product_type TEXT,
     total_count BIGINT
 )
+LANGUAGE plpgsql
 AS $$
 DECLARE
     sort_key TEXT;
@@ -37,8 +43,10 @@ BEGIN
         oi.id,
         oi.due_date,
         oi.priority,
+        oi.product_type, -- <<< ADDED product_type
         cd.customer_name,
-        COALESCE(sp.model_name, bp.model_name) AS product_model_name
+        COALESCE(sp.model_name, bp.model_name) AS product_model_name,
+        COALESCE(oi.sofa_product_id, oi.bed_product_id) AS product_id -- <<< ADDED unified product_id
       FROM
         public.order_items AS oi
       LEFT JOIN
@@ -59,15 +67,15 @@ BEGIN
           )
         )
         AND (
-            array_length(stage_keys, 1) IS NULL OR
-            EXISTS (
-                SELECT 1
-                FROM public.order_item_stage_status oiss
-                JOIN public.stages s ON oiss.stage_id = s.stage_id
-                WHERE oiss.order_item_id = oi.id
-                  AND oiss.status = 'active'
-                  AND s.name = ANY(stage_keys)
-            )
+          array_length(stage_keys, 1) IS NULL OR
+          EXISTS (
+              SELECT 1
+              FROM public.order_item_stage_status oiss
+              JOIN public.stages s ON oiss.stage_id = s.stage_id
+              WHERE oiss.order_item_id = oi.id
+                AND oiss.status = 'active'
+                AND s.name = ANY(stage_keys)
+          )
         )
         AND (array_length(priority_keys, 1) IS NULL OR oi.priority::TEXT = ANY(priority_keys))
         AND (is_overdue IS NOT TRUE OR oi.due_date < CURRENT_DATE)
@@ -105,11 +113,10 @@ BEGIN
       po.priority,
       po.customer_name,
       po.product_model_name,
+      po.product_id, -- <<< ADDED product_id TO FINAL SELECT
+      po.product_type, -- <<< ADDED product_type TO FINAL SELECT
       (SELECT COUNT(*) FROM filtered_orders) AS total_count
     FROM
       paginated_orders po;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Don't forget to grant permissions
-GRANT EXECUTE ON FUNCTION search_and_paginate_orders(TEXT, INT, INT, JSONB, JSONB) TO public;
+$$;

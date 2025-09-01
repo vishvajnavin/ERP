@@ -14,7 +14,7 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, onOrderSelect }) => (
     <table className="min-w-full">
       <thead>
         <tr className="border-b border-gray-200/50">
-          {['Priority', 'Order ID', 'Product', 'Customer', 'Due Date', 'Stage'].map(h => (
+          {['Priority', 'Order ID', 'Product', 'Product Type', 'Customer', 'Due Date', 'Stage'].map(h => (
             <th key={h} className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               {h}
             </th>
@@ -40,6 +40,7 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, onOrderSelect }) => (
               </td>
               <td className="px-6 py-5 whitespace-nowrap text-sm font-medium text-black">{order.id}</td>
               <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-800">{order.product}</td>
+              <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-800">{order.productType}</td>
               <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-600">{order.customer}</td>
               <td className={`px-6 py-5 whitespace-nowrap text-sm ${isOverdue ? 'text-red-500 font-semibold' : 'text-gray-600'}`} suppressHydrationWarning>
                 {new Date(order.dueDate).toLocaleDateString()}

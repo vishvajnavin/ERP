@@ -18,12 +18,12 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
   const signOut = userContext?.signOut;
 
   const menuItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, href: "/dashboard", roles: ['admin', 'manager', 'employee'] },
-    { name: 'Customers', icon: Users, href: "/customers", roles: ['admin', 'manager', 'employee'] },
-    { name: 'Products', icon: Package, href: "/products", roles: ['admin'] },
-    { name: 'Place Order', icon: ShoppingCart, href: "/place-order", roles: ['admin', 'manager', 'employee'] },
-    { name: 'View Orders', icon: ClipboardList, href: "/view-orders", roles: ['admin', 'manager', 'employee'] },
-    { name: 'Order History', icon: History, href: "/order-history", roles: ['admin', 'manager', 'employee'] },
+    { name: 'Dashboard', icon: LayoutDashboard, href: "/dashboard", roles: ['admin', 'manager'] },
+    { name: 'Customers', icon: Users, href: "/customers", roles: ['admin', 'manager', 'sales coordinator'] },
+    { name: 'Products', icon: Package, href: "/products", roles: ['admin', 'manager', 'sales coordinator'] },
+    { name: 'Place Order', icon: ShoppingCart, href: "/place-order", roles: ['admin', 'manager', 'sales coordinator'] },
+    { name: 'View Orders', icon: ClipboardList, href: "/view-orders", roles: ['admin', 'manager', 'production manager'] },
+    { name: 'Order History', icon: History, href: "/order-history", roles: ['admin', 'manager'] },
   ];
 
   const filteredMenuItems = menuItems.filter(item => user?.role && item.roles.includes(user.role));

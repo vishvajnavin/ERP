@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { Product } from "@/types/products";
+import { getSignedUrl } from "./get-signed-url";
 
 export async function searchProducts(
   query: string,
@@ -30,7 +31,30 @@ export async function searchProducts(
     return [];
   }
 
-  // The return type of the RPC now perfectly matches what we need.
-  // Ensure your `Product` type includes `id`, `model_name`, and optionally `product_type`.
-  return products || [];
+  if (!products) {
+    return [];
+  }
+
+  // Create signed URLs for the images
+  const productsWithSignedUrls = await Promise.all(
+    products.map(async (product) => {
+      let signedReferenceUrl = null;
+      if (product.reference_image_url && typeof product.reference_image_url === 'string') {
+        signedReferenceUrl = await getSignedUrl(product.reference_image_url);
+      }
+
+      let signedMeasurementUrl = null;
+      if (product.measurement_drawing_url && typeof product.measurement_drawing_url === 'string') {
+        signedMeasurementUrl = await getSignedUrl(product.measurement_drawing_url);
+      }
+
+      return {
+        ...product,
+        reference_image_url: signedReferenceUrl,
+        measurement_drawing_url: signedMeasurementUrl,
+      };
+    })
+  );
+
+  return productsWithSignedUrls;
 }

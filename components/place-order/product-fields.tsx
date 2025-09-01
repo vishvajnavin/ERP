@@ -7,14 +7,14 @@ import Image from "next/image";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Check, ChevronsUpDown, UploadCloud, X} from 'lucide-react'
 import { cn } from "@/lib/utils";
-import { Product } from "@/types/products";
+import { Product, ProductWithFiles } from "@/types/products";
 
 // --- Detailed Forms ---
-export interface DetailsFormProps {
+export interface DetailsFormProps<T extends Product | ProductWithFiles = Product> {
   baseName: string;
   index: number;
-  product: Product;
-  handleProductChange: <K extends keyof Product>(index: number, field: K, value: Product[K]) => void;
+  product: T;
+  handleProductChange: <K extends keyof T>(index: number, field: K, value: T[K]) => void;
   disabled: boolean;
   nameError?: string;
 }
@@ -83,13 +83,18 @@ export const ImageUploadField = ({ label, name, value, onChange, disabled }: { l
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        if (typeof value === 'string') {
+        // A string value is assumed to be a URL from the database.
+        // We check if it's a valid URL format before setting it as a preview.
+        if (typeof value === 'string' && (value.startsWith('http') || value.startsWith('blob:'))) {
             setPreview(value);
         } else if (value instanceof File) {
+            // If it's a File object, create a temporary blob URL for preview.
             const objectUrl = URL.createObjectURL(value);
             setPreview(objectUrl);
+            // Clean up the blob URL when the component unmounts or the value changes.
             return () => URL.revokeObjectURL(objectUrl);
         } else {
+            // If the value is null, undefined, or an invalid string, don't show a preview.
             setPreview(null);
         }
     }, [value]);

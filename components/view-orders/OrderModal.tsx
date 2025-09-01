@@ -31,7 +31,8 @@ const OrderModal: React.FC<OrderModalProps> = ({
   const [productDetails, setProductDetails] =
     useState<Record<string, unknown> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [showDiagram, setShowDiagram] = useState(false);
+  const [productError, setProductError] = useState<string | null>(null);
+  const [showProductDetails, setShowProductDetails] = useState(false); // New state to control visibility
   const [view, setView] = useState<'details' | 'flow' | 'checklist'>('details');
   const [checklistData, setChecklistData] = useState<CheckItem[]>([]);
   const [selectedStage, setSelectedStage] = useState<{
@@ -184,26 +185,50 @@ const OrderModal: React.FC<OrderModalProps> = ({
                       <div>
                         <button
                           onClick={async () => {
-                            setIsLoading(true);
-                            const details = await getProductDetails(
-                              order.productId,
-                              order.productType
-                            );
-                            setProductDetails(details.data);
-                            setIsLoading(false);
+                            if (showProductDetails) {
+                              setShowProductDetails(false);
+                            } else {
+                              setIsLoading(true);
+                              const details = await getProductDetails(
+                                order.productId,
+                                order.productType
+                              );
+                              if (details.errors) {
+                                const errorMessage = (details.errors as { database?: string[] }).database?.[0] ||
+                                  Object.values(details.errors).flat()[0] ||
+                                  'Failed to fetch product details.';
+                                setProductError(errorMessage);
+                                setProductDetails(null);
+                                setShowProductDetails(false);
+                              } else {
+                                setProductDetails(details.data);
+                                setProductError(null);
+                                setShowProductDetails(true);
+                              }
+                              setIsLoading(false);
+                            }
                           }}
                           className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition-colors"
                           disabled={isLoading}
                         >
-                          {isLoading ? "Loading..." : "View Details"}
+                          {isLoading
+                            ? "Loading..."
+                            : showProductDetails
+                            ? "Collapse Details"
+                            : "View Details"}
                         </button>
                       </div>
-                      {productDetails && (
+                      {showProductDetails && productDetails && (
                         <div className="col-span-2 mt-4">
                           <ProductDetails
                             details={productDetails}
                             productType={order.productType}
                           />
+                        </div>
+                      )}
+                      {productError && (
+                        <div className="col-span-2 mt-4 text-red-500">
+                          {productError}
                         </div>
                       )}
                     </div>

@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client'; // Correct: Use the client-side createClient
+import { getSignedUrl } from '@/actions/get-signed-url';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -57,7 +58,27 @@ export default function ProductsPage() {
       setDisplayedProducts([]);
     } else {
       const fetchedProducts = data as Product[];
-      setDisplayedProducts(fetchedProducts);
+      // Create signed URLs for the images
+      const productsWithSignedUrls = await Promise.all(
+        fetchedProducts.map(async (product) => {
+          let signedReferenceUrl = null;
+          if (product.reference_image_url && typeof product.reference_image_url === 'string') {
+            signedReferenceUrl = await getSignedUrl(product.reference_image_url);
+          }
+
+          let signedMeasurementUrl = null;
+          if (product.measurement_drawing_url && typeof product.measurement_drawing_url === 'string') {
+            signedMeasurementUrl = await getSignedUrl(product.measurement_drawing_url);
+          }
+
+          return {
+            ...product,
+            reference_image_url: signedReferenceUrl,
+            measurement_drawing_url: signedMeasurementUrl,
+          };
+        })
+      );
+      setDisplayedProducts(productsWithSignedUrls);
     }
     setLoading(false);
   }, [productType, filters]);

@@ -1,14 +1,13 @@
 import { InputField, ImageUploadField, TextAreaField, ToggleGroupField, ComboboxField } from "./product-fields";
 import { DetailsFormProps } from "./product-fields";
+import { ProductWithFiles } from "@/types/products";
 
-export const BedDetailsForm: React.FC<DetailsFormProps> = ({ index, product, handleProductChange, disabled, baseName, nameError }) => {
+export const BedDetailsForm: React.FC<DetailsFormProps<ProductWithFiles>> = ({ index, product, handleProductChange, disabled, baseName, nameError }) => {
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {product.id && <InputField name={`${baseName}.id`} label="Product ID" value={product.id} disabled={true} required/>}
             <InputField name={`${baseName}.model_name`} label="Model Name" value={product.model_name || ''} error={nameError} disabled={disabled} onChange={(e) => handleProductChange(index, "model_name", e.target.value)} required/>
-            <ImageUploadField name={`${baseName}.reference_image_url`} label="Reference Image" value={product.reference_image_url} disabled={disabled} onChange={(file) => handleProductChange(index, "reference_image_url", file?.name)} />
-            <ImageUploadField name={`${baseName}.measurement_drawing_url`} label="Measurement Drawing" value={product.measurement_drawing_url} disabled={disabled} onChange={(file) => handleProductChange(index, "measurement_drawing_url", file?.name)} />
             <TextAreaField name={`${baseName}.description`} label="Description" value={product.description || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "description", e.target.value)} />
             <ToggleGroupField name={`${baseName}.bed_size`} label="Bed Size" value={product.bed_size} disabled={disabled} onValueChange={(val) => handleProductChange(index, "bed_size", val)} options={[{value: 'king', label: 'King'}, {value: 'queen', label: 'Queen'}, {value: 'customized', label: 'Customized'}]} required/>
             {product.bed_size === "customized" && <InputField name={`${baseName}.customized_mattress_size`} label="Custom Mattress Size" value={product.customized_mattress_size || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "customized_mattress_size", e.target.value)} required/>}

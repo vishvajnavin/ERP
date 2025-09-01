@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { CustomerSearchResult } from '@/types/customers';
-import { Briefcase, MapPin, Star } from 'lucide-react';
+import { Briefcase, MapPin } from 'lucide-react';
 import Image from 'next/image';
 
 interface CustomerCardProps {
@@ -41,12 +41,7 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onSelect }) => {
                             {customer.address}
                         </span>
                         <span className={`px-2.5 py-1 font-semibold rounded-full text-xs flex items-center gap-1
-                            ${customer.status === 'VIP' ? 'bg-yellow-100 text-yellow-800' : ''}
-                            ${customer.status === 'Active' ? 'bg-green-100 text-green-800' : ''}
-                            ${customer.status === 'New' ? 'bg-blue-100 text-blue-800' : ''}
                         `}>
-                            {customer.status === 'VIP' && <Star size={12} />}
-                            {customer.status}
                         </span>
                     </div>
                 </div>

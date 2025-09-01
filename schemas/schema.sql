@@ -109,7 +109,7 @@ CREATE TABLE public.profiles (
   id uuid NOT NULL,
   updated_at timestamp with time zone,
   full_name text,
-  role USER-DEFINED NOT NULL DEFAULT 'employee'::user_role,
+  role USER-DEFINED NOT NULL DEFAULT 'production manager'::user_role,
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
 );

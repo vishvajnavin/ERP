@@ -1,6 +1,7 @@
 import { DetailsFormProps, InputField, ImageUploadField, TextAreaField, ToggleGroupField, ComboboxField } from "./product-fields";
+import { ProductWithFiles } from "@/types/products";
 
-export const SofaDetailsForm: React.FC<DetailsFormProps> = ({ index, product, handleProductChange, disabled, baseName, nameError }) => {
+export const SofaDetailsForm: React.FC<DetailsFormProps<ProductWithFiles>> = ({ index, product, handleProductChange, disabled, baseName, nameError }) => {
 
     const upholsteryOptions = [
         {value: 'fabric', label: 'Fabric'}, {value: 'pu', label: 'PU'}, {value: 'leather_bloom', label: 'Leather Bloom'},
@@ -40,8 +41,6 @@ export const SofaDetailsForm: React.FC<DetailsFormProps> = ({ index, product, ha
                     Customized
                 </span>
             )}
-            <ImageUploadField name={`${baseName}.reference_image_url`} label="Reference Image" value={product.reference_image_url} disabled={disabled} onChange={(file) => handleProductChange(index, "reference_image_url", file?.name)} />
-            <ImageUploadField name={`${baseName}.measurement_drawing_url`} label="Measurement Drawing" value={product.measurement_drawing_url} disabled={disabled} onChange={(file) => handleProductChange(index, "measurement_drawing_url", file?.name)} />
             <TextAreaField name={`${baseName}.description`} label="Description" value={product.description || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "description", e.target.value)} />
             <ToggleGroupField name={`${baseName}.recliner_mechanism_mode`} label="Recliner Mechanism" value={product.recliner_mechanism_mode} disabled={disabled} onValueChange={(val) => handleProductChange(index, "recliner_mechanism_mode", val)} options={[{value: 'manual', label: 'Manual'}, {value: 'motorized_single', label: 'Motorized Single'}, {value: 'motorized_double', label: 'Motorized Double'}]} required/>
             <ToggleGroupField name={`${baseName}.recliner_mechanism_flip`} label="Recliner Flip" value={product.recliner_mechanism_flip} disabled={disabled} onValueChange={(val) => handleProductChange(index, "recliner_mechanism_flip", val)} options={[{value: 'single_flip', label: 'Single Flip'}, {value: 'double_flip', label: 'Double Flip'}, {value: 'double_motor_with_headrest', label: 'Double Motor with Headrest'}]} required/>

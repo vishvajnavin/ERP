@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Plus, Search, ChevronDown, Filter } from 'lucide-react';
+import { Plus, Search, Filter } from 'lucide-react';
 import { CustomerSearchResult } from '@/types/customers';
 import CustomerCard from '@/components/customers/customer-card';
 import CustomerDetailPanel from '@/components/customers/customer-detail-panel';
@@ -14,7 +14,6 @@ interface CustomerClientPageProps {
     initialCustomers: CustomerSearchResult[];
     initialFilters: {
         searchTerm: string;
-        status: string;
         address: string;
     };
 }
@@ -31,13 +30,12 @@ const CustomerClientPage: React.FC<CustomerClientPageProps> = ({ initialCustomer
     const [isLoading, setIsLoading] = useState(false);
 
     const currentSearchTerm = initialFilters.searchTerm;
-    const currentStatusFilter = initialFilters.status;
     const currentAddressFilter = initialFilters.address;
 
     const filterPopoverRef = useRef<HTMLDivElement>(null);
 
 
-    const fetchCustomers = useCallback(async (filters: { searchTerm?: string; status?: string; address?: string }) => {
+    const fetchCustomers = useCallback(async (filters: { searchTerm?: string; address?: string }) => {
         setIsLoading(true);
         const fetchedCustomers = await searchCustomers(filters);
         setCustomerSearchResults(fetchedCustomers);
@@ -45,10 +43,9 @@ const CustomerClientPage: React.FC<CustomerClientPageProps> = ({ initialCustomer
     }, []);
 
     // Update the URL with new filter values and trigger a new search.
-    const handleFilterChange = useCallback((newFilters: Partial<{ searchTerm: string; status: string; address: string }>) => {
+    const handleFilterChange = useCallback((newFilters: Partial<{ searchTerm: string; address: string }>) => {
         const params = new URLSearchParams(searchParams.toString());
         let updatedSearchTerm = currentSearchTerm;
-        let updatedStatus = currentStatusFilter;
         let updatedAddress = currentAddressFilter;
 
         if (newFilters.searchTerm !== undefined) {
@@ -57,14 +54,6 @@ const CustomerClientPage: React.FC<CustomerClientPageProps> = ({ initialCustomer
                 params.set('searchTerm', newFilters.searchTerm);
             } else {
                 params.delete('searchTerm');
-            }
-        }
-        if (newFilters.status !== undefined) {
-            updatedStatus = newFilters.status;
-            if (newFilters.status && newFilters.status !== 'All') {
-                params.set('status', newFilters.status);
-            } else {
-                params.delete('status');
             }
         }
         if (newFilters.address !== undefined) {
@@ -79,10 +68,9 @@ const CustomerClientPage: React.FC<CustomerClientPageProps> = ({ initialCustomer
         // Removed router.push to stop changing the URL pathname during search
         fetchCustomers({
             searchTerm: updatedSearchTerm,
-            status: updatedStatus,
             address: updatedAddress,
         });
-    }, [fetchCustomers, currentSearchTerm, currentStatusFilter, currentAddressFilter]);
+    }, [fetchCustomers, currentSearchTerm, currentAddressFilter]);
     
     // Effect to close popover on outside click.
     useEffect(() => {
@@ -101,7 +89,7 @@ const CustomerClientPage: React.FC<CustomerClientPageProps> = ({ initialCustomer
         setCustomerSearchResults(initialCustomers);
     }, [initialCustomers]);
 
-    const activeFilterCount = [currentSearchTerm, currentStatusFilter, currentAddressFilter].filter(Boolean).length;
+    const activeFilterCount = [currentSearchTerm, currentAddressFilter].filter(Boolean).length;
 
     return (
         <div className="p-4 sm:p-6 lg:p-8">
@@ -132,19 +120,6 @@ const CustomerClientPage: React.FC<CustomerClientPageProps> = ({ initialCustomer
                             onChange={(e) => handleFilterChange({ searchTerm: e.target.value })}
                             className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg"
                         />
-                    </div>
-                    <div className="relative">
-                        <select
-                            value={currentStatusFilter}
-                            onChange={(e) => handleFilterChange({ status: e.target.value })}
-                            className="w-full sm:w-auto appearance-none bg-white pl-4 pr-10 py-3 border border-gray-300 rounded-lg"
-                        >
-                            <option value="All">All Status</option>
-                            <option value="VIP">VIP</option>
-                            <option value="Active">Active</option>
-                            <option value="New">New</option>
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
                     </div>
                     <div className="relative" ref={filterPopoverRef}>
                         <button

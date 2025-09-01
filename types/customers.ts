@@ -4,7 +4,6 @@ export interface CustomerSearchResult {
   company?: string;
   address: string;
   avatar?: string;
-  status: 'VIP' | 'Active' | 'New';
 }
 
 export interface Customer {
@@ -15,9 +14,9 @@ export interface Customer {
   phone: string;
   address: string;
   avatar: string;
-  status: 'VIP' | 'Active' | 'New';
-  dateadded: string;
-  totalorders: number;
-  totalspend: number;
-  lastorder: string;
+  customerType: 'b2b' | 'b2c' | 'architecture' | 'interior design';
+  dateAdded: string;
+  totalOrders: number;
+  totalSpend: number;
+  lastOrder: string;
 }

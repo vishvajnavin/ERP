@@ -1,20 +1,20 @@
 import { useState, useEffect } from "react";
 import { OrderItem } from "./order-page-client";
-import { Product } from "@/types/products";
-import { searchProducts } from "@/actions/search-products"; // Import the server action
+import { Product, ProductWithFiles } from "@/types/products";
+import { searchProducts } from "@/actions/search-products";
 import { SofaDetailsForm } from "./sofa-details-form";
 import { BedDetailsForm } from "./bed-details-form";
 import { Search, Plus, Minus, Sofa, Bed, Trash2 } from 'lucide-react';
+import { ImageUploadDisplayField } from "./image-upload-display-field";
 
 type ProductEntryFormProps = {
     item: OrderItem;
     index: number;
     onItemChange: <K extends keyof OrderItem>(index: number, field: K, value: OrderItem[K]) => void;
-    onDetailsChange: <K extends keyof Product>(index: number, detailField: K, value: Product[K]) => void;
-    onProductSelect: (index: number, product: { id: string; type: 'Sofa' | 'Bed'; model_name: string; }) => void;
+    onDetailsChange: <K extends keyof ProductWithFiles>(index: number, detailField: K, value: ProductWithFiles[K]) => void;
+    onProductSelect: (index: number, product: Product) => void;
     onRemove: (index: number) => void;
     isOnlyItem: boolean;
-    // REMOVED: sofaModels and bedModels are no longer needed
 };
 
 export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, onProductSelect, onRemove, isOnlyItem }: ProductEntryFormProps) => {
@@ -37,7 +37,7 @@ export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, o
             const results = await searchProducts(search, item.type.toLowerCase() as 'sofa' | 'bed');
             setSearchResults(results);
             setIsApiSearching(false);
-        }, 300); // 300ms debounce
+        }, 300); 
 
         return () => {
             clearTimeout(handler);
@@ -66,12 +66,10 @@ export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, o
     }, [item.details.model_name, item.isCustom, item.type, item.id, index, onItemChange]);
 
 
-    // Construct the base name for input fields in this product entry
     const baseName = `products[${index}]`;
 
     return (
         <div className="bg-white p-6 rounded-xl shadow-md relative">
-            {/* Hidden inputs to structure the form data for the server action */}
             <input type="hidden" name={`${baseName}.product_type`} value={item.type.toLowerCase()} />
             <input type="hidden" name={`${baseName}.is_existing_model`} value={String(!!item.id)} />
             <input type="hidden" name={`${baseName}.is_customization`} value={String(item.isCustom)} />
@@ -97,7 +95,6 @@ export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, o
                         onChange={e => {
                             const newSearch = e.target.value;
                             setSearch(newSearch);
-                            // If user starts typing, it's a new search, so clear existing selection
                             if (item.id) {
                                 onItemChange(index, 'id', null);
                             }
@@ -113,12 +110,15 @@ export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, o
                                 <div className="p-3 text-gray-500">Searching...</div>
                             ) : searchResults.length > 0 ? (
                                 searchResults.map(p => (
-                                    <div key={p.id} onClick={() => {
-                                            onProductSelect(index, { id: p.id.toString(), model_name: p.model_name ?? '', type: item.type });
+                                    <div
+                                        key={p.id}
+                                        onMouseDown={() => {
+                                            onProductSelect(index, p);
                                             setSearch(p.model_name ?? '');
                                             setIsSearching(false);
                                         }}
-                                        className="p-3 hover:bg-red-50 cursor-pointer">
+                                        className="p-3 hover:bg-red-50 cursor-pointer"
+                                    >
                                         <span>{p.model_name}</span>
                                         <span className="text-xs text-gray-500 ml-2">(ID: {p.id})</span>
                                         {p.customization && <span className="text-xs text-red-500 ml-2">(Customized)</span>}
@@ -131,19 +131,41 @@ export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, o
                     )}
                 </div>
             </div>
-            <div className={`p-4 border-t-2 ${item.isCustom ? 'border-red-200' : 'border-gray-200'} transition`}>
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-lg text-gray-700">Product Details</h3>
-                    <div className="flex items-center gap-2">
-                        <span className={`font-semibold ${item.isCustom ? 'text-red-600' : 'text-gray-500'}`}>Customize</span>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" checked={item.isCustom} onChange={e => onItemChange(index, 'isCustom', e.target.checked)} className="sr-only peer" />
-                            <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-red-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
-                        </label>
+            <div>
+                <div className="w-full">
+                    <div className={`p-4 border-t-2 ${item.isCustom ? 'border-red-200' : 'border-gray-200'} transition`}>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-lg text-gray-700">Product Details</h3>
+                            <div className="flex items-center gap-2">
+                                <span className={`font-semibold ${item.isCustom ? 'text-red-600' : 'text-gray-500'}`}>Customize</span>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked={item.isCustom} onChange={e => onItemChange(index, 'isCustom', e.target.checked)} className="sr-only peer" />
+                                    <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-red-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                        {item.type === 'Sofa' && <SofaDetailsForm baseName={baseName} index={index} product={item.details} nameError={nameError} handleProductChange={onDetailsChange} disabled={!item.isCustom} />}
+                        {item.type === 'Bed' && <BedDetailsForm baseName={baseName} index={index} product={item.details} nameError={nameError} handleProductChange={onDetailsChange} disabled={!item.isCustom} />}
                     </div>
                 </div>
-                {item.type === 'Sofa' && <SofaDetailsForm baseName={baseName} index={index} product={item.details} nameError={nameError} handleProductChange={onDetailsChange} disabled={!item.isCustom} />}
-                {item.type === 'Bed' && <BedDetailsForm baseName={baseName} index={index} product={item.details} nameError={nameError} handleProductChange={onDetailsChange} disabled={!item.isCustom} />}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t">
+                <ImageUploadDisplayField
+                    label="Reference Image"
+                    name={`${baseName}.reference_image_url`}
+                    dbImageUrl={typeof item.details.reference_image_url === 'string' ? item.details.reference_image_url : undefined}
+                    file={item.details.reference_image_url instanceof File ? item.details.reference_image_url : undefined}
+                    onFileChange={(file) => onDetailsChange(index, 'reference_image_url', file)}
+                    disabled={!item.isCustom}
+                />
+                <ImageUploadDisplayField
+                    label="Measurement Image"
+                    name={`${baseName}.measurement_drawing_url`}
+                    dbImageUrl={typeof item.details.measurement_drawing_url === 'string' ? item.details.measurement_drawing_url : undefined}
+                    file={item.details.measurement_drawing_url instanceof File ? item.details.measurement_drawing_url : undefined}
+                    onFileChange={(file) => onDetailsChange(index, 'measurement_drawing_url', file)}
+                    disabled={!item.isCustom}
+                />
             </div>
             <div className="flex justify-end items-center mt-4 pt-4 border-t">
                 <div className="flex items-center gap-8">

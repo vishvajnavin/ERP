@@ -11,6 +11,8 @@ interface OrderDetailFromRPC {
   priority: number;
   customer_name: string;
   product_model_name: string;
+  product_id: number;
+  product_type: 'sofa' | 'bed';
   total_count: number;
 }
 
@@ -29,7 +31,7 @@ export async function searchOrderItems(
   const offset = (page - 1) * limit;
 
   // Call the new, powerful database function with all necessary parameters
-  const { data, error } = await supabase.rpc('search_and_paginate_orders', {
+  const { data, error } = await supabase.rpc('get_paginated_orders', {
     p_search_term: query, // Pass query directly, which can now be null
     p_limit: limit,
     p_offset: offset,
@@ -51,7 +53,7 @@ export async function searchOrderItems(
 
   // The total count is returned with every row, so we can just grab it from the first.
   const totalCount = typedData[0]?.total_count || 0;
-
+  console.log(typedData)
   // Map the paginated data from the database to the required 'Order' type
   const orders = typedData.map((item) => {
     return {
@@ -61,8 +63,8 @@ export async function searchOrderItems(
       dueDate: item.due_date,
       stage: item.production_stage as Stage,
       priority: Number(item.priority) as Priority,
-      productId: 0,
-      productType: "Sofa" as const,
+      productId: item.product_id,
+      productType: item.product_type,
     };
   });
 

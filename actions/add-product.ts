@@ -13,6 +13,13 @@ const getNumberOrNull = (value: FormDataEntryValue | null) => {
     return isNaN(num) ? null : num;
 }
 
+const getNumberOrZero = (value: FormDataEntryValue | null) => {
+    const str = getNullIfEmpty(value);
+    if (str === null) return 0;
+    const num = Number(str);
+    return isNaN(num) ? 0 : num;
+};
+
 export async function addProductAction(formData: FormData) {
   const supabase = await createClient()
 
@@ -35,17 +42,42 @@ export async function addProductAction(formData: FormData) {
   }
 
   try {
+    const referenceImageFile = formData.get('reference_image_url') as File;
+    const measurementDrawingFile = formData.get('measurement_drawing_url') as File;
+    let referenceImageUrl = null;
+    let measurementDrawingUrl = null;
+
+    if (referenceImageFile && referenceImageFile.size > 0) {
+      const referenceFileName = `${Date.now()}-${referenceImageFile.name}`;
+      const referenceFilePath = `reference/${referenceFileName}`;
+      const { data: refData, error: refError } = await supabase.storage
+        .from('order-images')
+        .upload(referenceFilePath, referenceImageFile);
+      if (refError) throw new Error(`Failed to upload reference image: ${refError.message}`);
+      referenceImageUrl = refData.path;
+    }
+
+    if (measurementDrawingFile && measurementDrawingFile.size > 0) {
+      const measurementFileName = `${Date.now()}-${measurementDrawingFile.name}`;
+      const measurementFilePath = `measurement/${measurementFileName}`;
+      const { data: measData, error: measError } = await supabase.storage
+        .from('order-images')
+        .upload(measurementFilePath, measurementDrawingFile);
+      if (measError) throw new Error(`Failed to upload measurement drawing: ${measError.message}`);
+      measurementDrawingUrl = measData.path;
+    }
+
     if (productType === 'sofa') {
       const sofaData = {
         // General
         model_name: modelName,
         description: getNullIfEmpty(formData.get('description')),
-        reference_image_url: getNullIfEmpty(formData.get('reference_image_url')),
-        measurement_drawing_url: getNullIfEmpty(formData.get('measurement_drawing_url')),
+        reference_image_url: referenceImageUrl,
+        measurement_drawing_url: measurementDrawingUrl,
         // Sofa Configuration
         model_family_configuration: getNullIfEmpty(formData.get('model_family_configuration')),
-        "2_seater_length": getNumberOrNull(formData.get('2_seater_length')),
-        "1_seater_length": getNumberOrNull(formData.get('1_seater_length')),
+        "2_seater_length": getNumberOrZero(formData.get('2_seater_length')),
+        "1_seater_length": getNumberOrZero(formData.get('1_seater_length')),
         // Mechanism
         recliner_mechanism_mode: getNullIfEmpty(formData.get('recliner_mechanism_mode')),
         recliner_mechanism_flip: getNullIfEmpty(formData.get('recliner_mechanism_flip')),
@@ -89,8 +121,8 @@ export async function addProductAction(formData: FormData) {
       const bedData = {
         model_name: formData.get('model_name'),
         description: getNullIfEmpty(formData.get('description')),
-        reference_image_url: getNullIfEmpty(formData.get('reference_image_url')),
-        measurement_drawing_url: getNullIfEmpty(formData.get('measurement_drawing_url')),
+        reference_image_url: referenceImageUrl,
+        measurement_drawing_url: measurementDrawingUrl,
         bed_size: getNullIfEmpty(formData.get('bed_size')),
         customized_mattress_size: getNullIfEmpty(formData.get('customized_mattress_size')),
         headboard_type: getNullIfEmpty(formData.get('headboard_type')),

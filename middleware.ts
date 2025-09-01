@@ -36,9 +36,42 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  // You can now add your route protection logic here.
-  if (!session && req.nextUrl.pathname !== "/login") {
-    return NextResponse.redirect(new URL("/login", req.url));
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { pathname } = req.nextUrl;
+
+  if (!user && pathname !== '/login') {
+    return NextResponse.redirect(new URL('/login', req.url));
+  }
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    const userRole = profile?.role;
+
+    const rolePages: { [key: string]: string[] } = {
+      'production manager': ['/view-orders'],
+      'sales coordinator': ['/customers', '/products', '/place-order'],
+    };
+
+    const allowedPages = rolePages[userRole] || [];
+    const isPageAllowed =
+      userRole === 'admin' ||
+      userRole === 'manager' ||
+      allowedPages.some((page) => pathname.startsWith(page)) ||
+      pathname === '/' ||
+      pathname === '/login';
+
+    if (!isPageAllowed) {
+      const defaultPage = userRole === 'production manager' ? '/view-orders' : '/dashboard';
+      return NextResponse.redirect(new URL(defaultPage, req.url));
+    }
   }
 
   return res;

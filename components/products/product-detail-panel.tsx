@@ -22,6 +22,29 @@ const DetailItem = ({ Icon, label, value }: { Icon: React.ElementType, label: st
   );
 };
 
+const ImagePreview = ({ label, imageUrl }: { label: string; imageUrl: string | File | null | undefined }) => {
+    if (!imageUrl) return null;
+
+    const getImageUrl = () => {
+        if (typeof imageUrl === 'string') {
+            return imageUrl;
+        }
+        if (imageUrl instanceof File) {
+            return URL.createObjectURL(imageUrl);
+        }
+        return '/placeholder.png';
+    };
+
+    return (
+        <div className="space-y-2">
+            <span className="text-sm text-gray-500">{label}</span>
+            <div className="relative w-full h-48 rounded-lg overflow-hidden">
+                <Image src={getImageUrl()} alt={label} layout="fill" objectFit="contain" className="bg-gray-100" />
+            </div>
+        </div>
+    );
+};
+
 export default function ProductDetailPanel({ product, onClose }: ProductDetailPanelProps) {
   if (!product) return null;
 
@@ -31,7 +54,6 @@ export default function ProductDetailPanel({ product, onClose }: ProductDetailPa
     <div className="bg-white rounded-xl shadow-lg p-6 h-full flex flex-col">
         <div className="flex justify-between items-center mb-6">
             <div className="flex items-center">
-                <Image width={64} height={64} className="h-16 w-16 rounded-lg object-cover bg-gray-100" src={product.reference_image_url || '/placeholder.png'} alt={`${product.model_name}'s image`} />
                 <div className="ml-4">
                     <h3 className="text-2xl font-bold text-gray-900">{product.model_name}</h3>
                     <p className="text-gray-500 capitalize">{productType}</p>
@@ -47,6 +69,8 @@ export default function ProductDetailPanel({ product, onClose }: ProductDetailPa
                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">General Information</h4>
                 <div className="space-y-4">
                     <DetailItem Icon={Package} label="Description" value={product.description} />
+                    <ImagePreview label="Reference Image" imageUrl={product.reference_image_url} />
+                    <ImagePreview label="Measurement Drawing" imageUrl={product.measurement_drawing_url} />
                 </div>
             </div>
 

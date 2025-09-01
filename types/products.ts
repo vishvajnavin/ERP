@@ -4,16 +4,17 @@
 export type ProductType = 'sofa' | 'bed'; // Add other types if needed
 
 export interface Product {
-    id: string;
+    id: number;
     created_at: string;
     product_type?: 'sofa' | 'bed';
+    customization?: boolean;
     // For new sofa
     model_name?: string;
     model_family_configuration?: string;
     "2_seater_length"?: number;
     "1_seater_length"?: number;
-    reference_image_url?: string;
-    measurement_drawing_url?: string;
+    reference_image_url?: string | null;
+    measurement_drawing_url?: string | null;
     description?: string;
     recliner_mechanism_mode?: string;
     recliner_mechanism_flip?: string;
@@ -51,3 +52,8 @@ export interface Product {
     storage_option?: string;
     bed_portion?: string;
   }
+
+export interface ProductWithFiles extends Omit<Product, 'reference_image_url' | 'measurement_drawing_url'> {
+  reference_image_url?: string | File | null;
+  measurement_drawing_url?: string | File | null;
+}

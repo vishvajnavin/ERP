@@ -15,7 +15,7 @@ export interface Order {
   stage: string;
   priority: Priority;
   productId: number;
-  productType: 'Sofa' | 'Bed';
+  productType: 'sofa' | 'bed';
 }
 
 // --- CHECKLIST TYPES ---
