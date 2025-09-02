@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ExportButton } from '../export-button';
 import { icons } from './icons';
 import { STAGE_CONFIG, PRIORITY_CONFIG } from './data';
 import { View, Stage, Priority } from './types';
@@ -96,94 +97,110 @@ const Header: React.FC<HeaderProps> = ({
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <button onClick={() => setShowFilters(!showFilters)} className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-800 hover:bg-gray-200">
-              <icons.filter /> Filters
-              {isFilterActive && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>}
-            </button>
-            <AnimatePresence>
-              {showFilters && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute top-full right-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-xl p-4 z-50"
-                >
-                  <h4 className="font-semibold mb-2 text-black">Stages</h4>
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    {Object.entries(STAGE_CONFIG).map(([key, { label }]) => (
-                      <label key={key} className="flex items-center gap-2 text-sm cursor-pointer text-black">
-                        <input
-                          type="checkbox"
-                          checked={!!activeFilters.stage[key as Stage]}
-                          onChange={() => toggleFilter('stage', key)}
-                          className="h-4 w-4 rounded bg-gray-200 border-gray-300 text-red-500 focus:ring-red-500"
-                        />
-                        {label}
-                      </label>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <button onClick={() => setShowFilters(!showFilters)} className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-800 hover:bg-gray-200">
+                <icons.filter /> Filters
+                {isFilterActive && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>}
+              </button>
+              <AnimatePresence>
+                {showFilters && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute top-full right-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-xl p-4 z-50"
+                  >
+                    <h4 className="font-semibold mb-2 text-black">Stages</h4>
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      {Object.entries(STAGE_CONFIG).map(([key, { label }]) => (
+                        <label key={key} className="flex items-center gap-2 text-sm cursor-pointer text-black">
+                          <input
+                            type="checkbox"
+                            checked={!!activeFilters.stage[key as Stage]}
+                            onChange={() => toggleFilter('stage', key)}
+                            className="h-4 w-4 rounded bg-gray-200 border-gray-300 text-red-500 focus:ring-red-500"
+                          />
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+                    <h4 className="font-semibold mb-2 text-black">Priority</h4>
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      {Object.entries(PRIORITY_CONFIG).map(([key, { label }]) => (
+                        <label key={key} className="flex items-center gap-2 text-sm cursor-pointer text-black">
+                          <input
+                            type="checkbox"
+                            checked={!!activeFilters.priority[key as unknown as Priority]}
+                            onChange={() => toggleFilter('priority', key)}
+                            className="h-4 w-4 rounded bg-gray-200 border-gray-300 text-red-500 focus:ring-red-500"
+                          />
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+                    <label className="flex items-center gap-2 text-sm cursor-pointer text-black">
+                      <input
+                        type="checkbox"
+                        checked={!!activeFilters.overdue.true}
+                        onChange={() => toggleFilter('overdue', 'true')}
+                        className="h-4 w-4 rounded bg-gray-200 border-gray-300 text-red-500 focus:ring-red-500"
+                      />
+                      Overdue Only
+                    </label>
+                    {isFilterActive && (
+                      <button onClick={clearFilters} className="w-full mt-4 text-sm text-center text-red-500 hover:text-red-600">
+                        Clear Filters
+                      </button>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            <div className="relative">
+              <button onClick={() => setShowSort(!showSort)} className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-800 hover:bg-gray-200">
+                <icons.sort /> Sort
+              </button>
+              <AnimatePresence>
+                {showSort && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl p-2 z-50"
+                  >
+                    {['priority', 'dueDate', 'id'].map(key => (
+                      <button
+                        key={key}
+                        onClick={() => {
+                          setSortConfig({ key, direction: sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc' });
+                          setShowSort(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-gray-100 flex justify-between items-center text-black"
+                      >
+                        <span>{key === 'dueDate' ? 'Due Date' : key === 'id' ? 'Order ID' : 'Priority'}</span>
+                        {sortConfig.key === key && <span className="text-red-500">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
+                      </button>
                     ))}
-                  </div>
-                  <h4 className="font-semibold mb-2 text-black">Priority</h4>
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    {Object.entries(PRIORITY_CONFIG).map(([key, { label }]) => (
-                      <label key={key} className="flex items-center gap-2 text-sm cursor-pointer text-black">
-                        <input
-                          type="checkbox"
-                          checked={!!activeFilters.priority[key as unknown as Priority]}
-                          onChange={() => toggleFilter('priority', key)}
-                          className="h-4 w-4 rounded bg-gray-200 border-gray-300 text-red-500 focus:ring-red-500"
-                        />
-                        {label}
-                      </label>
-                    ))}
-                  </div>
-                  <label className="flex items-center gap-2 text-sm cursor-pointer text-black">
-                    <input
-                      type="checkbox"
-                      checked={!!activeFilters.overdue.true}
-                      onChange={() => toggleFilter('overdue', 'true')}
-                      className="h-4 w-4 rounded bg-gray-200 border-gray-300 text-red-500 focus:ring-red-500"
-                    />
-                    Overdue Only
-                  </label>
-                  {isFilterActive && (
-                    <button onClick={clearFilters} className="w-full mt-4 text-sm text-center text-red-500 hover:text-red-600">
-                      Clear Filters
-                    </button>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
-          <div className="relative">
-            <button onClick={() => setShowSort(!showSort)} className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg text-sm text-gray-800 hover:bg-gray-200">
-              <icons.sort /> Sort
-            </button>
-            <AnimatePresence>
-              {showSort && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl p-2 z-50"
-                >
-                  {['priority', 'dueDate', 'id'].map(key => (
-                    <button
-                      key={key}
-                      onClick={() => {
-                        setSortConfig({ key, direction: sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc' });
-                        setShowSort(false);
-                      }}
-                      className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-gray-100 flex justify-between items-center text-black"
-                    >
-                      <span>{key === 'dueDate' ? 'Due Date' : key === 'id' ? 'Order ID' : 'Priority'}</span>
-                      {sortConfig.key === key && <span className="text-red-500">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
+          <div className="flex items-center gap-2">
+            <ExportButton
+              source="orders"
+              columns={[
+                { key: 'priority', label: 'Priority' },
+                { key: 'order_id', label: 'Order ID' },
+                { key: 'product_name', label: 'Product' },
+                { key: 'product_type', label: 'Product Type' },
+                { key: 'customer_name', label: 'Customer' },
+                { key: 'due_date', label: 'Due Date' },
+                { key: 'stage_name', label: 'Stage' },
+              ]}
+            />
           </div>
         </div>
       </div>

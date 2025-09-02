@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import ProductHeaderActions from "@/components/products/product-header-actions";
+import { ExportButton } from '@/components/export-button';
 import EditProductModal from '@/components/products/edit-product-modal';
 import { Product } from '@/types/products';
 import { SearchBar } from '@/components/products/search-bar';
@@ -61,14 +62,28 @@ export default function ProductsPage() {
       // Create signed URLs for the images
       const productsWithSignedUrls = await Promise.all(
         fetchedProducts.map(async (product) => {
-          let signedReferenceUrl = null;
-          if (product.reference_image_url && typeof product.reference_image_url === 'string') {
-            signedReferenceUrl = await getSignedUrl(product.reference_image_url);
+          let signedReferenceUrl: string | null = null;
+          if (product.reference_image_url && typeof product.reference_image_url === 'string' && product.reference_image_url.trim() !== '') {
+            const { data, error } = await getSignedUrl(product.reference_image_url);
+            if (data?.signedUrl && data.signedUrl.trim() !== '') {
+              signedReferenceUrl = data.signedUrl;
+            } else if (error && typeof error === 'string' && error.includes('Object not found')) {
+              // Suppress "Object not found" error from console, as it's handled gracefully in the UI.
+            } else if (error) {
+              console.error("Error getting signed URL for reference image:", error);
+            }
           }
 
-          let signedMeasurementUrl = null;
-          if (product.measurement_drawing_url && typeof product.measurement_drawing_url === 'string') {
-            signedMeasurementUrl = await getSignedUrl(product.measurement_drawing_url);
+          let signedMeasurementUrl: string | null = null;
+          if (product.measurement_drawing_url && typeof product.measurement_drawing_url === 'string' && product.measurement_drawing_url.trim() !== '') {
+            const { data, error: signedUrlError } = await getSignedUrl(product.measurement_drawing_url); // Renamed error to signedUrlError to avoid conflict
+            if (data?.signedUrl && data.signedUrl.trim() !== '') {
+              signedMeasurementUrl = data.signedUrl;
+            } else if (signedUrlError && typeof signedUrlError === 'string' && signedUrlError.includes('Object not found')) {
+              // Suppress "Object not found" error from console, as it's handled gracefully in the UI.
+            } else if (signedUrlError) {
+              console.error("Error getting signed URL for measurement drawing:", signedUrlError);
+            }
           }
 
           return {
@@ -109,6 +124,17 @@ export default function ProductsPage() {
             filters={filters}
           />
           {productType === 'sofa' && <FilterPopover onFilterChange={handleFilterChange} />}
+          <ExportButton
+            source="products"
+            productType={productType}
+            columns={[
+              { key: 'id', label: 'Product ID' },
+              { key: 'model_name', label: 'Model Name' },
+              { key: 'description', label: 'Description' },
+              { key: 'price', label: 'Price' },
+              { key: 'stock_quantity', label: 'Stock Quantity' },
+            ]}
+          />
           <ProductHeaderActions />
         </div>
       </div>
@@ -139,7 +165,7 @@ export default function ProductsPage() {
             <Card key={`${productType}-${product.id}`}>
               <CardContent className="p-0">
                 <div className="relative h-64 bg-gray-100 ">
-                  {product.reference_image_url ? (
+                  {product.reference_image_url && typeof product.reference_image_url === 'string' && product.reference_image_url.trim() !== '' ? (
                     <Image
                       src={product.reference_image_url}
                       alt={product.model_name || 'Product Image'}

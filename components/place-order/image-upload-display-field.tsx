@@ -3,8 +3,6 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { UploadCloud, X } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { getSignedUrl } from "@/actions/get-signed-url";
-
 export const ImageUploadDisplayField = ({
     label,
     name,
@@ -25,28 +23,15 @@ export const ImageUploadDisplayField = ({
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        const fetchAndSetPreview = async () => {
-            if (file) {
-                const objectUrl = URL.createObjectURL(file);
-                setPreview(objectUrl);
-                return () => URL.revokeObjectURL(objectUrl);
-            } else if (dbImageUrl) {
-                setIsLoading(true);
-                try {
-                    const url = await getSignedUrl(dbImageUrl);
-                    setPreview(url);
-                } catch (error) {
-                    console.error("Failed to get signed URL", error);
-                    setPreview(null);
-                } finally {
-                    setIsLoading(false);
-                }
-            } else {
-                setPreview(null);
-            }
-        };
-
-        fetchAndSetPreview();
+        if (file) {
+            const objectUrl = URL.createObjectURL(file);
+            setPreview(objectUrl);
+            return () => URL.revokeObjectURL(objectUrl);
+        } else if (dbImageUrl) {
+            setPreview(dbImageUrl);
+        } else {
+            setPreview(null);
+        }
     }, [dbImageUrl, file]);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {

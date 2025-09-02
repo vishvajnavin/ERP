@@ -116,8 +116,8 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customerId, o
                 <div>
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Financials</h4>
                     <div className="grid grid-cols-2 gap-4">
-                        <DetailItem Icon={DollarSign} label="Total Spend" value={`$${(customer.totalspend ?? 0).toLocaleString()}`} />
-                        <DetailItem Icon={ShoppingCart} label="Total Orders" value={customer.totalorders} />
+                        <DetailItem Icon={DollarSign} label="Total Spend" value={`$${(customer.totalSpend ?? 0).toLocaleString()}`} />
+                        <DetailItem Icon={ShoppingCart} label="Total Orders" value={customer.totalOrders} />
                     </div>
                 </div>
 
@@ -125,8 +125,8 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customerId, o
                 <div>
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">History</h4>
                     <div className="space-y-4"> 
-                        <DetailItem Icon={Calendar} label="Customer Since" value={formatDate(customer.dateadded)} />
-                        <DetailItem Icon={Clock} label="Last Order" value={formatDate(customer.lastorder)} />
+                        <DetailItem Icon={Calendar} label="Customer Since" value={formatDate(customer.dateAdded)} />
+                        <DetailItem Icon={Clock} label="Last Order" value={formatDate(customer.lastOrder)} />
                     </div>
                 </div>
             </div>

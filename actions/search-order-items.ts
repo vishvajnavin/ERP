@@ -53,7 +53,6 @@ export async function searchOrderItems(
 
   // The total count is returned with every row, so we can just grab it from the first.
   const totalCount = typedData[0]?.total_count || 0;
-  console.log(typedData)
   // Map the paginated data from the database to the required 'Order' type
   const orders = typedData.map((item) => {
     return {

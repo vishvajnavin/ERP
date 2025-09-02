@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Order, Stage, Priority, CheckItem } from "./types";
+import { Product } from "@/types/products";
 import { STAGE_CONFIG, PRIORITY_CONFIG } from "./data";
 import { icons } from "./icons";
 import getProductDetails from "@/actions/get-product-details";
@@ -28,8 +29,7 @@ const OrderModal: React.FC<OrderModalProps> = ({
   onClose,
   onPriorityChange,
 }) => {
-  const [productDetails, setProductDetails] =
-    useState<Record<string, unknown> | null>(null);
+  const [productDetails, setProductDetails] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [productError, setProductError] = useState<string | null>(null);
   const [showProductDetails, setShowProductDetails] = useState(false); // New state to control visibility
@@ -223,82 +223,84 @@ const OrderModal: React.FC<OrderModalProps> = ({
                           <ProductDetails
                             details={productDetails}
                             productType={order.productType}
+                            orderItemId={Number(order.id)}
+                            onProductUpdate={(updatedProduct) => setProductDetails(updatedProduct)}
                           />
                         </div>
                       )}
                       {productError && (
                         <div className="col-span-2 mt-4 text-red-500">
-                          {productError}
+                              {productError}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-black mb-2">
-                      Status & Priority
-                    </h3>
-                    <div className="bg-gray-100/50 p-4 rounded-lg space-y-4">
-                      <div>
-                        <span className="font-semibold text-gray-600 block">
-                          Due Date
-                        </span>
-                        <p
-                          className={`${
-                            new Date(order.dueDate) < new Date()
-                              ? "text-red-600"
-                              : ""
-                          }`}
-                        >
-                          {new Date(order.dueDate).toLocaleDateString()}
-                        </p>
                       </div>
-                      <div>
-                        <label className="font-semibold text-gray-600 block mb-1">
-                          Priority
-                        </label>
-                        <select
-                          value={order.priority}
-                          onChange={(e) =>
-                            onPriorityChange(
-                              order.id,
-                              Number(e.target.value) as Priority
-                            )
-                          }
-                          className="w-full bg-gray-200 border border-gray-300 rounded-md p-2 focus:ring-red-500 focus:border-red-500"
-                        >
-                          {Object.keys(PRIORITY_CONFIG).map((p) => (
-                            <option key={p} value={p}>
-                              {p}
-                            </option>
-                          ))}
-                        </select>
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold text-black mb-2">
+                          Status & Priority
+                        </h3>
+                        <div className="bg-gray-100/50 p-4 rounded-lg space-y-4">
+                          <div>
+                            <span className="font-semibold text-gray-600 block">
+                              Due Date
+                            </span>
+                            <p
+                              className={`${
+                                new Date(order.dueDate) < new Date()
+                                  ? "text-red-600"
+                                  : ""
+                              }`}
+                            >
+                              {new Date(order.dueDate).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div>
+                            <label className="font-semibold text-gray-600 block mb-1">
+                              Priority
+                            </label>
+                            <select
+                              value={order.priority}
+                              onChange={(e) =>
+                                onPriorityChange(
+                                  order.id,
+                                  Number(e.target.value) as Priority
+                                )
+                              }
+                              className="w-full bg-gray-200 border border-gray-300 rounded-md p-2 focus:ring-red-500 focus:border-red-500"
+                            >
+                              {Object.keys(PRIORITY_CONFIG).map((p) => (
+                                <option key={p} value={p}>
+                                  {p}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
-        <div className="p-6 border-t border-gray-200 bg-gray-50/30 rounded-b-2xl">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center">
-              {/* Stage progress bar remains the same */}
+            <div className="p-6 border-t border-gray-200 bg-gray-50/30 rounded-b-2xl">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  {/* Stage progress bar remains the same */}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setView('flow')}
+                    className="px-4 py-2 rounded-lg text-sm font-medium text-red-600 bg-red-100 hover:bg-red-200 transition-colors"
+                  >
+                    View Flow
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setView('flow')}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-red-600 bg-red-100 hover:bg-red-200 transition-colors"
-              >
-                View Flow
-              </button>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-};
+          </motion.div>
+        </motion.div>
+      );
+    };
 
 export default OrderModal;

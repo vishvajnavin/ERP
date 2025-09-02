@@ -7,6 +7,7 @@ import { addDays, format } from "date-fns";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { ExportButton } from "../export-button";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
@@ -80,6 +81,18 @@ export default function FiltersBar({ onApplyFilters, count }: FiltersBarProps) {
       </div>
 
       {/* Main Filters Popover */}
+      <ExportButton
+        source="order-history"
+        columns={[
+          { key: 'order_id', label: 'Order ID' },
+          { key: 'product_name', label: 'Product Name' },
+          { key: 'customer_name', label: 'Customer' },
+          { key: 'order_date', label: 'Order Date' },
+          { key: 'due_date', label: 'Due Date' },
+          { key: 'delivery_date', label: 'Delivery Date' },
+          { key: 'status', label: 'Status' },
+        ]}
+      />
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="outline" className="flex items-center gap-2">
