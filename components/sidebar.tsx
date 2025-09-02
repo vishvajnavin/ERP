@@ -2,7 +2,6 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Users, Package, ShoppingCart, ClipboardList, History, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useUser } from '@/context/user-context';
 
@@ -17,6 +16,15 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
   const user = userContext?.user;
   const signOut = userContext?.signOut;
 
+  const getInitials = (name?: string) => {
+    if (!name || name.trim() === '') return 'U';
+    const names = name.trim().split(/\s+/);
+    if (names.length > 1 && names[1]) {
+      return `${names[0][0]}${names[1][0]}`.toUpperCase();
+    }
+    return (names[0][0] || '').toUpperCase();
+  };
+
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, href: "/dashboard", roles: ['admin', 'manager'] },
     { name: 'Customers', icon: Users, href: "/customers", roles: ['admin', 'manager', 'sales coordinator'] },
@@ -24,9 +32,14 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
     { name: 'Place Order', icon: ShoppingCart, href: "/place-order", roles: ['admin', 'manager', 'sales coordinator'] },
     { name: 'View Orders', icon: ClipboardList, href: "/view-orders", roles: ['admin', 'manager', 'production manager'] },
     { name: 'Order History', icon: History, href: "/order-history", roles: ['admin', 'manager'] },
+    { name: 'Employees', icon: Users, href: "/employees", roles: ['admin'] },
   ];
 
   const filteredMenuItems = menuItems.filter(item => user?.role && item.roles.includes(user.role));
+
+  if (filteredMenuItems.length < 1) {
+    return null;
+  }
 
   return (
     <aside
@@ -87,20 +100,16 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
       {user && (
         <div className="p-4 border-t border-gray-800">
           <div className={`flex items-center ${isCollapsed ? 'justify-center' : ''}`}>
-            <Image
-              src="https://placehold.co/40x40/ffffff/111827?text=U"
-              alt="User Avatar"
-              width={40}
-              height={40}
-              className="h-10 w-10 rounded-full object-cover"
-            />
+            <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gray-200 flex items-center justify-center text-gray-800 text-lg p-1">
+              {getInitials(user?.full_name)}
+            </div>
             <div
               className={`ml-4 transition-all duration-200 ease-in-out ${
                 isCollapsed ? 'opacity-0 invisible w-0' : 'opacity-100 visible w-auto'
               }`}
             >
               <p className="font-semibold text-white whitespace-nowrap">{user?.full_name ?? 'User'}</p>
-              <p className="text-sm text-gray-400 whitespace-nowrap">{user?.email}</p>
+              <p className="text-sm text-gray-400 whitespace-nowrap truncate">{user?.email}</p>
             </div>
           </div>
           <button

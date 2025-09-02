@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useState, useEffect, useContext, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { UserContextType, UserProfile } from '@/types/auth';
 import { Session } from '@supabase/supabase-js';
@@ -9,6 +10,7 @@ export const UserContext = createContext<UserContextType | null>(null);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const supabase = createClient();
+  const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,6 +62,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     loading,
     signOut: async () => {
       await supabase.auth.signOut();
+      router.push('/login');
     },
   };
 

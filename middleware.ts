@@ -61,12 +61,18 @@ export async function middleware(req: NextRequest) {
     };
 
     const allowedPages = rolePages[userRole] || [];
-    const isPageAllowed =
-      userRole === 'admin' ||
-      userRole === 'manager' ||
-      allowedPages.some((page) => pathname.startsWith(page)) ||
-      pathname === '/' ||
-      pathname === '/login';
+    let isPageAllowed = false;
+
+    if (pathname === '/employees') {
+      isPageAllowed = userRole === 'admin';
+    } else {
+      isPageAllowed =
+        userRole === 'admin' ||
+        userRole === 'manager' ||
+        allowedPages.some((page) => pathname.startsWith(page)) ||
+        pathname === '/' ||
+        pathname === '/login';
+    }
 
     if (!isPageAllowed) {
       const defaultPage = userRole === 'production manager' ? '/view-orders' : '/dashboard';
