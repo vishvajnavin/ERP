@@ -1,20 +1,17 @@
-"use server";
+'use server';
 
-import { createClient } from "@/utils/supabase/server";
-import { Product } from "@/types/products";
-import { getSignedUrls } from "./get-signed-urls";
+import { createClient } from '@/utils/supabase/server';
+import { Product } from '@/types/products';
+import { getSignedUrls } from './get-signed-urls';
 
-export async function searchProducts(
-  query: string,
-  productType: "sofa" | "bed",
-  filters?: Record<string, string>
+export async function getProducts(
+  productType: 'sofa' | 'bed',
+  filters: Record<string, string>
 ): Promise<Product[]> {
   const supabase = await createClient();
-  let queryBuilder = supabase.from(productType === 'sofa' ? 'sofa_products' : 'bed_products').select('*');
+  const tableName = productType === 'sofa' ? 'sofa_products' : 'bed_products';
 
-  if (query.trim()) {
-    queryBuilder = queryBuilder.ilike('model_name', `%${query}%`);
-  }
+  let queryBuilder = supabase.from(tableName).select('*');
 
   if (filters) {
     for (const [key, value] of Object.entries(filters)) {
@@ -24,10 +21,12 @@ export async function searchProducts(
     }
   }
 
-  const { data: products, error } = await queryBuilder;
+  const { data: products, error } = await queryBuilder
+    .order('created_at', { ascending: false })
+    .limit(10);
 
   if (error) {
-    console.error("Error searching products:", error);
+    console.error(`Error fetching ${productType}s:`, error);
     return [];
   }
 

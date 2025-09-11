@@ -1,7 +1,7 @@
 // components/products/edit-product-form.tsx
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { Product } from '@/types/products';
 import { updateProductAction } from '@/actions/update-product';
 import { InputField, ToggleGroupField, ToggleOption } from '@/components/products/fields';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-
+import { ImageUploadDisplayField } from '../place-order/image-upload-display-field';
 // Helper to create options for ToggleGroupField from an array of values
 const createToggleOptions = <T extends string | boolean>(options: T[], labels?: string[]): ToggleOption<T>[] => {
   return options.map((opt, index) => ({
@@ -64,6 +64,8 @@ export default function EditProductForm({ product, productType, onFormSubmit }: 
   const [isPending, startTransition] = useTransition();
   // State to manage all controlled components
   const [formState, setFormState] = useState<Product>(product);
+  const [referenceImageFile, setReferenceImageFile] = useState<File | null>(null);
+  const [measurementImageFile, setMeasurementImageFile] = useState<File | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -106,8 +108,22 @@ export default function EditProductForm({ product, productType, onFormSubmit }: 
           <Label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Description</Label>
           <Textarea id="description" name="description" value={formState.description || ''} onChange={handleInputChange} placeholder="A brief description of the product" className="h-24"/>
         </div>
-        <InputField name="reference_image_url" label="Reference Image URL" value={formState.reference_image_url || ''} onChange={handleInputChange} placeholder="https://example.com/image.jpg"/>
-        <InputField name="measurement_drawing_url" label="Measurement Drawing URL" value={formState.measurement_drawing_url || ''} onChange={handleInputChange} placeholder="https://example.com/drawing.jpg"/>
+        <ImageUploadDisplayField
+          label="Reference Image"
+          name="reference_image_file"
+          dbImageUrl={formState.reference_image_url}
+          file={referenceImageFile}
+          onFileChange={setReferenceImageFile}
+          disabled={isPending}
+        />
+        <ImageUploadDisplayField
+          label="Measurement Drawing"
+          name="measurement_image_file"
+          dbImageUrl={formState.measurement_drawing_url}
+          file={measurementImageFile}
+          onFileChange={setMeasurementImageFile}
+          disabled={isPending}
+        />
       </div>
       
       {/* --- Bed Specific Fields --- */}

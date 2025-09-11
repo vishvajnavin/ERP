@@ -2,8 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { createClient } from '@/utils/supabase/client'; // Correct: Use the client-side createClient
-import { getSignedUrl } from '@/actions/get-signed-url';
+import { getProducts } from '@/actions/get-products';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -41,61 +40,15 @@ export default function ProductsPage() {
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
-    const supabase = createClient();
-    let queryBuilder = supabase.from(productType === 'sofa' ? 'sofa_products' : 'bed_products').select('*');
-
-    if (filters) {
-        for (const [key, value] of Object.entries(filters)) {
-            if (value && value !== 'all') {
-                queryBuilder = queryBuilder.eq(key, value);
-            }
-        }
-    }
-    
-    const { data, error } = await queryBuilder.order('created_at', { ascending: false }).limit(10);
-
-    if (error) {
-      console.error(`Error fetching ${productType}s:`, error);
+    try {
+      const products = await getProducts(productType, filters);
+      setDisplayedProducts(products);
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
       setDisplayedProducts([]);
-    } else {
-      const fetchedProducts = data as Product[];
-      // Create signed URLs for the images
-      const productsWithSignedUrls = await Promise.all(
-        fetchedProducts.map(async (product) => {
-          let signedReferenceUrl: string | null = null;
-          if (product.reference_image_url && typeof product.reference_image_url === 'string' && product.reference_image_url.trim() !== '') {
-            const { data, error } = await getSignedUrl(product.reference_image_url);
-            if (data?.signedUrl && data.signedUrl.trim() !== '') {
-              signedReferenceUrl = data.signedUrl;
-            } else if (error && typeof error === 'string' && error.includes('Object not found')) {
-              // Suppress "Object not found" error from console, as it's handled gracefully in the UI.
-            } else if (error) {
-              console.error("Error getting signed URL for reference image:", error);
-            }
-          }
-
-          let signedMeasurementUrl: string | null = null;
-          if (product.measurement_drawing_url && typeof product.measurement_drawing_url === 'string' && product.measurement_drawing_url.trim() !== '') {
-            const { data, error: signedUrlError } = await getSignedUrl(product.measurement_drawing_url); // Renamed error to signedUrlError to avoid conflict
-            if (data?.signedUrl && data.signedUrl.trim() !== '') {
-              signedMeasurementUrl = data.signedUrl;
-            } else if (signedUrlError && typeof signedUrlError === 'string' && signedUrlError.includes('Object not found')) {
-              // Suppress "Object not found" error from console, as it's handled gracefully in the UI.
-            } else if (signedUrlError) {
-              console.error("Error getting signed URL for measurement drawing:", signedUrlError);
-            }
-          }
-
-          return {
-            ...product,
-            reference_image_url: signedReferenceUrl,
-            measurement_drawing_url: signedMeasurementUrl,
-          };
-        })
-      );
-      setDisplayedProducts(productsWithSignedUrls);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [productType, filters]);
 
   useEffect(() => {
