@@ -79,7 +79,6 @@ export default function OrderTable({ orders, sort, setSort, onViewOrder }: Order
                 onClick={() => handleSort("deliveryDate")}
               />
               <Th label="Status" />
-              <th className="p-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -104,14 +103,6 @@ export default function OrderTable({ orders, sort, setSort, onViewOrder }: Order
                       </span>
                     ))}
                   </div>
-                </td>
-                <td className="p-3 text-right">
-                  <button
-                    onClick={() => onViewOrder(r)}
-                    className="px-3 py-1 rounded-md bg-blue-600 text-white"
-                  >
-                    View
-                  </button>
                 </td>
               </tr>
             ))}

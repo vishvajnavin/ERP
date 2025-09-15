@@ -12,7 +12,7 @@ export async function getOrderHistory(
   const supabase = await createClient();
   const offset = (page - 1) * pageSize;
 
-  const { data, error } = await supabase.rpc("search_and_paginate_order_history", {
+  const { data, error } = await supabase.rpc("search_and_paginate_order_history_v2", {
     p_search_term: filters.q,
     p_limit: pageSize,
     p_offset: offset,

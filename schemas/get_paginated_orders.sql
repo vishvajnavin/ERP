@@ -43,10 +43,11 @@ BEGIN
         oi.id,
         oi.due_date,
         oi.priority,
-        oi.product_type, -- <<< ADDED product_type
+        oi.product_type,
         cd.customer_name,
         COALESCE(sp.model_name, bp.model_name) AS product_model_name,
-        COALESCE(oi.sofa_product_id, oi.bed_product_id) AS product_id -- <<< ADDED unified product_id
+        COALESCE(oi.sofa_product_id, oi.bed_product_id) AS product_id,
+        oi.delivery_date
       FROM
         public.order_items AS oi
       LEFT JOIN
@@ -102,19 +103,34 @@ BEGIN
     SELECT
       po.id,
       po.due_date,
-      COALESCE(
+      CASE
+        -- If delivery date is present and no stages are recorded, it's delivered.
+        WHEN po.delivery_date IS NOT NULL AND NOT EXISTS (
+          SELECT 1 FROM public.order_item_stage_status WHERE order_item_id = po.id
+        ) THEN 'delivered'
+        
+        -- If no delivery date, no active stages, and all are completed, it's out for delivery.
+        WHEN po.delivery_date IS NULL 
+             AND NOT EXISTS (SELECT 1 FROM public.order_item_stage_status WHERE order_item_id = po.id AND status = 'active')
+             AND (SELECT COUNT(*) FROM public.order_item_stage_status WHERE order_item_id = po.id) > 0
+             AND (SELECT COUNT(*) FROM public.order_item_stage_status WHERE order_item_id = po.id AND status = 'completed') = (SELECT COUNT(*) FROM public.order_item_stage_status WHERE order_item_id = po.id)
+        THEN 'out_for_delivery'
+        
+        -- Default behavior: show active stages or 'delivered'
+        ELSE COALESCE(
           (SELECT string_agg(s.name, ', ')
            FROM public.order_item_stage_status oiss
            JOIN public.stages s ON oiss.stage_id = s.stage_id
            WHERE oiss.order_item_id = po.id AND oiss.status = 'active'
           ),
           'delivered'
-      ) AS production_stage,
+        )
+      END AS production_stage,
       po.priority,
       po.customer_name,
       po.product_model_name,
-      po.product_id, -- <<< ADDED product_id TO FINAL SELECT
-      po.product_type, -- <<< ADDED product_type TO FINAL SELECT
+      po.product_id,
+      po.product_type,
       (SELECT COUNT(*) FROM filtered_orders) AS total_count
     FROM
       paginated_orders po;

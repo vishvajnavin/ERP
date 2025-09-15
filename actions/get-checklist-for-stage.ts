@@ -11,7 +11,7 @@ export async function getChecklistForStage(orderItemId: number, stageId: number)
       check_id,
       name,
       sequence,
-      product_checklist_progress (
+      product_checklist_progress!left (
         status,
         failure_report,
         inspected_by,

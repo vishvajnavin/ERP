@@ -19,6 +19,7 @@ export const ImageUploadDisplayField = ({
     disabled: boolean;
 }) => {
     const [preview, setPreview] = useState<string | null>(null);
+    const [isRemoved, setIsRemoved] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -26,22 +27,28 @@ export const ImageUploadDisplayField = ({
         if (file) {
             const objectUrl = URL.createObjectURL(file);
             setPreview(objectUrl);
+            setIsRemoved(false); // A new file is added
             return () => URL.revokeObjectURL(objectUrl);
-        } else if (dbImageUrl) {
+        } else if (dbImageUrl && !isRemoved) {
             setPreview(dbImageUrl);
         } else {
             setPreview(null);
         }
-    }, [dbImageUrl, file]);
+    }, [dbImageUrl, file, isRemoved]);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = event.target.files?.[0] || null;
         onFileChange(selectedFile);
+        if (selectedFile) {
+            setIsRemoved(false); // New file is selected, so it's not "removed"
+        }
     };
 
     const handleRemove = (e: React.MouseEvent) => {
         e.stopPropagation();
         onFileChange(null);
+        setPreview(null);
+        setIsRemoved(true); // Mark as removed
         if (inputRef.current) {
             inputRef.current.value = "";
         }
@@ -67,6 +74,12 @@ export const ImageUploadDisplayField = ({
                     onChange={handleFileChange}
                     className="hidden"
                     disabled={disabled}
+                />
+                {/* Hidden input to track removal of existing DB image */}
+                <input
+                    type="hidden"
+                    name={`${name}_from_form`}
+                    value={isRemoved ? 'null' : (dbImageUrl || '')}
                 />
                 {isLoading ? (
                     <div className="flex items-center justify-center h-48">

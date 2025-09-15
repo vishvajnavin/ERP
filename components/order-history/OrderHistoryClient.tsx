@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { OrderHistory, OrderDetails } from "./types";
 import FiltersBar from "./FiltersBar";
 import OrderTable from "./OrderTable";

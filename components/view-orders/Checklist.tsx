@@ -211,7 +211,6 @@ export function Checklist({ checklist, orderItemId, stageId, onProceed }: Checkl
         <Button
           onClick={() => {
             startTransition(async () => {
-              console.log(stageId)
               const result = await proceedToNextStage(orderItemId, stageId);
               if (result.success) {
                 // The onProceed prop is likely causing a re-render.

@@ -3,6 +3,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Order, Stage } from './types';
 import { STAGE_CONFIG, PRIORITY_CONFIG } from './data';
+import { Button } from '../ui/button';
+import { markAsDelivered } from '@/actions/mark-as-delivered';
 
 interface KanbanBoardProps {
   orders: Order[];
@@ -11,6 +13,17 @@ interface KanbanBoardProps {
 
 const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onOrderSelect }) => {
   const allStages = Object.keys(STAGE_CONFIG) as Stage[];
+
+  const handleMarkAsDelivered = async (orderId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await markAsDelivered(orderId);
+      // Optionally, refresh data or update UI state here
+    } catch (error) {
+      console.error("Failed to mark as delivered:", error);
+      // Handle error state in UI
+    }
+  };
 
   return (
     <motion.div
@@ -55,6 +68,11 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ orders, onOrderSelect }) => {
                     </div>
                     <p className="text-sm text-gray-800 truncate mt-1">{order.product}</p>
                     <p className="text-xs text-gray-500 mt-2">{order.customer}</p>
+                    {order.stage === 'out_for_delivery' && (
+                      <Button onClick={(e) => handleMarkAsDelivered(order.id, e)} size="sm" className="mt-2">
+                        Mark as Delivered
+                      </Button>
+                    )}
                   </motion.div>
                 ))
               ) : (

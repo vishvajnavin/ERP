@@ -2,7 +2,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Order, View, Stage, Priority } from './types';
-import { STAGE_CONFIG } from './data';
 import Header from './Header';
 import OrderTable from './OrderTable';
 import KanbanBoard from './KanbanBoard';

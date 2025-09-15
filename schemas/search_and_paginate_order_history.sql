@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION search_and_paginate_order_history(
+CREATE OR REPLACE FUNCTION search_and_paginate_order_history_v2(
     p_search_term TEXT,
     p_limit INT,
     p_offset INT,
@@ -7,12 +7,12 @@ CREATE OR REPLACE FUNCTION search_and_paginate_order_history(
 )
 RETURNS TABLE (
     id int,
-    due_date date,
-    delivery_date date,
+    due_date TIMESTAMPTZ,
+    delivery_date TIMESTAMPTZ,
     production_stage TEXT,
     product_type TEXT,
     model_name TEXT,
-    order_date TIMESTAMP,
+    order_date TIMESTAMPTZ,
     customer_name TEXT,
     address TEXT,
     total_count BIGINT
@@ -38,22 +38,13 @@ BEGIN
     WITH filtered_orders AS (
       SELECT
         oi.id,
-        oi.due_date,
-        oi.delivery_date,
-        CASE
-          WHEN oi.delivery_date IS NOT NULL THEN 'Delivered'
-          ELSE COALESCE(
-            (SELECT string_agg(s.name, ', ')
-             FROM public.order_item_stage_status oiss
-             JOIN public.stages s ON oiss.stage_id = s.stage_id
-             WHERE oiss.order_item_id = oi.id AND oiss.status = 'active'
-            ),
-            'Pending'
-          )
-        END as production_stage,
+        oi.due_date::TIMESTAMPTZ,
+        oi.delivery_date::TIMESTAMPTZ,
+        -- MODIFIED: Production stage is always 'Delivered' now.
+        'Delivered' as production_stage,
         oi.product_type,
         COALESCE(sp.model_name, bp.model_name) AS model_name,
-        o.order_date,
+        o.order_date::TIMESTAMPTZ,
         cd.customer_name,
         cd.address
       FROM
@@ -67,6 +58,9 @@ BEGIN
       LEFT JOIN
         public.bed_products AS bp ON oi.bed_product_id = bp.id
       WHERE
+        -- ADDED: This is the main condition to only include delivered orders.
+        oi.delivery_date IS NOT NULL
+        AND
         (p_search_term IS NULL OR p_search_term = '' OR
           (
             oi.id::text ILIKE ('%' || p_search_term || '%') OR
@@ -76,16 +70,8 @@ BEGIN
           )
         )
         AND (
-            status_filter IS NULL OR status_filter = '' OR
-            (oi.delivery_date IS NOT NULL AND status_filter = 'Delivered') OR
-            EXISTS (
-                SELECT 1
-                FROM public.order_item_stage_status oiss
-                JOIN public.stages s ON oiss.stage_id = s.stage_id
-                WHERE oiss.order_item_id = oi.id
-                  AND oiss.status = 'active'
-                  AND s.name = status_filter
-            )
+            -- MODIFIED: Simplified the status filter as only 'Delivered' is relevant.
+            status_filter IS NULL OR status_filter = '' OR status_filter = 'Delivered'
         )
         AND (date_from IS NULL OR oi.delivery_date >= date_from)
         AND (date_to IS NULL OR oi.delivery_date <= date_to)
@@ -116,4 +102,4 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Grant permissions
-GRANT EXECUTE ON FUNCTION search_and_paginate_order_history(TEXT, INT, INT, JSONB, JSONB) TO public;
+GRANT EXECUTE ON FUNCTION search_and_paginate_order_history_v2(TEXT, INT, INT, JSONB, JSONB) TO public;

@@ -10,7 +10,7 @@ export async function proceedToNextStage(
   const supabase = await  createClient();
 
   console.log(orderItemId,currentStageId)
-  const { data, error } = await supabase.rpc('proceed_to_next_stage', {
+  const { data, error } = await supabase.rpc('advance_order_stage ', {
     p_current_stage_id: currentStageId,
     p_order_item_id: orderItemId,
   });
@@ -20,8 +20,8 @@ export async function proceedToNextStage(
     return { success: false, error: 'Failed to proceed to the next stage.' };
   }
 
-  if (!data) {
-    return { success: false, error: 'Could not proceed. Please ensure all checks are completed.' };
+  if (data === false) {
+    return { success: false, error: 'Could not proceed because one or more checks are still pending.' };
   }
 
   revalidatePath('/view-orders');

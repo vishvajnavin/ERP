@@ -81,8 +81,8 @@ export async function updateProductAction(formData: FormData) {
 
         const referenceImageFile = formData.get('reference_image_file') as File | null;
         const measurementImageFile = formData.get('measurement_image_file') as File | null;
-        const referenceImageUrlFromForm = formData.get('reference_image_url_from_form'); // This will be 'null' if removed
-        const measurementImageUrlFromForm = formData.get('measurement_drawing_url_from_form'); // This will be 'null' if removed
+        const referenceImageUrlFromForm = formData.get('reference_image_file_from_form'); // This will be 'null' if removed
+        const measurementImageUrlFromForm = formData.get('measurement_image_file_from_form'); // This will be 'null' if removed
 
         let newReferenceImageUrl = currentProduct?.reference_image_url || null;
         let newMeasurementImageUrl = currentProduct?.measurement_drawing_url || null;
@@ -121,8 +121,8 @@ export async function updateProductAction(formData: FormData) {
             updateData = {
                 model_name: formData.get('model_name'),
                 model_family_configuration: getNullIfEmpty(formData.get('model_family_configuration')),
-                "2_seater_length": getNumberOrNull(formData.get('2_seater_length')),
-                "1_seater_length": getNumberOrNull(formData.get('1_seater_length')),
+                "2_seater_length": getNumberOrNull(formData.get('2_seater_length')) ?? 0,
+                "1_seater_length": getNumberOrNull(formData.get('1_seater_length')) ?? 0,
                 description: getNullIfEmpty(formData.get('description')),
                 recliner_mechanism_mode: getNullIfEmpty(formData.get('recliner_mechanism_mode')),
                 recliner_mechanism_flip: getNullIfEmpty(formData.get('recliner_mechanism_flip')),
