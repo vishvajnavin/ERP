@@ -11,7 +11,7 @@ type ProductEntryFormProps = {
     item: OrderItem;
     index: number;
     onItemChange: <K extends keyof OrderItem>(index: number, field: K, value: OrderItem[K]) => void;
-    onDetailsChange: <K extends keyof ProductWithFiles>(index: number, detailField: K, value: ProductWithFiles[K]) => void;
+    onDetailsChange: <K extends keyof ProductWithFiles>(index: number, detailField: K, value: ProductWithFiles[K] | null) => void;
     onProductSelect: (index: number, product: Product) => void;
     onRemove: (index: number) => void;
     isOnlyItem: boolean;
@@ -52,7 +52,7 @@ export const ProductEntryForm = ({ item, index, onItemChange, onDetailsChange, o
 
         const checkName = async () => {
             const existingProducts = await searchProducts(item.details.model_name!, item.type.toLowerCase() as 'sofa' | 'bed');
-            const isNameTaken = existingProducts.some(p => p.model_name?.toLowerCase() === item.details.model_name?.toLowerCase() && p.id.toString() !== item.id);
+            const isNameTaken = existingProducts.some(p => p.model_name?.toLowerCase() === item.details.model_name?.toLowerCase());
             if (isNameTaken) {
                 onItemChange(index, 'nameError', `A ${item.type.toLowerCase()} with this name already exists.`);
             } else {

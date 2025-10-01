@@ -174,8 +174,8 @@ export async function submitOrder(prevState: FormState, formData: FormData) {
                     reference_image_url,
                     measurement_drawing_url,
                     description: formData.get(`${baseName}.description`) as string | undefined,
-                    recliner_mechanism_mode: formData.get(`${baseName}.recliner_mechanism_mode`) as string | undefined,
-                    recliner_mechanism_flip: formData.get(`${baseName}.recliner_mechanism_flip`) as string | undefined,
+                    recliner_mechanism_mode: (formData.get(`${baseName}.recliner_mechanism_mode`) as string | null) ?? null,
+                    recliner_mechanism_flip: (formData.get(`${baseName}.recliner_mechanism_flip`) as string | null) ?? null,
                     wood_to_floor: formData.get(`${baseName}.wood_to_floor`) === 'true',
                     headrest_mode: formData.get(`${baseName}.headrest_mode`) as string | undefined,
                     cup_holder: formData.get(`${baseName}.cup_holder`) as string | undefined,
@@ -204,7 +204,8 @@ export async function submitOrder(prevState: FormState, formData: FormData) {
                     armrest_width: Number(formData.get(`${baseName}.armrest_width`)),
                     armrest_depth: Number(formData.get(`${baseName}.armrest_depth`)),
                     purchase_count: 1, // Set purchase count to 1 for new products
-                }).select('id').single();
+                }).select().single();
+                console.log(newSofa)
                 if (error) throw new Error(`[Item ${i+1}] Failed to create new sofa product: ${error.message}`);
                 newProductId = newSofa.id;
             } else { // productType === 'bed'

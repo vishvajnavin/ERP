@@ -43,6 +43,13 @@ const PlaceOrderPage = () => {
     const [state, formAction] = useActionState(submitOrder, { success: false, message: '' });
     const hasNameError = orderItems.some(item => item.nameError);
 
+    useEffect(() => {
+        if (state.success) {
+            setOrderItems([{ ...initialProductState, uniqueId: Date.now() }]);
+            setSelectedCustomer(null);
+        }
+    }, [state.success]);
+
     const handleItemChange = useCallback(<K extends keyof OrderItem>(index: number, field: K, value: OrderItem[K]) => {
         setOrderItems(currentItems => {
             const newItems = [...currentItems];
@@ -59,7 +66,7 @@ const PlaceOrderPage = () => {
         });
     }, []);
 
-    const handleDetailsChange = useCallback(<K extends keyof ProductWithFiles>(index: number, detailField: K, value: ProductWithFiles[K]) => {
+    const handleDetailsChange = useCallback(<K extends keyof ProductWithFiles>(index: number, detailField: K, value: ProductWithFiles[K] | null) => {
         setOrderItems(currentItems => {
             const newItems = [...currentItems];
             const itemToUpdate = newItems[index];

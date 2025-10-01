@@ -82,9 +82,9 @@ CREATE TABLE public.order_items (
   delivery_date date,
   priority integer NOT NULL DEFAULT 1,
   CONSTRAINT order_items_pkey PRIMARY KEY (id),
-  CONSTRAINT order_items_bed_product_id_fkey FOREIGN KEY (bed_product_id) REFERENCES public.bed_products(id),
   CONSTRAINT order_items_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id),
-  CONSTRAINT order_items_sofa_product_id_fkey FOREIGN KEY (sofa_product_id) REFERENCES public.sofa_products(id)
+  CONSTRAINT order_items_sofa_product_id_fkey FOREIGN KEY (sofa_product_id) REFERENCES public.sofa_products(id),
+  CONSTRAINT order_items_bed_product_id_fkey FOREIGN KEY (bed_product_id) REFERENCES public.bed_products(id)
 );
 CREATE TABLE public.orders (
   id integer NOT NULL DEFAULT nextval('orders_id_seq'::regclass),
@@ -159,7 +159,7 @@ CREATE TABLE public.sofa_products (
 CREATE TABLE public.stage_dependencies (
   stage_id bigint NOT NULL,
   depends_on_stage_id bigint NOT NULL,
-  CONSTRAINT stage_dependencies_pkey PRIMARY KEY (stage_id, depends_on_stage_id),
+  CONSTRAINT stage_dependencies_pkey PRIMARY KEY (depends_on_stage_id, stage_id),
   CONSTRAINT stage_dependencies_stage_id_fkey FOREIGN KEY (stage_id) REFERENCES public.stages(stage_id),
   CONSTRAINT stage_dependencies_depends_on_stage_id_fkey FOREIGN KEY (depends_on_stage_id) REFERENCES public.stages(stage_id)
 );

@@ -1,7 +1,33 @@
 import { DetailsFormProps, InputField, ImageUploadField, TextAreaField, ToggleGroupField, ComboboxField } from "./product-fields";
 import { ProductWithFiles } from "@/types/products";
+import { useState, useEffect } from "react";
 
 export const SofaDetailsForm: React.FC<DetailsFormProps<ProductWithFiles>> = ({ index, product, handleProductChange, disabled, baseName, nameError }) => {
+    const [includeRecliner, setIncludeRecliner] = useState<boolean | null>(
+        !!product.recliner_mechanism_mode || !!product.recliner_mechanism_flip
+    );
+    const [includeCupHolder, setIncludeCupHolder] = useState<boolean | null>(!!product.cup_holder);
+
+    useEffect(() => {
+        setIncludeCupHolder(!!product.cup_holder);
+    }, [product.cup_holder]);
+
+    useEffect(() => {
+        setIncludeRecliner(!!product.recliner_mechanism_mode || !!product.recliner_mechanism_flip);
+    }, [product.recliner_mechanism_mode, product.recliner_mechanism_flip]);
+
+    useEffect(() => {
+        if (product.model_family_configuration !== '3+daybed' && product.model_family_configuration !== '2+daybed') {
+            handleProductChange(index, "daybed_headrest_mode", null);
+            handleProductChange(index, "daybed_position", null);
+        }
+    }, [product.model_family_configuration, handleProductChange, index]);
+
+    useEffect(() => {
+        if (!product.armrest_storage) {
+            handleProductChange(index, "storage_side", null);
+        }
+    }, [product.armrest_storage, handleProductChange, index]);
 
     const upholsteryOptions = [
         {value: 'fabric', label: 'Fabric'}, {value: 'pu', label: 'PU'}, {value: 'leather_bloom', label: 'Leather Bloom'},
@@ -42,16 +68,57 @@ export const SofaDetailsForm: React.FC<DetailsFormProps<ProductWithFiles>> = ({ 
                 </span>
             )}
             <TextAreaField name={`${baseName}.description`} label="Description" value={product.description || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "description", e.target.value)} />
-            <ToggleGroupField name={`${baseName}.recliner_mechanism_mode`} label="Recliner Mechanism" value={product.recliner_mechanism_mode} disabled={disabled} onValueChange={(val) => handleProductChange(index, "recliner_mechanism_mode", val)} options={[{value: 'manual', label: 'Manual'}, {value: 'motorized_single', label: 'Motorized Single'}, {value: 'motorized_double', label: 'Motorized Double'}]} required/>
-            <ToggleGroupField name={`${baseName}.recliner_mechanism_flip`} label="Recliner Flip" value={product.recliner_mechanism_flip} disabled={disabled} onValueChange={(val) => handleProductChange(index, "recliner_mechanism_flip", val)} options={[{value: 'single_flip', label: 'Single Flip'}, {value: 'double_flip', label: 'Double Flip'}, {value: 'double_motor_with_headrest', label: 'Double Motor with Headrest'}]} required/>
+            <ToggleGroupField 
+                name="include_recliner"
+                label="Include Recliner" 
+                value={includeRecliner} 
+                disabled={disabled} 
+                onValueChange={(val) => {
+                    setIncludeRecliner(val);
+                    if (val === false || val === null) {
+                        handleProductChange(index, "recliner_mechanism_mode", null);
+                        handleProductChange(index, "recliner_mechanism_flip", null);
+                    }
+                }} 
+                options={[{value: true, label: 'Yes'}, {value: false, label: 'No'}]} 
+                required
+            />
+            {includeRecliner && (
+                <>
+                    <ToggleGroupField name={`${baseName}.recliner_mechanism_mode`} label="Recliner Mechanism" value={product.recliner_mechanism_mode} disabled={disabled} onValueChange={(val) => handleProductChange(index, "recliner_mechanism_mode", val)} options={[{value: 'manual', label: 'Manual'}, {value: 'motorized_single', label: 'Motorized Single'}, {value: 'motorized_double', label: 'Motorized Double'}]} required/>
+                    <ToggleGroupField name={`${baseName}.recliner_mechanism_flip`} label="Recliner Flip" value={product.recliner_mechanism_flip} disabled={disabled} onValueChange={(val) => handleProductChange(index, "recliner_mechanism_flip", val)} options={[{value: 'single_flip', label: 'Single Flip'}, {value: 'double_flip', label: 'Double Flip'}, {value: 'double_motor_with_headrest', label: 'Double Motor with Headrest'}]} required/>
+                </>
+            )}
             <ToggleGroupField name={`${baseName}.wood_to_floor`} label="Wood to Floor" value={product.wood_to_floor} disabled={disabled} onValueChange={(val) => handleProductChange(index, "wood_to_floor", val)} options={[{value: true, label: 'Wood'}, {value: false, label: 'Metal'}]} required/>
             <ToggleGroupField name={`${baseName}.headrest_mode`} label="Headrest Mode" value={product.headrest_mode} disabled={disabled} onValueChange={(val) => handleProductChange(index, "headrest_mode", val)} options={[{value: 'manual', label: 'Manual'}, {value: 'motorized', label: 'Motorized'}]} required/>
-            <ToggleGroupField name={`${baseName}.cup_holder`} label="Cup Holder" value={product.cup_holder} disabled={disabled} onValueChange={(val) => handleProductChange(index, "cup_holder", val)} options={[{value: 'normal_push_back', label: 'Normal Push Back'}, {value: 'chiller_cup', label: 'Chiller Cup'}]} required/>
+            <ToggleGroupField
+                name="include_cup_holder"
+                label="Include Cup Holder"
+                value={includeCupHolder}
+                disabled={disabled}
+                onValueChange={(val) => {
+                    setIncludeCupHolder(val);
+                    if (val === false || val === null) {
+                        handleProductChange(index, "cup_holder", null);
+                    }
+                }}
+                options={[{value: true, label: 'Yes'}, {value: false, label: 'No'}]}
+                required
+            />
+            {includeCupHolder && (
+                <ToggleGroupField name={`${baseName}.cup_holder`} label="Cup Holder Type" value={product.cup_holder} disabled={disabled} onValueChange={(val) => handleProductChange(index, "cup_holder", val)} options={[{value: 'normal_push_back', label: 'Normal Push Back'}, {value: 'chiller_cup', label: 'Chiller Cup'}]} required/>
+            )}
             <ToggleGroupField name={`${baseName}.snack_swivel_tray`} label="Snack Swivel Tray" value={product.snack_swivel_tray} disabled={disabled} onValueChange={(val) => handleProductChange(index, "snack_swivel_tray", val)} options={[{value: true, label: 'Yes'}, {value: false, label: 'No'}]} required/>
-            <ToggleGroupField name={`${baseName}.daybed_headrest_mode`} label="Daybed Headrest" value={product.daybed_headrest_mode} disabled={disabled} onValueChange={(val) => handleProductChange(index, "daybed_headrest_mode", val)} options={[{value: 'manual', label: 'Manual'}, {value: 'motorized', label: 'Motorized'}]} required/>
-            <ToggleGroupField name={`${baseName}.daybed_position`} label="Daybed Position" value={product.daybed_position} disabled={disabled} onValueChange={(val) => handleProductChange(index, "daybed_position", val)} options={[{value: 'rhs', label: 'RHS'}, {value: 'lhs', label: 'LHS'}]} required/>
+            {(product.model_family_configuration === '3+daybed' || product.model_family_configuration === '2+daybed') && (
+                <>
+                    <ToggleGroupField name={`${baseName}.daybed_headrest_mode`} label="Daybed Headrest" value={product.daybed_headrest_mode} disabled={disabled} onValueChange={(val) => handleProductChange(index, "daybed_headrest_mode", val)} options={[{value: 'manual', label: 'Manual'}, {value: 'motorized', label: 'Motorized'}]} required/>
+                    <ToggleGroupField name={`${baseName}.daybed_position`} label="Daybed Position" value={product.daybed_position} disabled={disabled} onValueChange={(val) => handleProductChange(index, "daybed_position", val)} options={[{value: 'rhs', label: 'RHS'}, {value: 'lhs', label: 'LHS'}]} required/>
+                </>
+            )}
             <ToggleGroupField name={`${baseName}.armrest_storage`} label="Armrest Storage" value={product.armrest_storage} disabled={disabled} onValueChange={(val) => handleProductChange(index, "armrest_storage", val)} options={[{value: true, label: 'Yes'}, {value: false, label: 'No'}]} required/>
-            <ToggleGroupField name={`${baseName}.storage_side`} label="Storage Side" value={product.storage_side} disabled={disabled} onValueChange={(val) => handleProductChange(index, "storage_side", val)} options={[{value: 'rhs_arm', label: 'RHS Arm'}, {value: 'lhs_arm', label: 'LHS Arm'}, {value: 'both_arm', label: 'Both Arms'}]} required/>
+            {product.armrest_storage && (
+                <ToggleGroupField name={`${baseName}.storage_side`} label="Storage Side" value={product.storage_side} disabled={disabled} onValueChange={(val) => handleProductChange(index, "storage_side", val)} options={[{value: 'rhs_arm', label: 'RHS Arm'}, {value: 'lhs_arm', label: 'LHS Arm'}, {value: 'both_arm', label: 'Both Arms'}]} required/>
+            )}
             <InputField name={`${baseName}.foam_density_seating`} label="Foam Density (Seating)" type="number" value={product.foam_density_seating || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "foam_density_seating", Number(e.target.value))} required/>
             <InputField name={`${baseName}.foam_density_backrest`} label="Foam Density (Backrest)" type="number" value={product.foam_density_backrest || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "foam_density_backrest", Number(e.target.value))} required/>
             <ToggleGroupField name={`${baseName}.belt_details`} label="Belt Details" value={product.belt_details} disabled={disabled} onValueChange={(val) => handleProductChange(index, "belt_details", val)} options={[{value: 'elastic_belt', label: 'Elastic Belt'}, {value: 'zig_zag_spring', label: 'Zig Zag Spring'}, {value: 'pocket_spring', label: 'Pocket Spring'}]} required/>

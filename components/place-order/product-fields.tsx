@@ -14,7 +14,7 @@ export interface DetailsFormProps<T extends Product | ProductWithFiles = Product
   baseName: string;
   index: number;
   product: T;
-  handleProductChange: <K extends keyof T>(index: number, field: K, value: T[K]) => void;
+  handleProductChange: <K extends keyof T>(index: number, field: K, value: T[K] | null) => void;
   disabled: boolean;
   nameError?: string;
 }
@@ -36,7 +36,7 @@ type ToggleOption<T extends string | boolean> = {
     label: string;
 };
 
-export const ToggleGroupField = <T extends string | boolean>({ label, name, value, onValueChange, disabled, options, required, hideLabel }: { label: string; name: string; value: T | undefined; onValueChange: (value: T) => void; disabled: boolean; options: ToggleOption<T>[], required?: boolean; hideLabel?: boolean}) => (
+export const ToggleGroupField = <T extends string | boolean>({ label, name, value, onValueChange, disabled, options, required, hideLabel }: { label: string; name: string; value: T | undefined | null; onValueChange: (value: T | null) => void; disabled: boolean; options: ToggleOption<T>[], required?: boolean; hideLabel?: boolean}) => (
     <div>
         {/* Hidden input holds the name and value for the form submission */}
         <input type="hidden" name={name} value={String(value ?? '')} required={required} />
@@ -45,13 +45,28 @@ export const ToggleGroupField = <T extends string | boolean>({ label, name, valu
         )}
         <div className="flex items-center bg-gray-100 rounded-lg p-1">
             {options.map(option => (
-                <button type="button" key={String(option.value)} onClick={() => !disabled && onValueChange(option.value)} disabled={disabled} className={`flex-1 text-sm text-center py-2 px-2 rounded-md transition-all duration-200 ${value === option.value ? 'bg-white shadow font-semibold text-gray-800' : 'bg-transparent text-gray-600 hover:bg-gray-200'} disabled:cursor-not-allowed`}>{option.label}</button>
+                <button 
+                    type="button" 
+                    key={String(option.value)} 
+                    onClick={() => {
+                        if (disabled) return;
+                        if (value === option.value) {
+                            onValueChange(null);
+                        } else {
+                            onValueChange(option.value);
+                        }
+                    }} 
+                    disabled={disabled} 
+                    className={`flex flex-1 self-stretch justify-center items-center text-sm text-center py-2 px-2 rounded-md transition-all duration-200 ${value === option.value ? 'bg-white shadow font-semibold text-gray-800' : 'bg-transparent text-gray-600 hover:bg-gray-200'} disabled:cursor-not-allowed`}
+                >
+                    {option.label}
+                </button>
             ))}
         </div>
     </div>
 );
 
-export const ComboboxField = ({ label, name, value, onValueChange, disabled, options, placeholder, required, hideLabel }: { label: string; name: string; value: string | undefined; onValueChange: (value: string) => void; disabled: boolean; options: {value: string, label: string}[]; placeholder: string, required?: boolean; hideLabel?: boolean }) => {
+export const ComboboxField = ({ label, name, value, onValueChange, disabled, options, placeholder, required, hideLabel }: { label: string; name: string; value: string | undefined | null; onValueChange: (value: string | null) => void; disabled: boolean; options: {value: string, label: string}[]; placeholder: string, required?: boolean; hideLabel?: boolean }) => {
     const [open, setOpen] = useState(false);
     return (
         <div>
@@ -68,7 +83,14 @@ export const ComboboxField = ({ label, name, value, onValueChange, disabled, opt
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0"><Command><CommandInput placeholder="Search..." /><CommandList><CommandEmpty>No option found.</CommandEmpty><CommandGroup>
-                    {options.map((option) => (<CommandItem key={option.value} value={option.label} onSelect={() => { onValueChange(option.value); setOpen(false); }}>
+                    {options.map((option) => (<CommandItem key={option.value} value={option.label} onSelect={() => {
+                        if (value === option.value) {
+                            onValueChange(null); // Deselect
+                        } else {
+                            onValueChange(option.value); // Select
+                        }
+                        setOpen(false);
+                    }}>
                         <Check className={cn("mr-2 h-4 w-4", value === option.value ? "opacity-100" : "opacity-0")} />{option.label}
                     </CommandItem>))}
                 </CommandGroup></CommandList></Command></PopoverContent>
