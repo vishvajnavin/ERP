@@ -5,7 +5,11 @@ import { Stream } from 'stream';
 
 // This function converts a chunk of data (array of objects) into a CSV string.
 // It can optionally include a header row.
-const convertChunkToCSV = (data: any[], headers: string[], includeHeader: boolean): string => {
+
+interface DataRow {
+  [key: string]: string | number | boolean | Date | null | undefined;
+}
+const convertChunkToCSV = (data: DataRow[], headers: string[], includeHeader: boolean): string => {
   if (!data || data.length === 0) {
     return "";
   }
@@ -41,12 +45,12 @@ const getDataSourceConfig = (source: string | null) => {
                     customers ( name, email ),
                     order_items ( quantity, products ( name, price ) )
                 `,
-                mapper: (order: any) => ({
+                mapper: (order: Record<string, any>) => ({
                     order_id: order.id,
                     order_date: order.created_at,
                     customer_name: order.customers.name,
                     customer_email: order.customers.email,
-                    products: order.order_items.map((item: any) => `${item.quantity}x ${item.products.name}`).join('; '),
+                    products: order.order_items.map((item: Record<string, any>) => `${item.quantity}x ${item.products.name}`).join('; '),
                     order_total: order.total,
                 }),
                 tableName: 'orders'
@@ -54,7 +58,7 @@ const getDataSourceConfig = (source: string | null) => {
         case 'products':
             return {
                 query: 'id, name, price, stock_quantity',
-                mapper: (product: any) => product, // No mapping needed
+                mapper: (product: Record<string, any>) => product, // No mapping needed
                 tableName: 'products'
             };
         case 'customers':
@@ -62,7 +66,7 @@ const getDataSourceConfig = (source: string | null) => {
                 query: `
                     id, customer_name, address, mobile_number, email, company, customer_type
                 `,
-                mapper: (customer: any) => ({
+                mapper: (customer: Record<string, any>) => ({
                     id: customer.id,
                     customer_name: customer.customer_name,
                     address: customer.address,
@@ -104,7 +108,7 @@ export async function GET(request: NextRequest) {
       async start(controller) {
         const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({
           stream: new class extends Stream.Writable {
-            _write(chunk: any, encoding: any, callback: any) {
+            _write(chunk: Buffer | Uint8Array, encoding: BufferEncoding, callback: (error?: Error | null) => void) {
               controller.enqueue(chunk);
               callback();
             }
@@ -130,7 +134,7 @@ export async function GET(request: NextRequest) {
 
                     if (selectedColumns) {
                         mappedChunk = mappedChunk.map(row => {
-                            const newRow: { [key: string]: any } = {};
+                            const newRow: { [key: string]: DataRow[keyof DataRow] } = {};
                             selectedColumns.forEach(col => {
                                 newRow[col] = row[col];
                             });
@@ -207,7 +211,7 @@ export async function GET(request: NextRequest) {
                     let mappedChunk = chunk.map(config.mapper);
                     if (selectedColumns) {
                         mappedChunk = mappedChunk.map(row => {
-                            const newRow: { [key: string]: any } = {};
+                            const newRow: { [key: string]: DataRow[keyof DataRow] } = {};
                             selectedColumns.forEach(col => {
                                 newRow[col] = row[col];
                             });

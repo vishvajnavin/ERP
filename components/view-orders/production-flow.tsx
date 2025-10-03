@@ -118,7 +118,13 @@ export default function Diagram({
     async function fetchAndUpdateStages() {
       setLoading(true);
       const stages = await getOrderItemStageStatus(orderItemId);
-      const statusMap = new Map(stages.map(s => [s.stage, s.status]));
+      interface StageStatus {
+        stage: string;
+        status: NodeStatus;
+      }
+      const statusMap: Map<string, NodeStatus> = new Map(
+        (stages as StageStatus[]).map((s: StageStatus) => [s.stage, s.status])
+      );
 
       // Create the new nodes based on the fetched statuses
       const newNodes = initialNodes.map((node) => {
