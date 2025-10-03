@@ -4,6 +4,23 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server'; // Adjust path if necessary
 
+// Helper to convert empty strings or the string "null" to actual null
+const getFormDataValueOrNull = (formData: FormData, key: string) => {
+    const value = formData.get(key);
+    if (value === '' || value === 'null') {
+        return null;
+    }
+    return value;
+};
+
+// Helper to convert empty strings, "null", or invalid numbers to actual null
+const getNumberOrNull = (formData: FormData, key: string) => {
+    const value = getFormDataValueOrNull(formData, key);
+    if (value === null) return null;
+    const num = Number(value);
+    return isNaN(num) ? null : num;
+};
+
 export interface ProductItem {
   is_existing_model: boolean;
   is_customization?: boolean;
@@ -168,44 +185,43 @@ export async function submitOrder(prevState: FormState, formData: FormData) {
                 const { data: newSofa, error } = await supabase.from('sofa_products').insert({
                     customization: isCustomization,
                     model_name,
-                    model_family_configuration: formData.get(`${baseName}.model_family_configuration`) as string | undefined,
-                    "2_seater_length": Number(formData.get(`${baseName}.2_seater_length`)) || null,
-                    "1_seater_length": Number(formData.get(`${baseName}.1_seater_length`)) || null,
+                    model_family_configuration: getFormDataValueOrNull(formData, `${baseName}.model_family_configuration`),
+                    "2_seater_length": getNumberOrNull(formData, `${baseName}.2_seater_length`),
+                    "1_seater_length": getNumberOrNull(formData, `${baseName}.1_seater_length`),
                     reference_image_url,
                     measurement_drawing_url,
-                    description: formData.get(`${baseName}.description`) as string | undefined,
-                    recliner_mechanism_mode: (formData.get(`${baseName}.recliner_mechanism_mode`) as string | null) ?? null,
-                    recliner_mechanism_flip: (formData.get(`${baseName}.recliner_mechanism_flip`) as string | null) ?? null,
+                    description: getFormDataValueOrNull(formData, `${baseName}.description`),
+                    recliner_mechanism_mode: getFormDataValueOrNull(formData, `${baseName}.recliner_mechanism_mode`),
+                    recliner_mechanism_flip: getFormDataValueOrNull(formData, `${baseName}.recliner_mechanism_flip`),
                     wood_to_floor: formData.get(`${baseName}.wood_to_floor`) === 'true',
-                    headrest_mode: formData.get(`${baseName}.headrest_mode`) as string | undefined,
-                    cup_holder: formData.get(`${baseName}.cup_holder`) as string | undefined,
+                    headrest_mode: getFormDataValueOrNull(formData, `${baseName}.headrest_mode`),
+                    cup_holder: getFormDataValueOrNull(formData, `${baseName}.cup_holder`),
                     snack_swivel_tray: formData.get(`${baseName}.snack_swivel_tray`) === 'true',
-                    daybed_headrest_mode: formData.get(`${baseName}.daybed_headrest_mode`) as string | undefined,
-                    daybed_position: formData.get(`${baseName}.daybed_position`) as string | undefined,
+                    daybed_headrest_mode: getFormDataValueOrNull(formData, `${baseName}.daybed_headrest_mode`),
+                    daybed_position: getFormDataValueOrNull(formData, `${baseName}.daybed_position`),
                     armrest_storage: formData.get(`${baseName}.armrest_storage`) === 'true',
-                    storage_side: formData.get(`${baseName}.storage_side`) as string | undefined,
-                    foam_density_seating: Number(formData.get(`${baseName}.foam_density_seating`)),
-                    foam_density_backrest: Number(formData.get(`${baseName}.foam_density_backrest`)),
-                    belt_details: formData.get(`${baseName}.belt_details`) as string | undefined,
-                    leg_type: formData.get(`${baseName}.leg_type`) as string | undefined,
-                    pvd_color: formData.get(`${baseName}.pvd_color`) as string | undefined,
-                    chester_option: formData.get(`${baseName}.chester_option`) as string | undefined,
-                    armrest_panels: formData.get(`${baseName}.armrest_panels`) as string | undefined,
-                    polish_color: formData.get(`${baseName}.polish_color`) as string | undefined,
-                    polish_finish: formData.get(`${baseName}.polish_finish`) as string | undefined,
-                    upholstery: formData.get(`${baseName}.upholstery`) as string | undefined,
-                    upholstery_color: formData.get(`${baseName}.upholstery_color`) as string | undefined,
-                    total_width: Number(formData.get(`${baseName}.total_width`)),
-                    total_depth: Number(formData.get(`${baseName}.total_depth`)),
-                    total_height: Number(formData.get(`${baseName}.total_height`)),
-                    seat_width: Number(formData.get(`${baseName}.seat_width`)),
-                    seat_depth: Number(formData.get(`${baseName}.seat_depth`)),
-                    seat_height: Number(formData.get(`${baseName}.seat_height`)),
-                    armrest_width: Number(formData.get(`${baseName}.armrest_width`)),
-                    armrest_depth: Number(formData.get(`${baseName}.armrest_depth`)),
+                    storage_side: getFormDataValueOrNull(formData, `${baseName}.storage_side`),
+                    foam_density_seating: getNumberOrNull(formData, `${baseName}.foam_density_seating`),
+                    foam_density_backrest: getNumberOrNull(formData, `${baseName}.foam_density_backrest`),
+                    belt_details: getFormDataValueOrNull(formData, `${baseName}.belt_details`),
+                    leg_type: getFormDataValueOrNull(formData, `${baseName}.leg_type`),
+                    pvd_color: getFormDataValueOrNull(formData, `${baseName}.pvd_color`),
+                    chester_option: getFormDataValueOrNull(formData, `${baseName}.chester_option`),
+                    armrest_panels: getFormDataValueOrNull(formData, `${baseName}.armrest_panels`),
+                    polish_color: getFormDataValueOrNull(formData, `${baseName}.polish_color`),
+                    polish_finish: getFormDataValueOrNull(formData, `${baseName}.polish_finish`),
+                    upholstery: getFormDataValueOrNull(formData, `${baseName}.upholstery`),
+                    upholstery_color: getFormDataValueOrNull(formData, `${baseName}.upholstery_color`),
+                    total_width: getNumberOrNull(formData, `${baseName}.total_width`),
+                    total_depth: getNumberOrNull(formData, `${baseName}.total_depth`),
+                    total_height: getNumberOrNull(formData, `${baseName}.total_height`),
+                    seat_width: getNumberOrNull(formData, `${baseName}.seat_width`),
+                    seat_depth: getNumberOrNull(formData, `${baseName}.seat_depth`),
+                    seat_height: getNumberOrNull(formData, `${baseName}.seat_height`),
+                    armrest_width: getNumberOrNull(formData, `${baseName}.armrest_width`),
+                    armrest_depth: getNumberOrNull(formData, `${baseName}.armrest_depth`),
                     purchase_count: 1, // Set purchase count to 1 for new products
                 }).select().single();
-                console.log(newSofa)
                 if (error) throw new Error(`[Item ${i+1}] Failed to create new sofa product: ${error.message}`);
                 newProductId = newSofa.id;
             } else { // productType === 'bed'
@@ -214,19 +230,19 @@ export async function submitOrder(prevState: FormState, formData: FormData) {
                     model_name,
                     reference_image_url,
                     measurement_drawing_url,
-                    description: formData.get(`${baseName}.description`) as string | undefined,
-                    bed_size: formData.get(`${baseName}.bed_size`) as string | undefined,
-                    customized_mattress_size: formData.get(`${baseName}.customized_mattress_size`) as string | undefined,
-                    headboard_type: formData.get(`${baseName}.headboard_type`) as string | undefined,
-                    storage_option: formData.get(`${baseName}.storage_option`) as string | undefined,
-                    bed_portion: formData.get(`${baseName}.bed_portion`) as string | undefined,
-                    upholstery: formData.get(`${baseName}.upholstery`) as string | undefined,
-                    upholstery_color: formData.get(`${baseName}.upholstery_color`) as string | undefined,
-                    polish_color: formData.get(`${baseName}.polish_color`) as string | undefined,
-                    polish_finish: formData.get(`${baseName}.polish_finish`) as string | undefined,
-                    total_width: Number(formData.get(`${baseName}.total_width`)),
-                    total_depth: Number(formData.get(`${baseName}.total_depth`)),
-                    total_height: Number(formData.get(`${baseName}.total_height`)),
+                    description: getFormDataValueOrNull(formData, `${baseName}.description`),
+                    bed_size: getFormDataValueOrNull(formData, `${baseName}.bed_size`),
+                    customized_mattress_size: getFormDataValueOrNull(formData, `${baseName}.customized_mattress_size`),
+                    headboard_type: getFormDataValueOrNull(formData, `${baseName}.headboard_type`),
+                    storage_option: getFormDataValueOrNull(formData, `${baseName}.storage_option`),
+                    bed_portion: getFormDataValueOrNull(formData, `${baseName}.bed_portion`),
+                    upholstery: getFormDataValueOrNull(formData, `${baseName}.upholstery`),
+                    upholstery_color: getFormDataValueOrNull(formData, `${baseName}.upholstery_color`),
+                    polish_color: getFormDataValueOrNull(formData, `${baseName}.polish_color`),
+                    polish_finish: getFormDataValueOrNull(formData, `${baseName}.polish_finish`),
+                    total_width: getNumberOrNull(formData, `${baseName}.total_width`),
+                    total_depth: getNumberOrNull(formData, `${baseName}.total_depth`),
+                    total_height: getNumberOrNull(formData, `${baseName}.total_height`),
                     purchase_count: 1, // Set purchase count to 1 for new products
                 }).select('id').single();
                 if (error) throw new Error(`[Item ${i+1}] Failed to create new bed product: ${error.message}`);

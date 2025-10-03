@@ -22,7 +22,6 @@ export async function searchCustomers(filters: SearchFilters): Promise<CustomerS
 
     const { data, error } = await supabase
         .rpc('search_customers', params);
-    console.log(data)
     if (error) {
         console.error('Error fetching customers:', error);
         return [];

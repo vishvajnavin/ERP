@@ -6,7 +6,7 @@ import { createClient } from '@/utils/supabase/server';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 // Helper to convert empty strings/invalid numbers to null
-const getNullIfEmpty = (value: FormDataEntryValue | null) => (value === '' ? null : value);
+const getNullIfEmpty = (value: FormDataEntryValue | null) => (value === '' || value === 'null' ? null : value);
 const getNumberOrNull = (value: FormDataEntryValue | null) => {
     const str = getNullIfEmpty(value);
     if (str === null) return null;
@@ -177,6 +177,7 @@ export async function updateProductAction(formData: FormData) {
             };
         }
 
+        console.log(updateData)
         const { error } = await supabase
             .from(tableName)
             .update(updateData)

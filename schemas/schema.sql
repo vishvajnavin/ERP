@@ -83,8 +83,8 @@ CREATE TABLE public.order_items (
   priority integer NOT NULL DEFAULT 1,
   CONSTRAINT order_items_pkey PRIMARY KEY (id),
   CONSTRAINT order_items_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id),
-  CONSTRAINT order_items_sofa_product_id_fkey FOREIGN KEY (sofa_product_id) REFERENCES public.sofa_products(id),
-  CONSTRAINT order_items_bed_product_id_fkey FOREIGN KEY (bed_product_id) REFERENCES public.bed_products(id)
+  CONSTRAINT order_items_bed_product_id_fkey FOREIGN KEY (bed_product_id) REFERENCES public.bed_products(id),
+  CONSTRAINT order_items_sofa_product_id_fkey FOREIGN KEY (sofa_product_id) REFERENCES public.sofa_products(id)
 );
 CREATE TABLE public.orders (
   id integer NOT NULL DEFAULT nextval('orders_id_seq'::regclass),
@@ -115,12 +115,12 @@ CREATE TABLE public.profiles (
 );
 CREATE TABLE public.sofa_products (
   id integer NOT NULL DEFAULT nextval('sofa_products_id_seq'::regclass),
-  model_name text NOT NULL,
+  model_name text NOT NULL UNIQUE,
   reference_image_url text,
   measurement_drawing_url text,
   description text,
-  recliner_mechanism_mode text CHECK (recliner_mechanism_mode = ANY (ARRAY['manual'::text, 'motorized_single'::text, 'motorized_double'::text])),
-  recliner_mechanism_flip text CHECK (recliner_mechanism_flip = ANY (ARRAY['single_flip'::text, 'double_flip'::text, 'double_motor_with_headrest'::text])),
+  recliner_mechanism_mode text CHECK (recliner_mechanism_mode IS NULL OR (recliner_mechanism_mode = ANY (ARRAY['manual'::text, 'motorized_single'::text, 'motorized_double'::text]))),
+  recliner_mechanism_flip text CHECK (recliner_mechanism_flip IS NULL OR (recliner_mechanism_flip = ANY (ARRAY['single_flip'::text, 'double_flip'::text, 'double_motor_with_headrest'::text]))),
   wood_to_floor boolean DEFAULT true,
   headrest_mode text CHECK (headrest_mode = ANY (ARRAY['manual'::text, 'motorized'::text])),
   cup_holder text CHECK (cup_holder = ANY (ARRAY['normal_push_back'::text, 'chiller_cup'::text])),
@@ -152,8 +152,8 @@ CREATE TABLE public.sofa_products (
   customization boolean NOT NULL DEFAULT true,
   purchase_count integer NOT NULL DEFAULT 0,
   model_family_configuration USER-DEFINED NOT NULL,
-  2_seater_length integer NOT NULL DEFAULT 0,
-  1_seater_length integer NOT NULL DEFAULT 0,
+  2_seater_length integer,
+  1_seater_length integer,
   CONSTRAINT sofa_products_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.stage_dependencies (

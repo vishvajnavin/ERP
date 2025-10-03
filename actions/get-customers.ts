@@ -49,17 +49,17 @@ export async function getCustomers(filters: {
             email: c.email,
             company: c.company || 'N/A',
             address: c.address,
-            phone: c.mobile_number,
-            dateadded: new Date(c.created_at).toLocaleDateString('en-US', {
+            phone: c.mobile_number || 'N/A', // Ensure phone is always a string
+            avatar: `https://i.pravatar.cc/150?u=${c.id}`,
+            customerType: c.customer_type || 'b2c', // Map customer_type and provide a default
+            dateAdded: new Date(c.created_at).toLocaleDateString('en-US', { // Correct casing
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
             }),
-            avatar: `https://i.pravatar.cc/150?u=${c.id}`,
-            totalorders: 0,
-            totalspend: 0,
-            lastorder: 'N/A',
-            status: 'Active'
+            totalOrders: 0, // Correct casing
+            totalSpend: 0, // Correct casing
+            lastOrder: 'N/A', // Correct casing
         }));
 
         return { data: customers, error: null };

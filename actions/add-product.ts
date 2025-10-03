@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 
 // Helper to convert empty strings/invalid numbers to null
-const getNullIfEmpty = (value: FormDataEntryValue | null) => (value === '' ? null : value);
+const getNullIfEmpty = (value: FormDataEntryValue | null) => (value === '' || value === 'null' ? null : value);
 const getNumberOrNull = (value: FormDataEntryValue | null) => {
     const str = getNullIfEmpty(value);
     if (str === null) return null;

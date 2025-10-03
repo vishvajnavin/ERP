@@ -8,7 +8,6 @@ export async function getCustomerDetails(customerId: string): Promise<Customer |
 
     const { data, error } = await supabase
         .rpc('get_customer_details', { p_customer_id: parseInt(customerId) });
-    console.log(data)
     if (error) {
         console.error('Error fetching customer details:', error);
         return null;

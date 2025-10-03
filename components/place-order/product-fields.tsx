@@ -31,7 +31,7 @@ export const InputField = ({ label, name, value, error, required, hideLabel, ...
     </div>
 );
 
-type ToggleOption<T extends string | boolean> = {
+export type ToggleOption<T extends string | boolean> = {
     value: T;
     label: string;
 };
