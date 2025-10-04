@@ -7,6 +7,8 @@ type OrderTableProps = {
   orders: OrderHistory[];
   sort: { by: string; dir: string };
   setSort: React.Dispatch<React.SetStateAction<{ by: string; dir: string }>>;
+  onViewOrder: (order: OrderHistory) => void;
+  isLoading: boolean; // Add isLoading prop
 };
 
 const Th = ({ label }: { label: string }) => (
@@ -41,7 +43,7 @@ const ThSort = ({
   </th>
 );
 
-export default function OrderTable({ orders, sort, setSort }: OrderTableProps) {
+export default function OrderTable({ orders, sort, setSort, onViewOrder, isLoading }: OrderTableProps) {
   const handleSort = (by: string) => {
     if (sort.by === by) {
       setSort({ by, dir: sort.dir === "asc" ? "desc" : "asc" });
@@ -51,7 +53,12 @@ export default function OrderTable({ orders, sort, setSort }: OrderTableProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+    <div className="bg-white rounded-xl shadow-sm border overflow-hidden relative">
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
+        </div>
+      )}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 sticky top-0 z-10">
@@ -78,6 +85,7 @@ export default function OrderTable({ orders, sort, setSort }: OrderTableProps) {
                 onClick={() => handleSort("deliveryDate")}
               />
               <Th label="Status" />
+              <Th label="Actions" /> {/* Added Actions column */}
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -102,6 +110,15 @@ export default function OrderTable({ orders, sort, setSort }: OrderTableProps) {
                       </span>
                     ))}
                   </div>
+                </td>
+                <td className="p-3">
+                  <button
+                    onClick={() => onViewOrder(r)}
+                    className="text-blue-600 hover:underline text-sm"
+                    disabled={isLoading} // Disable button when loading
+                  >
+                    View
+                  </button>
                 </td>
               </tr>
             ))}

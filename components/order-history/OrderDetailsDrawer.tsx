@@ -52,9 +52,11 @@ const formatCurrency = (amt: number) =>
 export default function OrderDetailsDrawer({
   order,
   onClose,
+  isLoading,
 }: {
   order: OrderDetails | null;
   onClose: () => void;
+  isLoading: boolean; // Add isLoading prop
 }) {
   if (!order) return null;
 
@@ -64,6 +66,11 @@ export default function OrderDetailsDrawer({
 
   return (
     <Drawer open={!!order} onClose={onClose} width={640}>
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-50">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
+        </div>
+      )}
       <div className="h-full flex flex-col">
         <div className="border-b p-5 flex items-center justify-between">
           <div>
@@ -75,6 +82,7 @@ export default function OrderDetailsDrawer({
           <button
             onClick={onClose}
             className="text-sm px-3 py-1 rounded border"
+            disabled={isLoading} // Disable button when loading
           >
             Close
           </button>

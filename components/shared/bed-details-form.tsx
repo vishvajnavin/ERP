@@ -1,4 +1,4 @@
-import { InputField, ImageUploadField, TextAreaField, ToggleGroupField, ComboboxField } from "../place-order/product-fields";
+import { InputField, TextAreaField, ToggleGroupField, ComboboxField } from "../place-order/product-fields";
 import { DetailsFormProps } from "../place-order/product-fields";
 import { ProductWithFiles } from "@/types/products";
 

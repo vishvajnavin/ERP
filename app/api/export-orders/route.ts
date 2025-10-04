@@ -59,10 +59,20 @@ function normalizeSelectedColumns(cols: string[] | null): CanonicalKey[] | null 
   return mapped.length ? mapped : null;
 }
 
+interface TransformedOrder {
+  id: string;
+  product_name: string;
+  product_type: string;
+  customer_name: string;
+  due_date: string | null;
+  priority: string;
+  stage_name: string;
+}
+
 /** Create the row shape we’ll write (canonical keys only) */
-function mapOrdersForExport(transformedOrders: Record<string, any>[]) {
+function mapOrdersForExport(transformedOrders: TransformedOrder[]) {
   return transformedOrders.map((o) => {
-    const row: Record<CanonicalKey, string | number | null> = {
+    const row: Record<CanonicalKey, unknown> = {
       order_id: o.id ?? null,
       product_name: o.product_name ?? null,
       product_type: o.product_type ?? null,
@@ -77,7 +87,7 @@ function mapOrdersForExport(transformedOrders: Record<string, any>[]) {
 
 /** CSV chunk builder */
 function convertChunkToCSV(
-  data: Record<string, string | number | null>[],
+  data: Record<string, unknown>[],
   headers: string[],
   includeHeader: boolean
 ): string {
@@ -100,7 +110,7 @@ function convertChunkToCSV(
  * NOTE: You already confirmed data returns, so we keep your structure but
  * also extract `status`.
  */
-async function* getPaginatedOrders(filters: Record<string, string>, sort: Record<string, string>) {
+async function* getPaginatedOrders(filters: Record<string, unknown>, sort: Record<string, unknown>) {
   const supabase = await createClient();
   let page = 0;
   let hasMore = true;
@@ -131,15 +141,16 @@ async function* getPaginatedOrders(filters: Record<string, string>, sort: Record
       );
 
     if (sort?.by && sort?.dir) {
-      query = query.order(sort.by, { ascending: sort.dir === 'asc' });
+      query = query.order(sort.by as string, { ascending: sort.dir === 'asc' });
     } else {
       query = query.order('priority', { ascending: false });
     }
 
     if (filters.q) {
+      const q = filters.q as string;
       // If this nested OR ever becomes flaky, consider denormalizing a view for exports.
       query = query.or(
-        `orders.customer_details.customer_name.ilike.%${filters.q}%,sofa_products.model_name.ilike.%${filters.q}%,bed_products.model_name.ilike.%${filters.q}%`,
+        `orders.customer_details.customer_name.ilike.%${q}%,sofa_products.model_name.ilike.%${q}%,bed_products.model_name.ilike.%${q}%`,
         { referencedTable: 'order_items' }
       );
     }
@@ -161,9 +172,9 @@ async function* getPaginatedOrders(filters: Record<string, string>, sort: Record
     }
 
     if (orders && orders.length > 0) {
-      const transformed = orders.map((oi: Record<string, any>) => {
+      const transformed = orders.map((oi: Record<string, unknown>) => {
         const activeStage = Array.isArray(oi.order_item_stage_status)
-          ? oi.order_item_stage_status[0]
+          ? oi.order_item_stage_status[0] as Record<string, unknown>
           : null;
 
         return {
@@ -171,14 +182,14 @@ async function* getPaginatedOrders(filters: Record<string, string>, sort: Record
           priority: oi.priority,
           due_date: oi.due_date,
           // Pull BOTH stage name and status for export:
-          stage_name: activeStage?.stages?.name ?? 'delivered',
-          product_name: oi.sofa_products?.model_name || oi.bed_products?.model_name || null,
+          stage_name: (activeStage?.stages as Record<string, unknown>)?.name ?? 'delivered',
+          product_name: (oi.sofa_products as Record<string, unknown>)?.model_name || (oi.bed_products as Record<string, unknown>)?.model_name || null,
           product_type: oi.product_type,
-          customer_name: oi.orders?.customer_details?.customer_name || null,
+          customer_name: ((oi.orders as Record<string, unknown>)?.customer_details as Record<string, unknown>)?.customer_name || null,
         };
       });
 
-      yield transformed;
+      yield transformed as TransformedOrder[];
       page++;
     } else {
       hasMore = false;
@@ -216,7 +227,7 @@ export async function GET(request: NextRequest) {
       async start(controller) {
         const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({
           stream: new (class extends Stream.Writable {
-            _write(chunk: Buffer | Uint8Array, _enc: BufferEncoding, cb: (error?: Error | null) => void) {
+            _write(chunk: Buffer, _enc: BufferEncoding, cb: (error?: Error | null) => void) {
               controller.enqueue(chunk);
               cb();
             }
@@ -228,15 +239,15 @@ export async function GET(request: NextRequest) {
         try {
           const orderGenerator = getPaginatedOrders(filters, sort);
 
-          const processPage = (orders: Record<string, any>[], isFirst: boolean) => {
+          const processPage = (orders: TransformedOrder[], isFirst: boolean) => {
             let mapped = mapOrdersForExport(orders);
 
             // Column selection (alias-aware, already normalized to canonical)
             const cols = selectedColumns ?? CANONICAL_ORDER.slice();
             if (cols) {
               mapped = mapped.map((row) => {
-                const newRow: Record<string, string | number | null> = {};
-                for (const c of cols) newRow[c] = row[c];
+                const newRow: Record<string, unknown> = {};
+                for (const c of cols) newRow[c] = row[c as keyof typeof row];
                 return newRow;
               });
             }
@@ -297,8 +308,8 @@ export async function GET(request: NextRequest) {
         const cols = selectedColumns ?? CANONICAL_ORDER.slice();
         if (cols) {
           mapped = mapped.map((row) => {
-            const newRow: Record<string, string | number | null> = {};
-            for (const c of cols) newRow[c] = row[c];
+            const newRow: Record<string, unknown> = {};
+            for (const c of cols) newRow[c] = row[c as keyof typeof row];
             return newRow;
           });
         }

@@ -24,7 +24,7 @@ export default function EditProductForm({ product: initialProduct, productType, 
   const [product, setProduct] = useState<ProductWithFiles>(initialProduct);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const handleProductChange = useCallback(<K extends keyof ProductWithFiles>(index: number, field: K, value: ProductWithFiles[K] | null) => {
+  const handleProductChange = useCallback((index: number, field: keyof ProductWithFiles, value: unknown) => {
     setProduct(prev => ({ ...prev, [field]: value }));
   }, []);
 

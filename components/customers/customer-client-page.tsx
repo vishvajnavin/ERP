@@ -68,7 +68,7 @@ const CustomerClientPage: React.FC<CustomerClientPageProps> = ({ initialCustomer
             searchTerm: updatedSearchTerm,
             address: updatedAddress,
         });
-    }, [fetchCustomers, currentSearchTerm, currentAddressFilter]);
+    }, [fetchCustomers, currentSearchTerm, currentAddressFilter, searchParams]);
     
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {

@@ -20,7 +20,7 @@ export const ImageUploadDisplayField = ({
 }) => {
     const [preview, setPreview] = useState<string | null>(null);
     const [isRemoved, setIsRemoved] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {

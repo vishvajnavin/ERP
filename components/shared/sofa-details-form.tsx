@@ -1,4 +1,4 @@
-import { DetailsFormProps, InputField, ImageUploadField, TextAreaField, ToggleGroupField, ComboboxField } from "../place-order/product-fields";
+import { DetailsFormProps, InputField, TextAreaField, ToggleGroupField, ComboboxField } from "../place-order/product-fields";
 import { ProductWithFiles } from "@/types/products";
 import { useState, useEffect } from "react";
 
@@ -152,7 +152,7 @@ export const SharedSofaDetailsForm: React.FC<DetailsFormProps<ProductWithFiles>>
             <ToggleGroupField 
                 name={name("chester_option")} 
                 label="Chester Option" 
-                value={product.chester_option || null} 
+                value={product.chester_option || 'no_chester'} 
                 disabled={disabled} 
                 onValueChange={(val) => handleProductChange(index, "chester_option", val === 'no_chester' ? null : val)} 
                 options={[{value: 'with_button', label: 'With Button'}, {value: 'without_button', label: 'Without Button'}, {value: 'no_chester', label: 'No Chester'}]} 

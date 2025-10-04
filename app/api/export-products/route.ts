@@ -3,13 +3,13 @@ import ExcelJS from 'exceljs';
 import { NextRequest, NextResponse } from 'next/server';
 import { Stream } from 'stream';
 
+interface Product {
+  [key: string]: string | number | boolean | null;
+}
+
 // This function converts a chunk of data (array of objects) into a CSV string.
 // It can optionally include a header row.
-
-interface ProductRow {
-  [key: string]: string | number | boolean | Date | null | undefined;
-}
-const convertChunkToCSV = (data: ProductRow[], headers: string[], includeHeader: boolean): string => {
+const convertChunkToCSV = (data: Product[], headers: string[], includeHeader: boolean): string => {
   if (!data || data.length === 0) {
     return "";
   }
@@ -40,7 +40,7 @@ const getDataSourceConfig = (source: string | null, productType: string | null) 
             const tableName = productType === 'sofa' ? 'sofa_products' : 'bed_products';
             return {
                 query: '*',
-                mapper: (product: ProductRow) => product, // No mapping needed
+                mapper: (product: Product) => product, // No mapping needed
                 tableName: tableName
             };
         default:
@@ -75,8 +75,12 @@ export async function GET(request: NextRequest) {
 
     const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({
       stream: new class extends Stream.Writable {
-        _write(chunk: Buffer | Uint8Array, encoding: BufferEncoding, callback: (error?: Error | null) => void) {
+        _write(chunk: Buffer, encoding: BufferEncoding, callback: (error?: Error | null) => void) {
           writer.write(chunk);
+          callback();
+        }
+        _final(callback: (error?: Error | null) => void) {
+          writer.close();
           callback();
         }
       }(),
@@ -100,10 +104,10 @@ export async function GET(request: NextRequest) {
         }
 
         if (firstChunk && firstChunk.length > 0) {
-          let mappedFirstChunk = (firstChunk as unknown as ProductRow[]).map(config.mapper);
+          let mappedFirstChunk = (firstChunk as unknown as Product[]).map(config.mapper);
           if (selectedColumns) {
             mappedFirstChunk = mappedFirstChunk.map(row => {
-              const newRow: ProductRow = {};
+              const newRow: Product = {};
               selectedColumns.forEach(col => {
                 newRow[col] = row[col];
               });
@@ -151,10 +155,10 @@ export async function GET(request: NextRequest) {
           if (error) { throw error; }
           if (!chunk || chunk.length === 0) { break; }
 
-          let mappedChunk = (chunk as unknown as ProductRow[]).map(config.mapper);
+          let mappedChunk = (chunk as unknown as Product[]).map(config.mapper);
           if (selectedColumns) {
             mappedChunk = mappedChunk.map(row => {
-              const newRow: ProductRow = {};
+              const newRow: Product = {};
               selectedColumns.forEach(col => {
                 newRow[col] = row[col];
               });
@@ -198,10 +202,10 @@ export async function GET(request: NextRequest) {
                     if (error) { throw error; }
                     if (!chunk || chunk.length === 0) { controller.close(); return; }
 
-                    let mappedChunk = (chunk as unknown as ProductRow[]).map(config.mapper);
+                    let mappedChunk = (chunk as unknown as Product[]).map(config.mapper);
                     if (selectedColumns) {
                         mappedChunk = mappedChunk.map(row => {
-                            const newRow: ProductRow = {};
+                            const newRow: Product = {};
                             selectedColumns.forEach(col => {
                                 newRow[col] = row[col];
                             });

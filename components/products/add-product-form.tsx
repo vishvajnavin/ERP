@@ -8,7 +8,7 @@ import { useState, useCallback, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
 import { addProductAction } from '@/actions/add-product';
 import { Button } from '@/components/ui/button';
-import { ToggleGroupField, type ToggleOption } from '../place-order/product-fields';
+import { ToggleGroupField} from '../place-order/product-fields';
 import { toast } from 'sonner';
 import { SharedSofaDetailsForm } from '../shared/sofa-details-form';
 import { SharedBedDetailsForm } from '../shared/bed-details-form';
@@ -87,7 +87,7 @@ export default function AddProductForm({ onClose }: { onClose: () => void }) {
   const [product, setProduct] = useState<ProductWithFiles>({} as ProductWithFiles);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const handleProductChange = useCallback(<K extends keyof ProductWithFiles>(index: number, field: K, value: ProductWithFiles[K] | null) => {
+  const handleProductChange = useCallback((index: number, field: keyof ProductWithFiles, value: unknown) => {
     setProduct(prev => ({ ...prev, [field]: value }));
   }, []);
 

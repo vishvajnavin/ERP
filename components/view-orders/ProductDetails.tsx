@@ -158,7 +158,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ details, productType, o
     }
   };
 
-  const renderField = (key: string, value: string | number | boolean | Date | null | undefined) => {
+  const renderField = (key: string, value: unknown) => {
     const label = formatLabel(key);
     const fieldName = key as keyof Product;
 
