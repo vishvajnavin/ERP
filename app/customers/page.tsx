@@ -1,27 +1,33 @@
-import React from 'react';
-import { searchCustomers } from '@/actions/filter-customers'; // Use searchCustomers
 import CustomerClientPage from '@/components/customers/customer-client-page';
+import { searchCustomers } from '@/actions/filter-customers';
 
 export const dynamic = 'force-dynamic';
 
-interface CustomerPageProps {
-  searchParams?: { [key: string]: string | string[] | undefined };
+export default async function CustomerPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const resolvedSearchParams = await searchParams;
+
+  const filters = {
+    searchTerm: Array.isArray(resolvedSearchParams.search)
+      ? resolvedSearchParams.search[0]
+      : resolvedSearchParams.search ?? '',
+    status: Array.isArray(resolvedSearchParams.status)
+      ? resolvedSearchParams.status[0]
+      : resolvedSearchParams.status ?? 'All',
+    address: Array.isArray(resolvedSearchParams.address)
+      ? resolvedSearchParams.address[0]
+      : resolvedSearchParams.address ?? '',
+  };
+
+  const initialCustomers = await searchCustomers(filters);
+
+  return (
+    <CustomerClientPage
+      initialCustomers={initialCustomers}
+      initialFilters={filters}
+    />
+  );
 }
-
-// This Server Component handles the initial data fetching.
-const CustomerPage = async ({ searchParams }: CustomerPageProps) => {
-    // Extract filter values from URL search parameters.
-    const filters = {
-        searchTerm: Array.isArray(searchParams?.search) ? searchParams.search[0] : searchParams?.search || '',
-        status: Array.isArray(searchParams?.status) ? searchParams.status[0] : searchParams?.status || 'All',
-        address: Array.isArray(searchParams?.address) ? searchParams.address[0] : searchParams?.address || '',
-    };
-
-    // Fetch the initial list of customers on the server using the searchCustomers action.
-    const initialCustomers = await searchCustomers(filters);
-
-    // Render the client component, passing the fetched data and filters as props.
-    return <CustomerClientPage initialCustomers={initialCustomers} initialFilters={filters} />;
-};
-
-export default CustomerPage;
