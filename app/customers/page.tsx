@@ -4,14 +4,12 @@ import CustomerClientPage from '@/components/customers/customer-client-page';
 
 export const dynamic = 'force-dynamic';
 
+interface CustomerPageProps {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}
+
 // This Server Component handles the initial data fetching.
-const CustomerPage = async ({
-    searchParams,
-}: {
-    // Use a flexible type that allows any string key and marks it as optional
-    searchParams?: { [key: string]: string | string[] | undefined };
-}) => {
-    // Extract filter values from URL search parameters.
+const CustomerPage = async ({ searchParams }: CustomerPageProps) => {
     // Extract filter values from URL search parameters.
     const filters = {
         searchTerm: Array.isArray(searchParams?.search) ? searchParams.search[0] : searchParams?.search || '',
