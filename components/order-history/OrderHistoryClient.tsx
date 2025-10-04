@@ -10,12 +10,17 @@ import KPI from "./KPI";
 import { getOrderDetails } from "@/actions/get-order-details";
 import { getOrderHistory } from "@/actions/get-order-history";
 
-const formatCurrency = (amt: number) =>
-  new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 0,
-  }).format(amt);
+const debounce = <F extends (...args: Parameters<F>) => ReturnType<F>>(func: F, delay: number) => {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  return (...args: Parameters<F>): void => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    timeoutId = setTimeout(() => {
+      func(...args);
+    }, delay);
+  };
+};
 
 type OrderHistoryClientProps = {
   initialOrders: OrderHistory[];
@@ -32,18 +37,6 @@ export default function OrderHistoryClient({ initialOrders, initialTotalCount }:
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const pageSize = 12;
-
-  const debounce = <F extends (...args: any[]) => any>(func: F, delay: number) => {
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    return (...args: Parameters<F>): void => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      timeoutId = setTimeout(() => {
-        func(...args);
-      }, delay);
-    };
-  };
 
   const fetchOrders = useCallback(async (currentFilters: typeof filters, currentSort: typeof sort, currentPage: number) => {
     setIsLoading(true);
@@ -101,6 +94,7 @@ export default function OrderHistoryClient({ initialOrders, initialTotalCount }:
         sort={sort}
         setSort={setSort}
         onViewOrder={handleViewOrder}
+        isLoading={isLoading} // Pass isLoading to OrderTable
       />
 
       <Pagination page={page} totalPages={totalPages} setPage={setPage} />
@@ -108,6 +102,7 @@ export default function OrderHistoryClient({ initialOrders, initialTotalCount }:
       <OrderDetailsDrawer
         order={selectedOrder}
         onClose={() => setSelectedOrder(null)}
+        isLoading={isLoadingDetails} // Pass isLoadingDetails to OrderDetailsDrawer
       />
     </div>
   );

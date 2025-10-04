@@ -3,9 +3,10 @@ import ExcelJS from 'exceljs';
 import { NextRequest, NextResponse } from 'next/server';
 import { Stream } from 'stream';
 
+
 // This function converts a chunk of data (array of objects) into a CSV string.
 // It can optionally include a header row.
-const convertChunkToCSV = (data: any[], headers: string[], includeHeader: boolean): string => {
+const convertChunkToCSV = (data: Record<string, unknown>[], headers: string[], includeHeader: boolean): string => {
   if (!data || data.length === 0) {
     return "";
   }
@@ -18,8 +19,8 @@ const convertChunkToCSV = (data: any[], headers: string[], includeHeader: boolea
 
   for (const row of data) {
     const values = headers.map(header => {
-      const val = row[header] === null || row[header] === undefined ? '' : row[header];
-      const escaped = ('' + val).replace(/"/g, '""'); // Escape double quotes
+      const val = row[header] === null || row[header] === undefined ? '' : String(row[header]);
+      const escaped = val.replace(/"/g, '""'); // Escape double quotes
       return `"${escaped}"`;
     });
     csvRows.push(values.join(','));
@@ -41,12 +42,12 @@ const getDataSourceConfig = (source: string | null) => {
                     customers ( name, email ),
                     order_items ( quantity, products ( name, price ) )
                 `,
-                mapper: (order: any) => ({
+                mapper: (order: Record<string, unknown>) => ({
                     order_id: order.id,
                     order_date: order.created_at,
-                    customer_name: order.customers.name,
-                    customer_email: order.customers.email,
-                    products: order.order_items.map((item: any) => `${item.quantity}x ${item.products.name}`).join('; '),
+                    customer_name: (order.customers as Record<string, unknown>).name,
+                    customer_email: (order.customers as Record<string, unknown>).email,
+                    products: (order.order_items as Record<string, unknown>[]).map((item) => `${item.quantity}x ${(item.products as Record<string, unknown>).name}`).join('; '),
                     order_total: order.total,
                 }),
                 tableName: 'orders'
@@ -54,7 +55,7 @@ const getDataSourceConfig = (source: string | null) => {
         case 'products':
             return {
                 query: 'id, name, price, stock_quantity',
-                mapper: (product: any) => product, // No mapping needed
+                mapper: (product: Record<string, unknown>) => product, // No mapping needed
                 tableName: 'products'
             };
         case 'customers':
@@ -62,7 +63,7 @@ const getDataSourceConfig = (source: string | null) => {
                 query: `
                     id, customer_name, address, mobile_number, email, company, customer_type
                 `,
-                mapper: (customer: any) => ({
+                mapper: (customer: Record<string, unknown>) => ({
                     id: customer.id,
                     customer_name: customer.customer_name,
                     address: customer.address,
@@ -104,7 +105,7 @@ export async function GET(request: NextRequest) {
       async start(controller) {
         const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({
           stream: new class extends Stream.Writable {
-            _write(chunk: any, encoding: any, callback: any) {
+            _write(chunk: Buffer, encoding: BufferEncoding, callback: (error?: Error | null) => void) {
               controller.enqueue(chunk);
               callback();
             }
@@ -126,13 +127,13 @@ export async function GET(request: NextRequest) {
                     if (error) { throw error; }
                     if (!chunk || chunk.length === 0) { break; }
 
-                    let mappedChunk = chunk.map(config.mapper);
+                    let mappedChunk = (chunk as unknown as Record<string, unknown>[]).map(config.mapper);
 
                     if (selectedColumns) {
                         mappedChunk = mappedChunk.map(row => {
-                            const newRow: { [key: string]: any } = {};
+                            const newRow: Record<string, unknown> = {};
                             selectedColumns.forEach(col => {
-                                newRow[col] = row[col];
+                                newRow[col] = row[col as keyof typeof row];
                             });
                             return newRow;
                         });
@@ -204,12 +205,12 @@ export async function GET(request: NextRequest) {
                     if (error) { throw error; }
                     if (!chunk || chunk.length === 0) { controller.close(); return; }
 
-                    let mappedChunk = chunk.map(config.mapper);
+                    let mappedChunk = (chunk as unknown as Record<string, unknown>[]).map(config.mapper);
                     if (selectedColumns) {
                         mappedChunk = mappedChunk.map(row => {
-                            const newRow: { [key: string]: any } = {};
+                            const newRow: Record<string, unknown> = {};
                             selectedColumns.forEach(col => {
-                                newRow[col] = row[col];
+                                newRow[col] = row[col as keyof typeof row];
                             });
                             return newRow;
                         });

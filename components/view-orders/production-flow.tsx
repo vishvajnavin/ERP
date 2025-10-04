@@ -4,10 +4,8 @@ import {
   ReactFlow,
   useNodesState,
   useEdgesState,
-  addEdge,
   Node,
   Edge,
-  Connection,
   Position,
   Handle,
 } from '@xyflow/react';
@@ -16,6 +14,11 @@ import { FiLock } from 'react-icons/fi';
 
 // --- Type Definitions ---
 type NodeStatus = 'pending' | 'active' | 'completed';
+
+type OrderItemStage = {
+  stage: string;
+  status: NodeStatus;
+};
 
 type NodeData = {
   label: string;
@@ -117,20 +120,21 @@ export default function Diagram({
   useEffect(() => {
     async function fetchAndUpdateStages() {
       setLoading(true);
-      const stages = await getOrderItemStageStatus(orderItemId);
+      const stages: OrderItemStage[] = await getOrderItemStageStatus(orderItemId);
       const statusMap = new Map(stages.map(s => [s.stage, s.status]));
 
       // Create the new nodes based on the fetched statuses
       const newNodes = initialNodes.map((node) => {
         const stageName = node.data.label;
         const newStatus = statusMap.get(stageName) as NodeStatus | undefined;
+        const statusToApply = newStatus || 'pending'; // Default to 'pending' if status is not found
         return {
           ...node,
           data: {
             ...node.data,
-            status: newStatus || 'pending',
+            status: statusToApply,
           },
-          selectable: newStatus !== 'pending',
+          selectable: statusToApply !== 'pending', // Only selectable if not pending
         };
       });
 

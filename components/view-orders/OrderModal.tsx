@@ -1,9 +1,9 @@
 "use client";
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Order, Stage, Priority, CheckItem } from "./types";
+import { Order, Priority, CheckItem } from "./types";
 import { Product } from "@/types/products";
-import { STAGE_CONFIG, PRIORITY_CONFIG } from "./data";
+import { PRIORITY_CONFIG } from "./data";
 import { icons } from "./icons";
 import getProductDetails from "@/actions/get-product-details";
 import ProductDetails from "./ProductDetails";
@@ -56,8 +56,6 @@ const OrderModal: React.FC<OrderModalProps> = ({
       setIsLoading(false);
     }
   };
-
-  const allStages = Object.keys(STAGE_CONFIG) as (Stage | 'delivered')[];
 
   return (
     <motion.div

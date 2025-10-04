@@ -21,20 +21,6 @@ const CANONICAL_ORDER_HISTORY = [
 
 type CanonicalKeyOrderHistory = (typeof CANONICAL_ORDER_HISTORY)[number];
 
-/** Map of accepted aliases -> canonical key */
-const ALIASES_ORDER_HISTORY: Record<string, CanonicalKeyOrderHistory> = {
-  order_id: 'order_id',
-  id: 'order_id',
-  product_name: 'product_name',
-  product: 'product_name',
-  customer_name: 'customer_name',
-  customer: 'customer_name',
-  order_date: 'order_date',
-  due_date: 'due_date',
-  delivery_date: 'delivery_date',
-  status: 'status',
-};
-
 /** Nicely formatted labels for Excel headers */
 const DISPLAY_LABEL_ORDER_HISTORY: Record<CanonicalKeyOrderHistory, string> = {
   order_id: 'Order ID',
@@ -46,22 +32,20 @@ const DISPLAY_LABEL_ORDER_HISTORY: Record<CanonicalKeyOrderHistory, string> = {
   status: 'Status',
 };
 
-/** Normalize user `?columns=` to canonical keys (case-insensitive, alias-aware) */
-function normalizeSelectedColumnsOrderHistory(cols: string[] | null): CanonicalKeyOrderHistory[] | null {
-  if (!cols || cols.length === 0) return null;
-  const mapped: CanonicalKeyOrderHistory[] = [];
-  for (const raw of cols) {
-    const k = raw.trim().toLowerCase();
-    const canon = ALIASES_ORDER_HISTORY[k];
-    if (canon && !mapped.includes(canon)) mapped.push(canon);
-  }
-  return mapped.length ? mapped : null;
+interface TransformedOrder {
+  id: string;
+  product_name: string;
+  customer_name: string;
+  order_date: string | null;
+  due_date: string | null;
+  delivery_date: string | null;
+  status: string;
 }
 
 /** Create the row shape we’ll write (canonical keys only) */
-const mapOrderHistoryForExport = (transformedOrders: any[]) => {
+const mapOrderHistoryForExport = (transformedOrders: TransformedOrder[]) => {
   return transformedOrders.map((o) => {
-    const row: Record<CanonicalKeyOrderHistory, any> = {
+    const row: Record<CanonicalKeyOrderHistory, unknown> = {
       order_id: o.id ?? null,
       product_name: o.product_name ?? null,
       customer_name: o.customer_name ?? null,
@@ -74,7 +58,7 @@ const mapOrderHistoryForExport = (transformedOrders: any[]) => {
   });
 };
 
-const convertChunkToCSV = (data: Record<string, any>[], headers: CanonicalKeyOrderHistory[], includeHeader: boolean): string => {
+const convertChunkToCSV = (data: Record<string, unknown>[], headers: CanonicalKeyOrderHistory[], includeHeader: boolean): string => {
   if (!data || data.length === 0) {
     return "";
   }
@@ -84,8 +68,8 @@ const convertChunkToCSV = (data: Record<string, any>[], headers: CanonicalKeyOrd
   }
   for (const row of data) {
     const values = headers.map(header => {
-      const val = row[header] === null || row[header] === undefined ? '' : row[header];
-      const escaped = ('' + val).replace(/"/g, '""');
+      const val = row[header] === null || row[header] === undefined ? '' : String(row[header]);
+      const escaped = val.replace(/"/g, '""');
       return `"${escaped}"`;
     });
     csvRows.push(values.join(','));
@@ -93,7 +77,7 @@ const convertChunkToCSV = (data: Record<string, any>[], headers: CanonicalKeyOrd
   return csvRows.join('\n') + '\n';
 };
 
-async function* getPaginatedOrderHistory(filters: any, sort: any) {
+async function* getPaginatedOrderHistory(filters: Record<string, unknown>, sort: Record<string, unknown>) {
   const supabase = await createClient();
   let page = 0;
   let hasMore = true;
@@ -125,13 +109,14 @@ async function* getPaginatedOrderHistory(filters: any, sort: any) {
       `);
 
     if (sort && sort.by && sort.dir) {
-      query = query.order(sort.by, { ascending: sort.dir === 'asc' });
+      query = query.order(sort.by as string, { ascending: sort.dir === 'asc' });
     } else {
       query = query.order('due_date', { ascending: false });
     }
 
     if (filters.q) {
-      query = query.or(`customer_details.customer_name.ilike.%${filters.q}%,sofa_products.model_name.ilike.%${filters.q}%,bed_products.model_name.ilike.%${filters.q}%`);
+      const q = filters.q as string;
+      query = query.or(`customer_details.customer_name.ilike.%${q}%,sofa_products.model_name.ilike.%${q}%,bed_products.model_name.ilike.%${q}%`);
     }
     
     if (filters.status) {
@@ -161,10 +146,10 @@ async function* getPaginatedOrderHistory(filters: any, sort: any) {
     }
 
     if (orders && orders.length > 0) {
-      const transformedOrders = orders.map((oi: any) => {
-        const activeStages = oi.order_item_stage_status
-          .filter((s: any) => s.status === 'active')
-          .map((s: any) => s.stages.name)
+      const transformedOrders = orders.map((oi: Record<string, unknown>) => {
+        const activeStages = (oi.order_item_stage_status as Record<string, unknown>[])
+          .filter((s) => s.status === 'active')
+          .map((s) => (s.stages as Record<string, unknown>).name)
           .join(', ');
 
         return {
@@ -172,13 +157,13 @@ async function* getPaginatedOrderHistory(filters: any, sort: any) {
           due_date: oi.due_date,
           delivery_date: oi.delivery_date,
           status: oi.delivery_date ? 'Delivered' : (activeStages || 'Pending'),
-          product_name: oi.sofa_products?.model_name || oi.bed_products?.model_name,
-          order_date: oi.orders?.order_date,
-          customer_name: oi.orders?.customer_details?.customer_name,
-          address: oi.orders?.customer_details?.address,
+          product_name: (oi.sofa_products as Record<string, unknown>)?.model_name || (oi.bed_products as Record<string, unknown>)?.model_name,
+          order_date: (oi.orders as Record<string, unknown>)?.order_date,
+          customer_name: ((oi.orders as Record<string, unknown>)?.customer_details as Record<string, unknown>)?.customer_name,
+          address: ((oi.orders as Record<string, unknown>)?.customer_details as Record<string, unknown>)?.address,
         };
       });
-      yield transformedOrders;
+      yield transformedOrders as TransformedOrder[];
       page++;
     } else {
       hasMore = false;
@@ -213,7 +198,7 @@ export async function GET(request: NextRequest) {
       async start(controller) {
         const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({
           stream: new class extends Stream.Writable {
-            _write(chunk: any, encoding: any, callback: any) {
+            _write(chunk: Buffer, encoding: BufferEncoding, callback: (error?: Error | null) => void) {
               controller.enqueue(chunk);
               callback();
             }
@@ -228,12 +213,12 @@ export async function GET(request: NextRequest) {
             let mappedData = mapOrderHistoryForExport(orders);
             if (selectedColumns) {
               mappedData = mappedData.map(row => {
-                const newRow: { [key: string]: any } = {};
+                const newRow: { [key: string]: unknown } = {};
                 selectedColumns.forEach(col => {
                   newRow[col] = row[col as keyof typeof row];
                 });
-                return newRow;
-              }) as any[];
+                return newRow as Record<CanonicalKeyOrderHistory, unknown>;
+              });
             }
             if (isFirstPage && mappedData.length > 0) {
               const headers = (selectedColumns || CANONICAL_ORDER_HISTORY) as CanonicalKeyOrderHistory[];
@@ -289,12 +274,12 @@ export async function GET(request: NextRequest) {
           let mappedData = mapOrderHistoryForExport(orders);
           if (selectedColumns) {
             mappedData = mappedData.map(row => {
-              const newRow: { [key: string]: any } = {};
+              const newRow: { [key: string]: unknown } = {};
               selectedColumns.forEach(col => {
                 newRow[col] = row[col as keyof typeof row];
               });
-              return newRow;
-            }) as any[];
+              return newRow as Record<CanonicalKeyOrderHistory, unknown>;
+            });
           }
           if (isFirstChunk) {
             csvHeaders = (selectedColumns || CANONICAL_ORDER_HISTORY) as CanonicalKeyOrderHistory[];

@@ -8,22 +8,13 @@ import { useState, useCallback, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
 import { addProductAction } from '@/actions/add-product';
 import { Button } from '@/components/ui/button';
-import { ToggleGroupField, InputField, type ToggleOption } from '../place-order/product-fields';
+import { ToggleGroupField} from '../place-order/product-fields';
 import { toast } from 'sonner';
 import { SharedSofaDetailsForm } from '../shared/sofa-details-form';
 import { SharedBedDetailsForm } from '../shared/bed-details-form';
 import { ProductWithFiles } from '@/types/products';
 
 type ProductType = 'sofa' | 'bed';
-
-// Helper function to create options for ToggleGroupField
-const createOptions = (values: string[]): ToggleOption<string>[] =>
-  values.map(v => ({ label: v.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).replace('3+ Daybed', '3+ daybed').replace('2+ Daybed', '2+ daybed'), value: v }));
-
-const booleanOptions: ToggleOption<boolean>[] = [
-  { label: 'Yes', value: true },
-  { label: 'No', value: false },
-];
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -96,7 +87,7 @@ export default function AddProductForm({ onClose }: { onClose: () => void }) {
   const [product, setProduct] = useState<ProductWithFiles>({} as ProductWithFiles);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const handleProductChange = useCallback((index: number, field: keyof ProductWithFiles, value: any) => {
+  const handleProductChange = useCallback((index: number, field: keyof ProductWithFiles, value: unknown) => {
     setProduct(prev => ({ ...prev, [field]: value }));
   }, []);
 

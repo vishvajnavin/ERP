@@ -1,15 +1,15 @@
 'use client';
 import React, { useState, useActionState, useEffect, useRef, useCallback } from 'react';
-import { Plus, CheckCircle, Search, X, Sofa, Bed, Trash2, Minus, UploadCloud } from 'lucide-react';
+import { Plus, CheckCircle, Search } from 'lucide-react';
 import { useFormStatus } from 'react-dom';
 import { Product, ProductWithFiles } from '@/types/products';
 import { Customer } from '@/types/customers';
 import { searchCustomers } from '@/actions/search-customers';
 import getProductDetails from '@/actions/get-product-details';
-import { searchProducts } from '@/actions/search-products';
 import { submitOrder } from '@/actions/submit-order';
 import { Input } from '@/components/ui/input';
 import { ProductEntryForm } from './product-entry-form';
+import Image from 'next/image';
 
 // Main type for an item in the order form
 export type OrderItem = {
@@ -189,7 +189,7 @@ const CustomerSelector = ({ customer, onSelect }: { customer: Customer | null, o
                         <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
                             {searchResults.map((result) => (
                                 <div key={result.id} onClick={() => handleSelectCustomer(result)} className="flex items-center p-3 hover:bg-gray-100 cursor-pointer">
-                                    <img src={result.avatar} alt="Avatar" width={40} height={40} className="w-10 h-10 rounded-full mr-3 bg-gray-200" />
+                                    <Image src={result.avatar} alt="Avatar" width={40} height={40} className="w-10 h-10 rounded-full mr-3 bg-gray-200" />
                                     <div>
                                         <p className="font-semibold text-gray-800">{result.name}</p>
                                         <p className="text-sm text-gray-500">{result.phone}</p>
@@ -201,7 +201,7 @@ const CustomerSelector = ({ customer, onSelect }: { customer: Customer | null, o
                 </div>
             ) : customer ? (
                 <div className="flex items-center p-4 bg-gray-50 rounded-lg">
-                    <img src={customer.avatar} alt="Customer Avatar" width={48} height={48} className="w-12 h-12 rounded-full mr-4 bg-gray-200" />
+                    <Image src={customer.avatar} alt="Customer Avatar" width={48} height={48} className="w-12 h-12 rounded-full mr-4 bg-gray-200" />
                     <div>
                         <p className="font-semibold text-gray-800">{customer.name}</p>
                         <p className="text-sm text-gray-500">{customer.company}</p>

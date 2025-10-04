@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Plus, Search, Filter, Download } from 'lucide-react';
+import { Plus, Search, Filter } from 'lucide-react';
 import { CustomerSearchResult } from '@/types/customers';
 import CustomerCard from '@/components/customers/customer-card';
 import CustomerDetailPanel from '@/components/customers/customer-detail-panel';
@@ -68,7 +68,7 @@ const CustomerClientPage: React.FC<CustomerClientPageProps> = ({ initialCustomer
             searchTerm: updatedSearchTerm,
             address: updatedAddress,
         });
-    }, [fetchCustomers, currentSearchTerm, currentAddressFilter]);
+    }, [fetchCustomers, currentSearchTerm, currentAddressFilter, searchParams]);
     
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
