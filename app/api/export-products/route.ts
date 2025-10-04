@@ -1,10 +1,15 @@
 import { createClient } from '@/utils/supabase/server';
 import ExcelJS from 'exceljs';
 import { NextRequest, NextResponse } from 'next/server';
+import { Stream } from 'stream';
 
 // This function converts a chunk of data (array of objects) into a CSV string.
 // It can optionally include a header row.
-const convertChunkToCSV = (data: any[], headers: string[], includeHeader: boolean): string => {
+
+interface ProductRow {
+  [key: string]: string | number | boolean | Date | null | undefined;
+}
+const convertChunkToCSV = (data: ProductRow[], headers: string[], includeHeader: boolean): string => {
   if (!data || data.length === 0) {
     return "";
   }
@@ -35,7 +40,7 @@ const getDataSourceConfig = (source: string | null, productType: string | null) 
             const tableName = productType === 'sofa' ? 'sofa_products' : 'bed_products';
             return {
                 query: '*',
-                mapper: (product: any) => product, // No mapping needed
+                mapper: (product: ProductRow) => product, // No mapping needed
                 tableName: tableName
             };
         default:
@@ -69,24 +74,12 @@ export async function GET(request: NextRequest) {
     const writer = writable.getWriter();
 
     const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({
-      stream: {
-        write: (chunk: any) => {
+      stream: new class extends Stream.Writable {
+        _write(chunk: Buffer | Uint8Array, encoding: BufferEncoding, callback: (error?: Error | null) => void) {
           writer.write(chunk);
-          return true;
-        },
-        end: () => writer.close(),
-        // Other stream methods that ExcelJS might expect, but are not strictly necessary for basic writing
-        // These are often no-ops for simple writable streams
-        cork: () => {},
-        uncork: () => {},
-        setDefaultEncoding: () => {},
-        on: () => {},
-        once: () => {},
-        emit: () => {},
-        off: () => {},
-        removeListener: () => {},
-        destroy: () => writer.abort(),
-      } as any, // Cast to any to satisfy ExcelJS's Stream type expectation
+          callback();
+        }
+      }(),
     });
 
     const worksheet = workbook.addWorksheet(source || 'Sheet 1');
@@ -107,10 +100,10 @@ export async function GET(request: NextRequest) {
         }
 
         if (firstChunk && firstChunk.length > 0) {
-          let mappedFirstChunk = firstChunk.map(config.mapper);
+          let mappedFirstChunk = (firstChunk as unknown as ProductRow[]).map(config.mapper);
           if (selectedColumns) {
             mappedFirstChunk = mappedFirstChunk.map(row => {
-              const newRow: { [key: string]: any } = {};
+              const newRow: ProductRow = {};
               selectedColumns.forEach(col => {
                 newRow[col] = row[col];
               });
@@ -158,10 +151,10 @@ export async function GET(request: NextRequest) {
           if (error) { throw error; }
           if (!chunk || chunk.length === 0) { break; }
 
-          let mappedChunk = chunk.map(config.mapper);
+          let mappedChunk = (chunk as unknown as ProductRow[]).map(config.mapper);
           if (selectedColumns) {
             mappedChunk = mappedChunk.map(row => {
-              const newRow: { [key: string]: any } = {};
+              const newRow: ProductRow = {};
               selectedColumns.forEach(col => {
                 newRow[col] = row[col];
               });
@@ -205,10 +198,10 @@ export async function GET(request: NextRequest) {
                     if (error) { throw error; }
                     if (!chunk || chunk.length === 0) { controller.close(); return; }
 
-                    let mappedChunk = chunk.map(config.mapper);
+                    let mappedChunk = (chunk as unknown as ProductRow[]).map(config.mapper);
                     if (selectedColumns) {
                         mappedChunk = mappedChunk.map(row => {
-                            const newRow: { [key: string]: any } = {};
+                            const newRow: ProductRow = {};
                             selectedColumns.forEach(col => {
                                 newRow[col] = row[col];
                             });

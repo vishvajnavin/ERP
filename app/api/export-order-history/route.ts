@@ -46,22 +46,10 @@ const DISPLAY_LABEL_ORDER_HISTORY: Record<CanonicalKeyOrderHistory, string> = {
   status: 'Status',
 };
 
-/** Normalize user `?columns=` to canonical keys (case-insensitive, alias-aware) */
-function normalizeSelectedColumnsOrderHistory(cols: string[] | null): CanonicalKeyOrderHistory[] | null {
-  if (!cols || cols.length === 0) return null;
-  const mapped: CanonicalKeyOrderHistory[] = [];
-  for (const raw of cols) {
-    const k = raw.trim().toLowerCase();
-    const canon = ALIASES_ORDER_HISTORY[k];
-    if (canon && !mapped.includes(canon)) mapped.push(canon);
-  }
-  return mapped.length ? mapped : null;
-}
-
 /** Create the row shape we’ll write (canonical keys only) */
-const mapOrderHistoryForExport = (transformedOrders: any[]) => {
+const mapOrderHistoryForExport = (transformedOrders: Record<string, any>[]) => {
   return transformedOrders.map((o) => {
-    const row: Record<CanonicalKeyOrderHistory, any> = {
+    const row: Record<CanonicalKeyOrderHistory, string | number | null> = {
       order_id: o.id ?? null,
       product_name: o.product_name ?? null,
       customer_name: o.customer_name ?? null,
@@ -74,7 +62,7 @@ const mapOrderHistoryForExport = (transformedOrders: any[]) => {
   });
 };
 
-const convertChunkToCSV = (data: Record<string, any>[], headers: CanonicalKeyOrderHistory[], includeHeader: boolean): string => {
+const convertChunkToCSV = (data: Record<string, string | number | null>[], headers: CanonicalKeyOrderHistory[], includeHeader: boolean): string => {
   if (!data || data.length === 0) {
     return "";
   }
@@ -93,7 +81,7 @@ const convertChunkToCSV = (data: Record<string, any>[], headers: CanonicalKeyOrd
   return csvRows.join('\n') + '\n';
 };
 
-async function* getPaginatedOrderHistory(filters: any, sort: any) {
+async function* getPaginatedOrderHistory(filters: Record<string, string | undefined>, sort: Record<string, string>) {
   const supabase = await createClient();
   let page = 0;
   let hasMore = true;
@@ -161,10 +149,10 @@ async function* getPaginatedOrderHistory(filters: any, sort: any) {
     }
 
     if (orders && orders.length > 0) {
-      const transformedOrders = orders.map((oi: any) => {
+      const transformedOrders = orders.map((oi: Record<string, any>) => {
         const activeStages = oi.order_item_stage_status
-          .filter((s: any) => s.status === 'active')
-          .map((s: any) => s.stages.name)
+          .filter((s: Record<string, any>) => s.status === 'active')
+          .map((s: Record<string, any>) => s.stages.name)
           .join(', ');
 
         return {
@@ -213,7 +201,7 @@ export async function GET(request: NextRequest) {
       async start(controller) {
         const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({
           stream: new class extends Stream.Writable {
-            _write(chunk: any, encoding: any, callback: any) {
+            _write(chunk: Buffer | Uint8Array, encoding: BufferEncoding, callback: (error?: Error | null) => void) {
               controller.enqueue(chunk);
               callback();
             }
@@ -228,12 +216,12 @@ export async function GET(request: NextRequest) {
             let mappedData = mapOrderHistoryForExport(orders);
             if (selectedColumns) {
               mappedData = mappedData.map(row => {
-                const newRow: { [key: string]: any } = {};
+                const newRow: Record<string, string | number | null> = {};
                 selectedColumns.forEach(col => {
                   newRow[col] = row[col as keyof typeof row];
                 });
                 return newRow;
-              }) as any[];
+              });
             }
             if (isFirstPage && mappedData.length > 0) {
               const headers = (selectedColumns || CANONICAL_ORDER_HISTORY) as CanonicalKeyOrderHistory[];
@@ -289,12 +277,12 @@ export async function GET(request: NextRequest) {
           let mappedData = mapOrderHistoryForExport(orders);
           if (selectedColumns) {
             mappedData = mappedData.map(row => {
-              const newRow: { [key: string]: any } = {};
+              const newRow: Record<string, string | number | null> = {};
               selectedColumns.forEach(col => {
                 newRow[col] = row[col as keyof typeof row];
               });
               return newRow;
-            }) as any[];
+            });
           }
           if (isFirstChunk) {
             csvHeaders = (selectedColumns || CANONICAL_ORDER_HISTORY) as CanonicalKeyOrderHistory[];

@@ -7,7 +7,6 @@ type OrderTableProps = {
   orders: OrderHistory[];
   sort: { by: string; dir: string };
   setSort: React.Dispatch<React.SetStateAction<{ by: string; dir: string }>>;
-  onViewOrder: (order: OrderHistory) => void;
 };
 
 const Th = ({ label }: { label: string }) => (
@@ -42,7 +41,7 @@ const ThSort = ({
   </th>
 );
 
-export default function OrderTable({ orders, sort, setSort, onViewOrder }: OrderTableProps) {
+export default function OrderTable({ orders, sort, setSort }: OrderTableProps) {
   const handleSort = (by: string) => {
     if (sort.by === by) {
       setSort({ by, dir: sort.dir === "asc" ? "desc" : "asc" });

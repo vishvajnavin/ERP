@@ -12,7 +12,14 @@ import {
 } from "@/components/ui/select";
 import { updateEmployeeRole } from "@/actions/update-employee-role";
 
-export function EmployeeCard({ employee }: { employee: any }) {
+interface Employee {
+  id: string;
+  role: string;
+  full_name: string;
+  email: string;
+}
+
+export function EmployeeCard({ employee }: { employee: Employee }) {
   const [role, setRole] = useState(employee.role);
   const [isUpdating, setIsUpdating] = useState(false);
 

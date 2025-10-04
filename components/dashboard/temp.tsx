@@ -3,9 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   BarChart as RBarChart,
   Bar,
@@ -49,14 +47,14 @@ import {
    ===================================================== */
 const COLORS = ["#2563eb", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6"]; // blue, green, amber, red, violet
 
-const fmtINR = (n) =>
+const fmtINR = (n: number) =>
   new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
     maximumFractionDigits: 0,
   }).format(n);
 
-function range(n) { return Array.from({ length: n }, (_, i) => i); }
+function range(n: number) { return Array.from({ length: n }, (_, i) => i); }
 
 function makeMonthly(n = 12) {
   // returns array of {month, orders, revenue, returns}
@@ -71,7 +69,7 @@ function makeMonthly(n = 12) {
 
 function makeTopSkus(n = 8) {
   return range(n).map((i) => ({
-    sku: SKU-${1000 + i},
+    sku: `SKU-${1000 + i}`,
     name: ["Sofa Alpha","Sofa Beta","Recliner Pro","Bed Frame","Side Table","TV Unit","Dining Set","Wardrobe"][i % 8],
     qty: 50 + Math.floor(Math.random() * 240),
     revenue: 150000 + Math.floor(Math.random() * 900000),
@@ -82,11 +80,11 @@ function makeIssues(n = 6) {
   const sev = ["Low","Medium","High","Critical"];
   const area = ["Production","Logistics","QC","Payments","Returns","Inventory"];
   return range(n).map((i) => ({
-    id: ISS-${2340 + i},
+    id: `ISS-${2340 + i}`,
     title: ["QC variance","Packing delay","Payment gateway error","Inventory mismatch","Shipment hold","Label printing error"][i % 6],
     area: area[i % area.length],
     severity: sev[Math.min(3, Math.floor(Math.random() * 4))],
-    openSince: ${1 + Math.floor(Math.random() * 12)}d,
+    openSince: `${1 + Math.floor(Math.random() * 12)}d`,
     owner: ["Aditi","Rohit","System","Arun","Meera"][i % 5],
     status: ["Open","Investigating","Mitigated"][i % 3],
   }));
@@ -110,7 +108,7 @@ const totals = monthly.reduce(
 /* =====================================================
    Reusable Atoms
    ===================================================== */
-function MiniSpark({ data, dataKey = "orders" }) {
+function MiniSpark({ data, dataKey = "orders" }: { data: Record<string, any>[], dataKey?: string }) {
   return (
     <ResponsiveContainer width="100%" height={48}>
       <AreaChart data={data} margin={{ top: 4, bottom: 0, left: 0, right: 0 }}>
@@ -120,7 +118,7 @@ function MiniSpark({ data, dataKey = "orders" }) {
   );
 }
 
-function StatCard({ title, value, delta, icon, trendKey }) {
+function StatCard({ title, value, delta, icon, trendKey }: { title: string, value: string, delta: number, icon: React.ReactNode, trendKey: string }) {
   const DeltaIcon = delta >= 0 ? ArrowUpRight : ArrowDownRight;
   const deltaClass = delta >= 0 ? "text-green-600" : "text-red-600";
   return (
@@ -130,7 +128,7 @@ function StatCard({ title, value, delta, icon, trendKey }) {
           {icon}
           {title}
         </CardTitle>
-        <Badge variant="secondary" className={gap-1 ${deltaClass}}>
+        <Badge variant="secondary" className={`gap-1 ${deltaClass}`}>
           <DeltaIcon className="w-3 h-3" /> {Math.abs(delta)}%
         </Badge>
       </CardHeader>
@@ -144,14 +142,13 @@ function StatCard({ title, value, delta, icon, trendKey }) {
   );
 }
 
-function Section({ title, children, right }) {
+function Section({ title, children, right }: { title: string, children: React.ReactNode, right?: React.ReactNode }) {
   return (
     <div className="bg-card border rounded-2xl shadow-sm">
       <div className="flex items-center justify-between p-4">
         <h3 className="font-semibold">{title}</h3>
         <div className="flex items-center gap-2">{right}</div>
       </div>
-      <Separator />
       <div className="p-4">{children}</div>
     </div>
   );
@@ -176,7 +173,7 @@ export default function DashboardPro() {
   }, [dark]);
 
   return (
-    <div className={min-h-screen ${dark ? "bg-neutral-900 text-neutral-100" : "bg-gray-50 text-neutral-900"} p-6}> 
+    <div className={`min-h-screen ${dark ? "bg-neutral-900 text-neutral-100" : "bg-gray-50 text-neutral-900"} p-6`}> 
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Top Bar */}
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -203,7 +200,7 @@ export default function DashboardPro() {
           <StatCard title="Total Orders" value={totals.orders.toLocaleString()} delta={8} icon={<Package className="w-4 h-4 text-blue-500"/>} trendKey="orders" />
           <StatCard title="Revenue" value={fmtINR(totals.revenue)} delta={12} icon={<TrendingUp className="w-4 h-4 text-green-600"/>} trendKey="revenue" />
           <StatCard title="Returns" value={totals.returns.toLocaleString()} delta={-3} icon={<AlertTriangle className="w-4 h-4 text-amber-500"/>} trendKey="returns" />
-          <StatCard title="OTIF (On-time In-full)" value={92%} delta={2} icon={<Truck className="w-4 h-4 text-violet-500"/>} trendKey="orders" />
+          <StatCard title="OTIF (On-time In-full)" value={"92%"} delta={2} icon={<Truck className="w-4 h-4 text-violet-500"/>} trendKey="orders" />
         </div>
 
         {/* Insights Row */}
@@ -238,7 +235,7 @@ export default function DashboardPro() {
                   <div className="text-sm text-muted-foreground">{s.label}</div>
                   <div className="text-2xl font-semibold mt-1">{s.val}</div>
                   <div className="h-2 rounded bg-muted overflow-hidden mt-3">
-                    <div className="h-full" style={{ width: ${Math.min(100, (s.val/900)*100)}%, background: COLORS[i] }} />
+                    <div className="h-full" style={{ width: `${Math.min(100, (s.val/900)*100)}%`, background: COLORS[i] }} />
                   </div>
                 </div>
               ))}
@@ -252,7 +249,7 @@ export default function DashboardPro() {
               <div className="h-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadialBarChart innerRadius="35%" outerRadius="90%" data={[{ name: "Utilization", uv: 76 }]} startAngle={90} endAngle={-270}>
-                    <RadialBar minAngle={15} background clockWise dataKey="uv" fill={COLORS[2]} />
+                    <RadialBar background dataKey="uv" fill={COLORS[2]} />
                     <Tooltip />
                   </RadialBarChart>
                 </ResponsiveContainer>
@@ -305,7 +302,7 @@ export default function DashboardPro() {
                   <div>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="text-xs">{iss.area}</Badge>
-                      <span className={text-xs ${iss.severity === 'Critical' ? 'text-red-600' : iss.severity === 'High' ? 'text-amber-600' : 'text-muted-foreground'}}>{iss.severity}</span>
+                      <span className={`text-xs ${iss.severity === 'Critical' ? 'text-red-600' : iss.severity === 'High' ? 'text-amber-600' : 'text-muted-foreground'}`}>{iss.severity}</span>
                     </div>
                     <div className="font-medium mt-1">{iss.title}</div>
                     <div className="text-xs text-muted-foreground mt-1">Owner: {iss.owner} • Open {iss.openSince}</div>
@@ -382,7 +379,7 @@ export default function DashboardPro() {
 /* =====================================================
    Small Controls
    ===================================================== */
-function DateRange({ rangeDays, setRangeDays }) {
+function DateRange({ rangeDays, setRangeDays }: { rangeDays: number, setRangeDays: (days: number) => void }) {
   return (
     <div className="flex items-center gap-2 text-sm">
       <CalendarDays className="w-4 h-4 text-muted-foreground"/>
@@ -392,9 +389,9 @@ function DateRange({ rangeDays, setRangeDays }) {
           <button
             key={d}
             onClick={() => setRangeDays(d)}
-            className={px-2 py-1 rounded border text-xs ${rangeDays===d ? 'bg-primary text-primary-foreground' : 'bg-background'}}
+            className={`px-2 py-1 rounded border text-xs ${rangeDays===d ? 'bg-primary text-primary-foreground' : 'bg-background'}`}
           >
-            {d === 365 ? '1Y' : ${d}D}
+            {d === 365 ? '1Y' : `${d}D`}
           </button>
         ))}
       </div>

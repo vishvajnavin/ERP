@@ -10,13 +10,6 @@ import KPI from "./KPI";
 import { getOrderDetails } from "@/actions/get-order-details";
 import { getOrderHistory } from "@/actions/get-order-history";
 
-const formatCurrency = (amt: number) =>
-  new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 0,
-  }).format(amt);
-
 type OrderHistoryClientProps = {
   initialOrders: OrderHistory[];
   initialTotalCount: number;
@@ -29,11 +22,10 @@ export default function OrderHistoryClient({ initialOrders, initialTotalCount }:
   const [sort, setSort] = useState({ by: "dueDate", dir: "desc" });
   const [page, setPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState<OrderDetails | null>(null);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const pageSize = 12;
 
-  const debounce = <F extends (...args: any[]) => any>(func: F, delay: number) => {
+  const debounce = <F extends (...args: Parameters<F>) => ReturnType<F>>(func: F, delay: number) => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     return (...args: Parameters<F>): void => {
       if (timeoutId) {
@@ -71,10 +63,8 @@ export default function OrderHistoryClient({ initialOrders, initialTotalCount }:
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   const handleViewOrder = async (order: OrderHistory) => {
-    setIsLoadingDetails(true);
     const details = await getOrderDetails(order.id);
     setSelectedOrder(details);
-    setIsLoadingDetails(false);
   };
 
   return (
@@ -100,7 +90,6 @@ export default function OrderHistoryClient({ initialOrders, initialTotalCount }:
         orders={orders}
         sort={sort}
         setSort={setSort}
-        onViewOrder={handleViewOrder}
       />
 
       <Pagination page={page} totalPages={totalPages} setPage={setPage} />

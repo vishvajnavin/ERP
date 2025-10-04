@@ -10,7 +10,7 @@ interface RoleGuardProps {
 }
 
 interface UserContextType {
-  user: { role?: string; [key: string]: any } | null;
+  user: { role?: string } | null;
   loading: boolean;
 }
 

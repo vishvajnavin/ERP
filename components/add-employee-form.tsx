@@ -49,8 +49,10 @@ export default function AddEmployeeForm({
         });
         onSuccess?.();
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to add employee');
+    } catch (err) {
+      if (err instanceof Error) {
+        toast.error(err.message || 'Failed to add employee');
+      }
     } finally {
       setLoading(false);
     }

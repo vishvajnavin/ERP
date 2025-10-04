@@ -22,7 +22,7 @@ const formatLabel = (key: string) => {
     .join(' ');
 };
 
-const ProductDetails: React.FC<ProductDetailsProps> = ({ details, productType, orderItemId, onProductUpdate }) => {
+const ProductDetails: React.FC<ProductDetailsProps> = ({ details, productType, onProductUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedDetails, setEditedDetails] = useState(details);
   const [referenceImageFile, setReferenceImageFile] = useState<File | null>(null);
@@ -158,7 +158,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ details, productType, o
     }
   };
 
-  const renderField = (key: string, value: any) => {
+  const renderField = (key: string, value: string | number | boolean | Date | null | undefined) => {
     const label = formatLabel(key);
     const fieldName = key as keyof Product;
 

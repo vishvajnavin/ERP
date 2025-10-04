@@ -1,5 +1,5 @@
 import React from 'react';
-import { LucideIcon, Scissors, Hammer, Wrench, CheckCircle, Truck, Sofa } from 'lucide-react';
+import { LucideIcon, Scissors, Hammer, Wrench, CheckCircle, Sofa } from 'lucide-react';
 import { STAGE_CONFIG } from '@/components/view-orders/data';
 import { Stage } from '@/components/view-orders/types';
 
