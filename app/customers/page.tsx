@@ -12,12 +12,11 @@ const CustomerPage = async ({
     searchParams?: { [key: string]: string | string[] | undefined };
 }) => {
     // Extract filter values from URL search parameters.
-    // Await searchParams to access its properties as per Next.js documentation for Server Components.
-    const awaitedSearchParams = await searchParams;
+    // Extract filter values from URL search parameters.
     const filters = {
-        searchTerm: Array.isArray(awaitedSearchParams?.search) ? awaitedSearchParams.search[0] : awaitedSearchParams?.search || '',
-        status: Array.isArray(awaitedSearchParams?.status) ? awaitedSearchParams.status[0] : awaitedSearchParams?.status || 'All',
-        address: Array.isArray(awaitedSearchParams?.address) ? awaitedSearchParams.address[0] : awaitedSearchParams?.address || '',
+        searchTerm: Array.isArray(searchParams?.search) ? searchParams.search[0] : searchParams?.search || '',
+        status: Array.isArray(searchParams?.status) ? searchParams.status[0] : searchParams?.status || 'All',
+        address: Array.isArray(searchParams?.address) ? searchParams.address[0] : searchParams?.address || '',
     };
 
     // Fetch the initial list of customers on the server using the searchCustomers action.

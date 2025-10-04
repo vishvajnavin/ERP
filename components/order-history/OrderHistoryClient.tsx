@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { OrderHistory, OrderDetails } from "./types";
 import FiltersBar from "./FiltersBar";
 import OrderTable from "./OrderTable";
@@ -50,7 +50,7 @@ export default function OrderHistoryClient({ initialOrders, initialTotalCount }:
     setIsLoading(false);
   }, [pageSize]);
 
-  const debouncedFetch = useCallback(debounce(fetchOrders, 300), [fetchOrders]);
+  const debouncedFetch = useMemo(() => debounce(fetchOrders, 300), [fetchOrders]);
 
   useEffect(() => {
     if (filters.q) {
@@ -99,7 +99,7 @@ export default function OrderHistoryClient({ initialOrders, initialTotalCount }:
       <OrderDetailsDrawer
         order={selectedOrder}
         onClose={() => setSelectedOrder(null)}
-        isLoading={isLoadingDetails} // Pass isLoadingDetails to OrderDetailsDrawer
+        isLoading={isLoading} // Pass isLoading to OrderDetailsDrawer
       />
     </div>
   );
