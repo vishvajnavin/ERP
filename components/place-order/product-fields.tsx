@@ -50,11 +50,7 @@ export const ToggleGroupField = <T extends string | boolean>({ label, name, valu
                     key={String(option.value)} 
                     onClick={() => {
                         if (disabled) return;
-                        if (value === option.value) {
-                            onValueChange(null);
-                        } else {
-                            onValueChange(option.value);
-                        }
+                        onValueChange(option.value);
                     }} 
                     disabled={disabled} 
                     className={`flex flex-1 self-stretch justify-center items-center text-sm text-center py-2 px-2 rounded-md transition-all duration-200 ${value === option.value ? 'bg-white shadow font-semibold text-gray-800' : 'bg-transparent text-gray-600 hover:bg-gray-200'} disabled:cursor-not-allowed`}

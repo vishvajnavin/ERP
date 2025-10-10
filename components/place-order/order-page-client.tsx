@@ -46,7 +46,6 @@ const PlaceOrderPage = () => {
     useEffect(() => {
         if (state.success) {
             setOrderItems([{ ...initialProductState, uniqueId: Date.now() }]);
-            setSelectedCustomer(null);
         }
     }, [state.success]);
 
@@ -158,7 +157,7 @@ const CustomerSelector = ({ customer, onSelect }: { customer: Customer | null, o
             const formattedResults: Customer[] = results.map(c => ({
                 id: c.id, name: c.customer_name, email: c.email, company: c.company || 'N/A', address: c.address, phone: c.mobile_number, customerType: c.customer_type,
                 dateAdded: new Date(c.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-                avatar: `https://avatar.vercel.sh/${c.email}.png`, totalOrders: 0, totalSpend: 0, lastOrder: 'N/A', status: 'Active'
+                avatar: '', totalOrders: 0, totalSpend: 0, lastOrder: 'N/A', status: 'Active'
             }));
             setSearchResults(formattedResults);
             setIsLoading(false);
@@ -189,7 +188,9 @@ const CustomerSelector = ({ customer, onSelect }: { customer: Customer | null, o
                         <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
                             {searchResults.map((result) => (
                                 <div key={result.id} onClick={() => handleSelectCustomer(result)} className="flex items-center p-3 hover:bg-gray-100 cursor-pointer">
-                                    <Image src={result.avatar} alt="Avatar" width={40} height={40} className="w-10 h-10 rounded-full mr-3 bg-gray-200" />
+                                    <div className="w-10 h-10 rounded-full mr-3 bg-gray-200 flex items-center justify-center text-gray-600 font-semibold">
+                                        {result.name.charAt(0).toUpperCase()}
+                                    </div>
                                     <div>
                                         <p className="font-semibold text-gray-800">{result.name}</p>
                                         <p className="text-sm text-gray-500">{result.phone}</p>
@@ -201,7 +202,9 @@ const CustomerSelector = ({ customer, onSelect }: { customer: Customer | null, o
                 </div>
             ) : customer ? (
                 <div className="flex items-center p-4 bg-gray-50 rounded-lg">
-                    <Image src={customer.avatar} alt="Customer Avatar" width={48} height={48} className="w-12 h-12 rounded-full mr-4 bg-gray-200" />
+                    <div className="w-12 h-12 rounded-full mr-4 bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-xl">
+                        {customer.name.charAt(0).toUpperCase()}
+                    </div>
                     <div>
                         <p className="font-semibold text-gray-800">{customer.name}</p>
                         <p className="text-sm text-gray-500">{customer.company}</p>

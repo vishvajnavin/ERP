@@ -9,6 +9,19 @@ export const SharedSofaDetailsForm: React.FC<DetailsFormProps<ProductWithFiles>>
     const [includeCupHolder, setIncludeCupHolder] = useState<boolean | null>(!!product.cup_holder);
 
     useEffect(() => {
+        if (product.id) return;
+        // Set default to the first option for all toggle groups
+        handleProductChange(index, "wood_to_floor", true); // Wood
+        handleProductChange(index, "headrest_mode", "manual");
+        handleProductChange(index, "snack_swivel_tray", true); // Yes
+        handleProductChange(index, "armrest_storage", true); // Yes
+        handleProductChange(index, "belt_details", "elastic_belt");
+        handleProductChange(index, "leg_type", "wood");
+        handleProductChange(index, "chester_option", "with_button");
+        handleProductChange(index, "polish_finish", "matt_finish");
+    }, [product.id, handleProductChange, index]);
+
+    useEffect(() => {
         setIncludeCupHolder(!!product.cup_holder);
     }, [product.cup_holder]);
 
@@ -17,11 +30,42 @@ export const SharedSofaDetailsForm: React.FC<DetailsFormProps<ProductWithFiles>>
     }, [product.recliner_mechanism_mode, product.recliner_mechanism_flip]);
 
     useEffect(() => {
-        if (product.model_family_configuration !== '3+daybed' && product.model_family_configuration !== '2+daybed') {
+        if (includeRecliner) {
+            if (!product.recliner_mechanism_mode) {
+                handleProductChange(index, "recliner_mechanism_mode", 'manual');
+            }
+            if (!product.recliner_mechanism_flip) {
+                handleProductChange(index, "recliner_mechanism_flip", 'single_flip');
+            }
+        }
+    }, [includeRecliner, product.recliner_mechanism_mode, product.recliner_mechanism_flip, handleProductChange, index]);
+
+    useEffect(() => {
+        if (includeCupHolder && !product.cup_holder) {
+            handleProductChange(index, "cup_holder", 'normal_push_back');
+        }
+    }, [includeCupHolder, product.cup_holder, handleProductChange, index]);
+
+    useEffect(() => {
+        if (product.armrest_storage && !product.storage_side) {
+            handleProductChange(index, "storage_side", 'rhs_arm');
+        }
+    }, [product.armrest_storage, product.storage_side, handleProductChange, index]);
+
+    useEffect(() => {
+        const isDaybed = product.model_family_configuration === '3+daybed' || product.model_family_configuration === '2+daybed';
+        if (isDaybed) {
+            if (!product.daybed_headrest_mode) {
+                handleProductChange(index, "daybed_headrest_mode", 'manual');
+            }
+            if (!product.daybed_position) {
+                handleProductChange(index, "daybed_position", 'rhs');
+            }
+        } else {
             handleProductChange(index, "daybed_headrest_mode", null);
             handleProductChange(index, "daybed_position", null);
         }
-    }, [product.model_family_configuration, handleProductChange, index]);
+    }, [product.model_family_configuration, product.daybed_headrest_mode, product.daybed_position, handleProductChange, index]);
 
     const upholsteryOptions = [
         {value: 'fabric', label: 'Fabric'}, {value: 'pu', label: 'PU'}, {value: 'leather_bloom', label: 'Leather Bloom'},
@@ -154,7 +198,13 @@ export const SharedSofaDetailsForm: React.FC<DetailsFormProps<ProductWithFiles>>
                 label="Chester Option" 
                 value={product.chester_option || 'no_chester'} 
                 disabled={disabled} 
-                onValueChange={(val) => handleProductChange(index, "chester_option", val === 'no_chester' ? null : val)} 
+                onValueChange={(val) => {
+                    if (val === 'no_chester') {
+                        handleProductChange(index, "chester_option", null);
+                    } else {
+                        handleProductChange(index, "chester_option", val);
+                    }
+                }} 
                 options={[{value: 'with_button', label: 'With Button'}, {value: 'without_button', label: 'Without Button'}, {value: 'no_chester', label: 'No Chester'}]} 
                 required
             />
