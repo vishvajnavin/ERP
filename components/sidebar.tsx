@@ -92,7 +92,6 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
         ))}
       </nav>
 
-      {/* --- Footer --- */}
       {user && (
         <div className="p-4 border-t border-gray-800">
           <div className={`flex items-center ${isCollapsed ? 'justify-center' : ''}`}>
