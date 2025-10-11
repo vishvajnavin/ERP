@@ -43,22 +43,18 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
 
   return (
     <aside
-      className={`flex flex-col bg-black text-white transition-all duration-300 ease-in-out h-screen sticky top-0 z-10 ${
+      className={`flex flex-col bg-black text-white transition-all duration-300 ease-in-out h-[calc(100vh-2rem)] sticky top-4 left-4 z-10 rounded-3xl shadow-2xl ${
         isCollapsed ? 'w-20' : 'w-64'
-      }`}
+      } m-4`}
     >
       {/* --- Header --- */}
-      <div className="flex items-center justify-center h-20 border-b border-gray-800">
-        <div className={`flex items-center justify-center transition-all duration-300 ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'}`}>
-           <svg className="h-8 w-auto text-red-600" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" />
-          </svg>
-          <span className="ml-3 text-xl font-bold whitespace-nowrap">ERP System</span>
+      <div className="flex items-center justify-start h-20 border-gray-800 pt-4 px-4">
+        <div className={`flex items-center justify-start transition-all duration-300 ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'}`}>
+          <img src="/Vinyork_Logo.png" alt="Vinyork Logo" className="h-12 w-auto" />
+          <span className="text-white text-4xl ml-2 uppercase font-bold" style={{ fontFamily: 'Mainlux, sans-serif' }}>vinyork</span>
         </div>
          <div className={`flex items-center justify-center transition-all duration-300 ${isCollapsed ? 'opacity-100 w-auto' : 'opacity-0 w-0'}`}>
-            <svg className="h-8 w-8 text-red-600" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" />
-            </svg>
+            <img src="/Vinyork_Logo.png" alt="Vinyork Logo" className="h-12 w-auto" />
         </div>
       </div>
 
