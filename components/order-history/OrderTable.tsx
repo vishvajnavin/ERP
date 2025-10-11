@@ -85,7 +85,7 @@ export default function OrderTable({ orders, sort, setSort, onViewOrder, isLoadi
                 onClick={() => handleSort("deliveryDate")}
               />
               <Th label="Status" />
-              <Th label="Actions" /> {/* Added Actions column */}
+              <Th label="Actions" />
             </tr>
           </thead>
           <tbody className="divide-y">
