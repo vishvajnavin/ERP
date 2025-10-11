@@ -135,7 +135,7 @@ export const SharedSofaDetailsForm: React.FC<DetailsFormProps<ProductWithFiles>>
                 label="Headrest Mode" 
                 value={product.headrest_mode || 'fixed'} 
                 disabled={disabled} 
-                onValueChange={(val) => handleProductChange(index, "headrest_mode", val === 'fixed' ? null : val)} 
+                onValueChange={(val) => handleProductChange(index, "headrest_mode", val)} 
                 options={[{value: 'manual', label: 'Manual'}, {value: 'motorized', label: 'Motorized'}, {value: 'fixed', label: 'Fixed'}]} 
                 required
             />
@@ -164,7 +164,7 @@ export const SharedSofaDetailsForm: React.FC<DetailsFormProps<ProductWithFiles>>
                         label="Daybed Headrest" 
                         value={product.daybed_headrest_mode || 'fixed'} 
                         disabled={disabled} 
-                        onValueChange={(val) => handleProductChange(index, "daybed_headrest_mode", val === 'fixed' ? null : val)} 
+                        onValueChange={(val) => handleProductChange(index, "daybed_headrest_mode", val)} 
                         options={[{value: 'manual', label: 'Manual'}, {value: 'motorized', label: 'Motorized'}, {value: 'fixed', label: 'Fixed'}]} 
                         required
                     />
@@ -200,7 +200,7 @@ export const SharedSofaDetailsForm: React.FC<DetailsFormProps<ProductWithFiles>>
                 disabled={disabled} 
                 onValueChange={(val) => {
                     if (val === 'no_chester') {
-                        handleProductChange(index, "chester_option", null);
+                        handleProductChange(index, "chester_option", 'no_chester');
                     } else {
                         handleProductChange(index, "chester_option", val);
                     }
