@@ -9,7 +9,6 @@ import getProductDetails from '@/actions/get-product-details';
 import { submitOrder } from '@/actions/submit-order';
 import { Input } from '@/components/ui/input';
 import { ProductEntryForm } from './product-entry-form';
-import Image from 'next/image';
 
 // Main type for an item in the order form
 export type OrderItem = {
