@@ -61,3 +61,55 @@ export async function getProducts(
 
   return { products: productsWithSignedUrls, totalCount: count ?? 0 };
 }
+
+export async function searchProducts(
+  query: string,
+  productType: "sofa" | "bed",
+  filters?: Record<string, string>
+): Promise<Product[]> {
+  const supabase = await createClient();
+  let queryBuilder = supabase.from(productType === 'sofa' ? 'sofa_products' : 'bed_products').select('*');
+
+  if (query.trim()) {
+    queryBuilder = queryBuilder.ilike('model_name', `%${query}%`);
+  }
+
+  if (filters) {
+    for (const [key, value] of Object.entries(filters)) {
+      if (value && value !== 'all') {
+        queryBuilder = queryBuilder.eq(key, value);
+      }
+    }
+  }
+
+  const { data: products, error } = await queryBuilder;
+
+  if (error) {
+    console.error("Error searching products:", error);
+    return [];
+  }
+
+  if (!products) {
+    return [];
+  }
+
+  // Extract all image paths that need signing
+  const imagePaths = products.flatMap(p => {
+    const paths = [];
+    if (p.reference_image_url) paths.push(p.reference_image_url);
+    if (p.measurement_drawing_url) paths.push(p.measurement_drawing_url);
+    return paths;
+  });
+
+  // Get all signed URLs in one go
+  const signedUrlMap = await getSignedUrls(imagePaths);
+
+  // Map the signed URLs back to the products
+  const productsWithSignedUrls = products.map(product => ({
+    ...product,
+    reference_image_url: product.reference_image_url ? signedUrlMap[product.reference_image_url] : null,
+    measurement_drawing_url: product.measurement_drawing_url ? signedUrlMap[product.measurement_drawing_url] : null,
+  }));
+
+  return productsWithSignedUrls;
+}

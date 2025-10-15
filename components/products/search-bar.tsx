@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
-import { Product } from "@/types/products";
-import { getProducts } from "@/actions/search-products";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;

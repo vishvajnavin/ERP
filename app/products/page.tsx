@@ -205,7 +205,7 @@ export default function ProductsPage() {
         }}
       />
       </div>
-      <div className={`transition-all ease-in-out ${viewedProduct ? 'w-full max-w-md' : 'max-w-0'} overflow-hidden`}>
+      <div className={`transition-all ease-in-out ${viewedProduct ? 'w-full max-w-md' : 'max-w-0'} overflow-hidden sticky top-0 h-screen overflow-y-auto`}>
         <div className="w-full">
           <ProductDetailPanel product={viewedProduct} onClose={handleClosePanel} />
         </div>

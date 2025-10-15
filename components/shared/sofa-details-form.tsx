@@ -97,10 +97,10 @@ export const SharedSofaDetailsForm: React.FC<DetailsFormProps<ProductWithFiles>>
             <InputField name={name("model_name")} label="Model Name" value={product.model_name || ''} error={nameError} disabled={disabled} onChange={(e) => handleProductChange(index, "model_name", e.target.value)} required/>
             <ComboboxField name={name("model_family_configuration")} label="Model Family Configuration" placeholder="Select Configuration" value={product.model_family_configuration} disabled={disabled} onValueChange={(val) => handleProductChange(index, "model_family_configuration", val)} options={modelFamilyOptions} required/>
             {(product.model_family_configuration === '3+2 str' || product.model_family_configuration === '3+2+1') && (
-                <InputField name={name("2_seater_length")} label="2 Seater Length (cm)" type="number" value={product['2_seater_length'] || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "2_seater_length", Number(e.target.value))} required/>
+                <InputField name={name("2_seater_length")} label="2 Seater Length (in)" type="number" value={product['2_seater_length'] || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "2_seater_length", Number(e.target.value))} required/>
             )}
             {product.model_family_configuration === '3+2+1' && (
-                <InputField name={name("1_seater_length")} label="1 Seater Length (cm)" type="number" value={product['1_seater_length'] || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "1_seater_length", Number(e.target.value))} required/>
+                <InputField name={name("1_seater_length")} label="1 Seater Length (in)" type="number" value={product['1_seater_length'] || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "1_seater_length", Number(e.target.value))} required/>
             )}
             {product.customization && (
                 <span className="text-lg font-semibold text-red-600 bg-red-100 px-2 py-0.5 rounded-md h-min w-min col-span-2">
@@ -229,14 +229,14 @@ export const SharedSofaDetailsForm: React.FC<DetailsFormProps<ProductWithFiles>>
             {product.polish_finish !== 'no_polish' && (
                 <InputField name={name("polish_color")} label="Polish Color" value={product.polish_color || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "polish_color", e.target.value)} required/>
             )}
-            <InputField name={name("total_width")} label="Total Width (cm)" type="number" value={product.total_width || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "total_width", Number(e.target.value))} required/>
-            <InputField name={name("total_depth")} label="Total Depth (cm)" type="number" value={product.total_depth || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "total_depth", Number(e.target.value))} required/>
-            <InputField name={name("total_height")} label="Total Height (cm)" type="number" value={product.total_height || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "total_height", Number(e.target.value))} required/>
-            <InputField name={name("seat_width")} label="Seat Width (cm)" type="number" value={product.seat_width || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "seat_width", Number(e.target.value))} required/>
-            <InputField name={name("seat_depth")} label="Seat Depth (cm)" type="number" value={product.seat_depth || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "seat_depth", Number(e.target.value))} required/>
-            <InputField name={name("seat_height")} label="Seat Height (cm)" type="number" value={product.seat_height || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "seat_height", Number(e.target.value))} required/>
-            <InputField name={name("armrest_width")} label="Armrest Width (cm)" type="number" value={product.armrest_width || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "armrest_width", Number(e.target.value))} required/>
-            <InputField name={name("armrest_depth")} label="Armrest Depth (cm)" type="number" value={product.armrest_depth || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "armrest_depth", Number(e.target.value))} required/>
+            <InputField name={name("total_width")} label="Total Width (in)" type="number" value={product.total_width || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "total_width", Number(e.target.value))} required/>
+            <InputField name={name("total_depth")} label="Total Depth (in)" type="number" value={product.total_depth || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "total_depth", Number(e.target.value))} required/>
+            <InputField name={name("total_height")} label="Total Height (in)" type="number" value={product.total_height || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "total_height", Number(e.target.value))} required/>
+            <InputField name={name("seat_width")} label="Seat Width (in)" type="number" value={product.seat_width || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "seat_width", Number(e.target.value))} required/>
+            <InputField name={name("seat_depth")} label="Seat Depth (in)" type="number" value={product.seat_depth || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "seat_depth", Number(e.target.value))} required/>
+            <InputField name={name("seat_height")} label="Seat Height (in)" type="number" value={product.seat_height || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "seat_height", Number(e.target.value))} required/>
+            <InputField name={name("armrest_width")} label="Armrest Width (in)" type="number" value={product.armrest_width || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "armrest_width", Number(e.target.value))} required/>
+            <InputField name={name("armrest_depth")} label="Armrest Depth (in)" type="number" value={product.armrest_depth || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "armrest_depth", Number(e.target.value))} required/>
             <ComboboxField name={name("upholstery")} label="Upholstery" placeholder="Select Upholstery" value={product.upholstery} disabled={disabled} onValueChange={(val) => handleProductChange(index, "upholstery", val)} options={upholsteryOptions} required/>
             <InputField name={name("upholstery_color")} label="Upholstery Color" value={product.upholstery_color || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "upholstery_color", e.target.value)} required/>
         </div>

@@ -112,6 +112,7 @@ export async function addProductAction(formData: FormData) {
         upholstery_color: getNullIfEmpty(formData.get('upholstery_color')),
         polish_color: getNullIfEmpty(formData.get('polish_color')),
         polish_finish: getNullIfEmpty(formData.get('polish_finish')),
+        customization: false,
       };
       
       const { error } = await supabase.from('sofa_products').insert([sofaData]);
@@ -131,6 +132,7 @@ export async function addProductAction(formData: FormData) {
         upholstery_color: getNullIfEmpty(formData.get('upholstery_color')),
         polish_color: getNullIfEmpty(formData.get('polish_color')),
         polish_finish: getNullIfEmpty(formData.get('polish_finish')),
+        customization: false,
       };
 
       const { error } = await supabase.from('bed_products').insert([bedData]);

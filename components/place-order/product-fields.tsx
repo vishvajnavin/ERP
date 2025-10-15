@@ -43,7 +43,7 @@ export const ToggleGroupField = <T extends string | boolean>({ label, name, valu
         {!hideLabel && (
             <label className="block text-sm font-medium text-gray-700 mb-1">{label}{required && <span className="text-red-500">*</span>}</label>
         )}
-        <div className="flex items-center bg-gray-100 rounded-lg p-1">
+        <div className="flex items-center flex-wrap gap-2 bg-gray-100 rounded-lg p-1">
             {options.map(option => (
                 <button 
                     type="button" 
