@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { getProducts } from '@/actions/get-products';
+import { deleteProduct } from '@/actions/delete-product';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -24,6 +25,10 @@ export default function ProductsPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [viewedProduct, setViewedProduct] = useState<Product | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
+  const pageSize = 10;
 
   const handleEditClick = (product: Product) => {
     setSelectedProduct(product);
@@ -41,15 +46,16 @@ export default function ProductsPage() {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const products = await getProducts(productType, filters);
+      const { products, totalCount } = await getProducts(productType, filters, currentPage, pageSize);
       setDisplayedProducts(products);
+      setTotalPages(Math.ceil(totalCount / pageSize));
     } catch (error) {
       console.error("Failed to fetch products:", error);
       setDisplayedProducts([]);
     } finally {
       setLoading(false);
     }
-  }, [productType, filters]);
+  }, [productType, filters, currentPage]);
 
   useEffect(() => {
     fetchProducts();
@@ -59,10 +65,24 @@ export default function ProductsPage() {
   // This function will be passed to the SearchBar component.
   const handleSearch = useCallback((searchResults: Product[]) => {
     setDisplayedProducts(searchResults);
+    setIsSearching(searchResults.length > 0);
   }, []); // Dependency array is empty as setDisplayedProducts is stable.
 
   const handleFilterChange = (newFilters: Record<string, string>) => {
     setFilters(prevFilters => ({ ...prevFilters, ...newFilters }));
+  };
+
+  const handleDelete = async (product: Product) => {
+    const confirmation = confirm(`Are you sure you want to delete ${product.model_name}?`);
+    if (confirmation) {
+      try {
+        await deleteProduct(String(product.id), productType);
+        fetchProducts();
+      } catch (error) {
+        console.error("Failed to delete product:", error);
+        alert("Failed to delete product. Please try again.");
+      }
+    }
   };
 
   return (
@@ -144,6 +164,9 @@ export default function ProductsPage() {
                   <Button variant="outline" size="sm" onClick={() => handleEditClick(product)}>
                     Edit
                   </Button>
+                  <Button variant="destructive" size="sm" onClick={() => handleDelete(product)}>
+                    Delete
+                  </Button>
                 </div>
               </CardHeader>
             </Card>
@@ -154,6 +177,26 @@ export default function ProductsPage() {
           <p className="text-gray-500">No {productType}s found. Add one to get started!</p>
         </div>
       )}
+
+      {/* Pagination Controls */}
+      {!isSearching && totalPages > 1 && (
+        <div className="flex justify-center items-center gap-4 mt-8">
+          <Button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          <span>Page {currentPage} of {totalPages}</span>
+          <Button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </Button>
+        </div>
+      )}
+
       <EditProductModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}

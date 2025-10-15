@@ -122,10 +122,10 @@ CREATE TABLE public.sofa_products (
   recliner_mechanism_mode text CHECK (recliner_mechanism_mode IS NULL OR (recliner_mechanism_mode = ANY (ARRAY['manual'::text, 'motorized_single'::text, 'motorized_double'::text]))),
   recliner_mechanism_flip text CHECK (recliner_mechanism_flip IS NULL OR (recliner_mechanism_flip = ANY (ARRAY['single_flip'::text, 'double_flip'::text, 'double_motor_with_headrest'::text]))),
   wood_to_floor boolean DEFAULT true,
-  headrest_mode text CHECK (headrest_mode IS NULL OR (headrest_mode = ANY (ARRAY['manual'::text, 'motorized'::text]))),
+  headrest_mode text NOT NULL CHECK (headrest_mode = ANY (ARRAY['manual'::text, 'motorized'::text, 'fixed'::text])),
   cup_holder text CHECK (cup_holder = ANY (ARRAY['normal_push_back'::text, 'chiller_cup'::text])),
   snack_swivel_tray boolean DEFAULT false,
-  daybed_headrest_mode text CHECK (daybed_headrest_mode IS NULL OR (daybed_headrest_mode = ANY (ARRAY['manual'::text, 'motorized'::text]))),
+  daybed_headrest_mode text CHECK (daybed_headrest_mode IS NULL OR (daybed_headrest_mode = ANY (ARRAY['manual'::text, 'motorized'::text, 'fixed'::text]))),
   daybed_position text CHECK (daybed_position = ANY (ARRAY['rhs'::text, 'lhs'::text])),
   armrest_storage boolean DEFAULT false,
   storage_side text CHECK (storage_side = ANY (ARRAY['rhs_arm'::text, 'lhs_arm'::text, 'both_arm'::text])),
@@ -134,7 +134,7 @@ CREATE TABLE public.sofa_products (
   belt_details text CHECK (belt_details = ANY (ARRAY['elastic_belt'::text, 'zig_zag_spring'::text, 'pocket_spring'::text])),
   leg_type text CHECK (leg_type = ANY (ARRAY['wood'::text, 'pvd'::text, 'ss'::text])),
   pvd_color text,
-  chester_option text CHECK (chester_option IS NULL OR (chester_option = ANY (ARRAY['with_button'::text, 'without_button'::text]))),
+  chester_option text NOT NULL CHECK (chester_option = ANY (ARRAY['with_button'::text, 'without_button'::text, 'no_chester'::text])),
   armrest_panels text,
   polish_color text,
   polish_finish text CHECK (polish_finish = ANY (ARRAY['matt_finish'::text, 'glossy_finish'::text])),
@@ -159,7 +159,7 @@ CREATE TABLE public.sofa_products (
 CREATE TABLE public.stage_dependencies (
   stage_id bigint NOT NULL,
   depends_on_stage_id bigint NOT NULL,
-  CONSTRAINT stage_dependencies_pkey PRIMARY KEY (depends_on_stage_id, stage_id),
+  CONSTRAINT stage_dependencies_pkey PRIMARY KEY (stage_id, depends_on_stage_id),
   CONSTRAINT stage_dependencies_stage_id_fkey FOREIGN KEY (stage_id) REFERENCES public.stages(stage_id),
   CONSTRAINT stage_dependencies_depends_on_stage_id_fkey FOREIGN KEY (depends_on_stage_id) REFERENCES public.stages(stage_id)
 );

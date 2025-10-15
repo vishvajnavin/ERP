@@ -6,12 +6,14 @@ import { getSignedUrls } from './get-signed-urls';
 
 export async function getProducts(
   productType: 'sofa' | 'bed',
-  filters: Record<string, string>
-): Promise<Product[]> {
+  filters: Record<string, string>,
+  page: number = 1,
+  pageSize: number = 10
+): Promise<{ products: Product[], totalCount: number }> {
   const supabase = await createClient();
   const tableName = productType === 'sofa' ? 'sofa_products' : 'bed_products';
 
-  let queryBuilder = supabase.from(tableName).select('*');
+  let queryBuilder = supabase.from(tableName).select('*', { count: 'exact' });
 
   if (filters) {
     for (const [key, value] of Object.entries(filters)) {
@@ -21,17 +23,17 @@ export async function getProducts(
     }
   }
 
-  const { data: products, error } = await queryBuilder
+  const { data: products, error, count } = await queryBuilder
     .order('created_at', { ascending: false })
-    .limit(10);
+    .range((page - 1) * pageSize, page * pageSize - 1);
 
   if (error) {
     console.error(`Error fetching ${productType}s:`, error);
-    return [];
+    return { products: [], totalCount: 0 };
   }
 
   if (!products) {
-    return [];
+    return { products: [], totalCount: 0 };
   }
 
   // Extract all image paths that need signing
@@ -52,5 +54,5 @@ export async function getProducts(
     measurement_drawing_url: product.measurement_drawing_url ? signedUrlMap[product.measurement_drawing_url] : null,
   }));
 
-  return productsWithSignedUrls;
+  return { products: productsWithSignedUrls, totalCount: count ?? 0 };
 }

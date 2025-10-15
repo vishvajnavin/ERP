@@ -4,6 +4,14 @@ import { Product } from '@/types/products';
 import { X, Package, Settings, Sofa, Bed, Ruler, Paintbrush } from 'lucide-react';
 import Image from 'next/image';
 
+const formatValue = (value: string | number | boolean | undefined | null) => {
+  if (typeof value !== 'string') return value;
+  return value
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 interface ProductDetailPanelProps {
   product: Product | null;
   onClose: () => void;
@@ -78,18 +86,19 @@ export default function ProductDetailPanel({ product, onClose }: ProductDetailPa
                 <div>
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Sofa Configuration</h4>
                     <div className="grid grid-cols-2 gap-4">
-                        <DetailItem Icon={Sofa} label="Model Family" value={product.model_family_configuration} />
+                        <DetailItem Icon={Sofa} label="Model Family" value={formatValue(product.model_family_configuration)} />
                         <DetailItem Icon={Ruler} label="2 Seater Length" value={product['2_seater_length']} />
                         <DetailItem Icon={Ruler} label="1 Seater Length" value={product['1_seater_length']} />
-                        <DetailItem Icon={Settings} label="Recliner Mechanism" value={product.recliner_mechanism_mode} />
-                        <DetailItem Icon={Settings} label="Recliner Flip" value={product.recliner_mechanism_flip} />
-                        <DetailItem Icon={Settings} label="Headrest Mode" value={product.headrest_mode} />
-                        <DetailItem Icon={Settings} label="Cup Holder" value={product.cup_holder} />
-                        <DetailItem Icon={Settings} label="Daybed Headrest" value={product.daybed_headrest_mode} />
-                        <DetailItem Icon={Settings} label="Daybed Position" value={product.daybed_position} />
-                        <DetailItem Icon={Settings} label="Storage Side" value={product.storage_side} />
-                        <DetailItem Icon={Settings} label="Snack Swivel Tray" value={product.snack_swivel_tray} />
-                        <DetailItem Icon={Settings} label="Armrest Storage" value={product.armrest_storage} />
+                        <DetailItem Icon={Settings} label="Recliner Mechanism" value={formatValue(product.recliner_mechanism_mode)} />
+                        <DetailItem Icon={Settings} label="Recliner Flip" value={formatValue(product.recliner_mechanism_flip)} />
+                        <DetailItem Icon={Settings} label="Wood to Floor" value={typeof product.wood_to_floor === 'boolean' ? (product.wood_to_floor ? 'Wood' : 'Metal') : product.wood_to_floor} />
+                        <DetailItem Icon={Settings} label="Headrest Mode" value={formatValue(product.headrest_mode)} />
+                        <DetailItem Icon={Settings} label="Cup Holder" value={formatValue(product.cup_holder)} />
+                        <DetailItem Icon={Settings} label="Daybed Headrest" value={formatValue(product.daybed_headrest_mode)} />
+                        <DetailItem Icon={Settings} label="Daybed Position" value={formatValue(product.daybed_position)} />
+                        <DetailItem Icon={Settings} label="Storage Side" value={formatValue(product.storage_side)} />
+                        <DetailItem Icon={Settings} label="Snack Swivel Tray" value={typeof product.snack_swivel_tray === 'boolean' ? (product.snack_swivel_tray ? 'Yes' : 'No') : product.snack_swivel_tray} />
+                        <DetailItem Icon={Settings} label="Armrest Storage" value={typeof product.armrest_storage === 'boolean' ? (product.armrest_storage ? 'Yes' : 'No') : product.armrest_storage} />
                     </div>
                 </div>
             )}
@@ -100,9 +109,9 @@ export default function ProductDetailPanel({ product, onClose }: ProductDetailPa
                     <div className="grid grid-cols-2 gap-4">
                         <DetailItem Icon={Bed} label="Bed Size" value={product.bed_size} />
                         <DetailItem Icon={Ruler} label="Custom Mattress Size" value={product.customized_mattress_size} />
-                        <DetailItem Icon={Bed} label="Headboard Type" value={product.headboard_type} />
-                        <DetailItem Icon={Bed} label="Storage Option" value={product.storage_option} />
-                        <DetailItem Icon={Bed} label="Bed Portion" value={product.bed_portion} />
+                        <DetailItem Icon={Bed} label="Headboard Type" value={formatValue(product.headboard_type)} />
+                        <DetailItem Icon={Bed} label="Storage Option" value={formatValue(product.storage_option)} />
+                        <DetailItem Icon={Bed} label="Bed Portion" value={formatValue(product.bed_portion)} />
                     </div>
                 </div>
             )}
@@ -128,10 +137,10 @@ export default function ProductDetailPanel({ product, onClose }: ProductDetailPa
             <div>
                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Upholstery & Finish</h4>
                 <div className="grid grid-cols-2 gap-4">
-                    <DetailItem Icon={Paintbrush} label="Upholstery" value={product.upholstery} />
+                    <DetailItem Icon={Paintbrush} label="Upholstery" value={formatValue(product.upholstery)} />
                     <DetailItem Icon={Paintbrush} label="Upholstery Color" value={product.upholstery_color} />
                     <DetailItem Icon={Paintbrush} label="Polish Color" value={product.polish_color} />
-                    <DetailItem Icon={Paintbrush} label="Polish Finish" value={product.polish_finish} />
+                    <DetailItem Icon={Paintbrush} label="Polish Finish" value={formatValue(product.polish_finish)} />
                 </div>
             </div>
         </div>

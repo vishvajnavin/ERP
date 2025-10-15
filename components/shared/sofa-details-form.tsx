@@ -118,6 +118,7 @@ export const SharedSofaDetailsForm: React.FC<DetailsFormProps<ProductWithFiles>>
                     if (val === false || val === null) {
                         handleProductChange(index, "recliner_mechanism_mode", null);
                         handleProductChange(index, "recliner_mechanism_flip", null);
+                        handleProductChange(index, "wood_to_floor", null);
                     }
                 }} 
                 options={[{value: true, label: 'Yes'}, {value: false, label: 'No'}]} 
@@ -129,7 +130,9 @@ export const SharedSofaDetailsForm: React.FC<DetailsFormProps<ProductWithFiles>>
                     <ToggleGroupField name={name("recliner_mechanism_flip")} label="Recliner Flip" value={product.recliner_mechanism_flip} disabled={disabled} onValueChange={(val) => handleProductChange(index, "recliner_mechanism_flip", val)} options={[{value: 'single_flip', label: 'Single Flip'}, {value: 'double_flip', label: 'Double Flip'}, {value: 'double_motor_with_headrest', label: 'Double Motor with Headrest'}]} required/>
                 </>
             )}
-            <ToggleGroupField name={name("wood_to_floor")} label="Wood to Floor" value={product.wood_to_floor} disabled={disabled} onValueChange={(val) => handleProductChange(index, "wood_to_floor", val)} options={[{value: true, label: 'Wood'}, {value: false, label: 'Metal'}]} required/>
+            {includeRecliner && (
+                <ToggleGroupField name={name("wood_to_floor")} label="Wood to Floor" value={product.wood_to_floor} disabled={disabled || !includeRecliner} onValueChange={(val) => handleProductChange(index, "wood_to_floor", val)} options={[{value: true, label: 'Wood'}, {value: false, label: 'Metal'}]} required/>
+            )}
             <ToggleGroupField 
                 name={name("headrest_mode")} 
                 label="Headrest Mode" 
@@ -209,8 +212,23 @@ export const SharedSofaDetailsForm: React.FC<DetailsFormProps<ProductWithFiles>>
                 required
             />
             <InputField name={name("armrest_panels")} label="Armrest Panels" value={product.armrest_panels || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "armrest_panels", e.target.value)} required/>
-            <InputField name={name("polish_color")} label="Polish Color" value={product.polish_color || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "polish_color", e.target.value)} required/>
-            <ToggleGroupField name={name("polish_finish")} label="Polish Finish" value={product.polish_finish} disabled={disabled} onValueChange={(val) => handleProductChange(index, "polish_finish", val)} options={[{value: 'matt_finish', label: 'Matt Finish'}, {value: 'glossy_finish', label: 'Glossy Finish'}]} required/>
+            <ToggleGroupField 
+                name={name("polish_finish")} 
+                label="Polish Finish" 
+                value={product.polish_finish} 
+                disabled={disabled} 
+                onValueChange={(val) => {
+                    handleProductChange(index, "polish_finish", val);
+                    if (val === 'no_polish') {
+                        handleProductChange(index, "polish_color", null);
+                    }
+                }} 
+                options={[{value: 'matt_finish', label: 'Matt Finish'}, {value: 'glossy_finish', label: 'Glossy Finish'}, {value: 'no_polish', label: 'No Polish'}]} 
+                required
+            />
+            {product.polish_finish !== 'no_polish' && (
+                <InputField name={name("polish_color")} label="Polish Color" value={product.polish_color || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "polish_color", e.target.value)} required/>
+            )}
             <InputField name={name("total_width")} label="Total Width (cm)" type="number" value={product.total_width || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "total_width", Number(e.target.value))} required/>
             <InputField name={name("total_depth")} label="Total Depth (cm)" type="number" value={product.total_depth || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "total_depth", Number(e.target.value))} required/>
             <InputField name={name("total_height")} label="Total Height (cm)" type="number" value={product.total_height || ''} disabled={disabled} onChange={(e) => handleProductChange(index, "total_height", Number(e.target.value))} required/>

@@ -51,11 +51,11 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
       {/* --- Header --- */}
       <div className="flex items-center justify-start h-20 border-gray-800 pt-4 px-4">
         <div className={`flex items-center justify-start transition-all duration-300 ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'}`}>
-          <Image src="/Vinyork_Logo.png" alt="Vinyork Logo" className="h-12 w-auto" />
+          <Image src="/Vinyork_Logo.png" alt="Vinyork Logo" className="h-12 w-auto" width={48} height={48} />
           <span className="text-white text-4xl ml-2 uppercase font-bold" style={{ fontFamily: 'Mainlux, sans-serif' }}>vinyork</span>
         </div>
          <div className={`flex items-center justify-center transition-all duration-300 ${isCollapsed ? 'opacity-100 w-auto' : 'opacity-0 w-0'}`}>
-            <Image src="/Vinyork_Logo.png" alt="Vinyork Logo" className="h-12 w-auto" />
+            <Image src="/Vinyork_Logo.png" alt="Vinyork Logo" className="h-12 w-auto" width={48} height={48} />
         </div>
       </div>
 

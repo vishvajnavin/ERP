@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Product } from "@/types/products";
 import { searchProducts } from "@/actions/search-products";
@@ -17,8 +17,14 @@ export function SearchBar({
   filters,
 }: SearchBarProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
     const handler = setTimeout(async () => {
       const filtered = await searchProducts(searchQuery, productType, filters);
       onSearch(filtered);
