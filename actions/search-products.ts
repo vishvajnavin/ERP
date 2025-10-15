@@ -4,15 +4,19 @@ import { createClient } from "@/utils/supabase/server";
 import { Product } from "@/types/products";
 import { getSignedUrls } from "./get-signed-urls";
 
-export async function searchProducts(
-  query: string,
+export async function getProducts(
   productType: "sofa" | "bed",
-  filters?: Record<string, string>
-): Promise<Product[]> {
+  filters: Record<string, string>,
+  page: number = 1,
+  pageSize: number = 10,
+  query?: string
+): Promise<{ products: Product[], totalCount: number }> {
   const supabase = await createClient();
-  let queryBuilder = supabase.from(productType === 'sofa' ? 'sofa_products' : 'bed_products').select('*');
+  const tableName = productType === 'sofa' ? 'sofa_products' : 'bed_products';
 
-  if (query.trim()) {
+  let queryBuilder = supabase.from(tableName).select('*', { count: 'exact' });
+
+  if (query && query.trim()) {
     queryBuilder = queryBuilder.ilike('model_name', `%${query}%`);
   }
 
@@ -24,15 +28,17 @@ export async function searchProducts(
     }
   }
 
-  const { data: products, error } = await queryBuilder;
+  const { data: products, error, count } = await queryBuilder
+    .order('created_at', { ascending: false })
+    .range((page - 1) * pageSize, page * pageSize - 1);
 
   if (error) {
-    console.error("Error searching products:", error);
-    return [];
+    console.error(`Error fetching ${productType}s:`, error);
+    return { products: [], totalCount: 0 };
   }
 
   if (!products) {
-    return [];
+    return { products: [], totalCount: 0 };
   }
 
   // Extract all image paths that need signing
@@ -53,5 +59,5 @@ export async function searchProducts(
     measurement_drawing_url: product.measurement_drawing_url ? signedUrlMap[product.measurement_drawing_url] : null,
   }));
 
-  return productsWithSignedUrls;
+  return { products: productsWithSignedUrls, totalCount: count ?? 0 };
 }

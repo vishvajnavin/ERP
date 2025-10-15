@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Product } from "@/types/products";
-import { searchProducts } from "@/actions/search-products";
+import { getProducts } from "@/actions/search-products";
 
 interface SearchBarProps {
-  onSearch: (filteredProducts: Product[]) => void;
+  onSearch: (query: string) => void;
   productType: "sofa" | "bed";
   filters?: Record<string, string>;
 }
@@ -25,9 +25,8 @@ export function SearchBar({
       return;
     }
 
-    const handler = setTimeout(async () => {
-      const filtered = await searchProducts(searchQuery, productType, filters);
-      onSearch(filtered);
+    const handler = setTimeout(() => {
+      onSearch(searchQuery);
     }, 300); // 300ms debounce
 
     return () => {

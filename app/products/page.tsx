@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { getProducts } from '@/actions/get-products';
+import { getProducts } from '@/actions/search-products';
 import { deleteProduct } from '@/actions/delete-product';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ export default function ProductsPage() {
   const [viewedProduct, setViewedProduct] = useState<Product | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const pageSize = 10;
 
   const handleEditClick = (product: Product) => {
@@ -46,7 +46,7 @@ export default function ProductsPage() {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const { products, totalCount } = await getProducts(productType, filters, currentPage, pageSize);
+      const { products, totalCount } = await getProducts(productType, filters, currentPage, pageSize, searchQuery);
       setDisplayedProducts(products);
       setTotalPages(Math.ceil(totalCount / pageSize));
     } catch (error) {
@@ -55,18 +55,16 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, [productType, filters, currentPage]);
+  }, [productType, filters, currentPage, searchQuery]);
 
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
 
-  // NEW: Create a stable search handler function with useCallback.
-  // This function will be passed to the SearchBar component.
-  const handleSearch = useCallback((searchResults: Product[]) => {
-    setDisplayedProducts(searchResults);
-    setIsSearching(searchResults.length > 0);
-  }, []); // Dependency array is empty as setDisplayedProducts is stable.
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  }, []);
 
   const handleFilterChange = (newFilters: Record<string, string>) => {
     setFilters(prevFilters => ({ ...prevFilters, ...newFilters }));
@@ -179,7 +177,7 @@ export default function ProductsPage() {
       )}
 
       {/* Pagination Controls */}
-      {!isSearching && totalPages > 1 && (
+      {totalPages > 1 && (
         <div className="flex justify-center items-center gap-4 mt-8">
           <Button
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
