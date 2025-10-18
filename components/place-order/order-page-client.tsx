@@ -10,7 +10,7 @@ import { submitOrder } from '@/actions/submit-order';
 import { Input } from '@/components/ui/input';
 import { ProductEntryForm } from './product-entry-form';
 
-// Main type for an item in the order form
+// Main type 
 export type OrderItem = {
     id: string | null;
     uniqueId: number;
@@ -21,7 +21,7 @@ export type OrderItem = {
     due_date: Date | null;
     nameError?: string;
 };
-
+// Initial state for a new product entry
 const initialProductState: OrderItem = {
     id: null,
     uniqueId: Date.now(),
