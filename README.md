@@ -1,4 +1,4 @@
-# Vinyork - Sofa Manufacturing ERP
+# Sofa Manufacturing ERP
 
 Vinyork is a specialized Enterprise Resource Planning (ERP) system designed for the leather and sofa manufacturing industry. It streamlines the entire production lifecycle, from order customization to production pipeline tracking and inventory management.
 
