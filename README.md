@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vinyork - Sofa Manufacturing ERP
 
-## Getting Started
+Vinyork is a specialized Enterprise Resource Planning (ERP) system designed for the leather and sofa manufacturing industry. It streamlines the entire production lifecycle, from order customization to production pipeline tracking and inventory management.
 
-First, run the development server:
+## 🚀 Features & Screenshots
+
+### 1. Executive Dashboard
+A high-level view of the business, tracking total orders, production status, and overdue items. It features a visual production pipeline to monitor bottlenecks.
+![Dashboard](./screenshots/dashboard.jpg)
+
+### 2. Custom Order Management
+An advanced ordering interface that handles complex product configurations.
+* **Detailed Customization:** Supports specific attributes like Recliner options, Headrest modes (Manual/Motorized), Cup Holders, and Foam Density.
+* **Dynamic Search:** Quick lookup for existing models and customers.
+![Place New Order](./screenshots/place-order.jpg)
+
+### 3. Production Pipeline (Kanban)
+A Kanban-style board to track orders through specific manufacturing stages:
+* Carpentry -> Webbing -> Marking -> Stitching -> Cladding -> Final QC.
+![Production Kanban](./screenshots/production-kanban.jpg)
+
+### 4. Customer Relationship Management (CRM)
+Manage customer profiles and view their specific order histories and locations.
+![Customer Management](./screenshots/customer-management.jpg)
+
+### 5. Order History & Tracking
+Comprehensive logs of all past and current orders with filtering capabilities by date, status, and customer.
+![Order History](./screenshots/order-history.jpg)
+
+---
+
+## 🛠 Tech Stack
+
+* **Frontend:** React.js / Next.js
+* **UI Library:** Tailwind CSS (or your specific UI library)
+* **Backend:** Python / Node.js (Edit this based on your backend)
+* **Database:** PostgreSQL / MongoDB
+
+## 📦 Installation
 
 ```bash
+# Clone the repository
+git clone [https://github.com/yourusername/vinyork-erp.git](https://github.com/yourusername/vinyork-erp.git)
+
+# Install dependencies
+npm install
+
+# Run the development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
