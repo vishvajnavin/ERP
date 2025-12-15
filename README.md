@@ -8,7 +8,7 @@
 <br />
 
 <div align="center">
-  <img src="./screenshots/dashboard.jpg" alt="Vinyork Dashboard" width="100%" style="border-radius: 10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1);" />
+  <img src="./screenshots/dashboard.png" alt="Vinyork Dashboard" width="100%" style="border-radius: 10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1);" />
 </div>
 
 <br />
