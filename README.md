@@ -1,49 +1,48 @@
-# Sofa Manufacturing ERP
+<div align="center">
+  <h1>🛋️ Vinyork ERP</h1>
+  <p>
+    <strong>Next-Gen Manufacturing Management for Leather & Sofas</strong>
+  </p>
+</div>
 
-Vinyork is a specialized Enterprise Resource Planning (ERP) system designed for the leather and sofa manufacturing industry. It streamlines the entire production lifecycle, from order customization to production pipeline tracking and inventory management.
+<br />
 
-## 🚀 Features & Screenshots
+<div align="center">
+  <img src="./screenshots/dashboard.jpg" alt="Vinyork Dashboard" width="100%" style="border-radius: 10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1);" />
+</div>
 
-### 1. Executive Dashboard
-A high-level view of the business, tracking total orders, production status, and overdue items. It features a visual production pipeline to monitor bottlenecks.
-![Dashboard](./screenshots/dashboard.jpg)
+<br />
 
-### 2. Custom Order Management
-An advanced ordering interface that handles complex product configurations.
-* **Detailed Customization:** Supports specific attributes like Recliner options, Headrest modes (Manual/Motorized), Cup Holders, and Foam Density.
-* **Dynamic Search:** Quick lookup for existing models and customers.
-![Place New Order](./screenshots/place-order.jpg)
+<table>
+  <tr>
+    <td width="50%">
+      <h3 align="center">🏭 Production Pipeline</h3>
+      <p align="center">Kanban board for tracking carpentry, stitching, and assembly stages.</p>
+      <img src="./screenshots/production-kanban.jpg" alt="Kanban Board" width="100%" />
+    </td>
+    <td width="50%">
+      <h3 align="center">🛒 Advanced Ordering</h3>
+      <p align="center">Custom configuration logic for recliner types, foam density, and materials.</p>
+      <img src="./screenshots/place-order.jpg" alt="Order Form" width="100%" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <h3 align="center">👥 Customer CRM</h3>
+      <p align="center">Manage relationships, locations, and specific client requirements.</p>
+      <img src="./screenshots/customer-management.jpg" alt="CRM" width="100%" />
+    </td>
+    <td width="50%">
+      <h3 align="center">📜 Order History</h3>
+      <p align="center">Complete digital audit trail of all manufacturing orders.</p>
+      <img src="./screenshots/order-history.jpg" alt="Order History" width="100%" />
+    </td>
+  </tr>
+</table>
 
-### 3. Production Pipeline (Kanban)
-A Kanban-style board to track orders through specific manufacturing stages:
-* Carpentry -> Webbing -> Marking -> Stitching -> Cladding -> Final QC.
-![Production Kanban](./screenshots/production-kanban.jpg)
-
-### 4. Customer Relationship Management (CRM)
-Manage customer profiles and view their specific order histories and locations.
-![Customer Management](./screenshots/customer-management.jpg)
-
-### 5. Order History & Tracking
-Comprehensive logs of all past and current orders with filtering capabilities by date, status, and customer.
-![Order History](./screenshots/order-history.jpg)
-
----
-
-## 🛠 Tech Stack
-
-* **Frontend:** React.js / Next.js
-* **UI Library:** Tailwind CSS (or your specific UI library)
-* **Backend:** Python / Node.js (Edit this based on your backend)
-* **Database:** PostgreSQL / MongoDB
-
-## 📦 Installation
-
-```bash
-# Clone the repository
-git clone [https://github.com/yourusername/vinyork-erp.git](https://github.com/yourusername/vinyork-erp.git)
-
-# Install dependencies
-npm install
-
-# Run the development server
-npm run dev
+<div align="center">
+  <br />
+  <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white" />
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" />
+</div>
