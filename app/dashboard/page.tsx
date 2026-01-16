@@ -6,12 +6,22 @@ import ProductionChart from '@/components/dashboard/production-chart';
 import RecentOrders from '@/components/dashboard/recent-orders';
 import { getDashboardData } from '@/actions/get-dashboard-data';
 
+import { PageContainer } from '@/components/ui/page-container';
+import { PageHeader } from '@/components/ui/page-header';
+
 // --- Main Dashboard Page Component ---
 const DashboardPage: React.FC = async () => {
   const data = await getDashboardData();
 
   if (!data) {
-    return <div>Error loading dashboard data.</div>;
+    return (
+      <div className="flex h-full items-center justify-center p-8">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold text-gray-900">Unable to load dashboard data</h2>
+          <p className="mt-1 text-sm text-gray-500">Please try refreshing the page.</p>
+        </div>
+      </div>
+    );
   }
 
   const kpiData = [
@@ -22,14 +32,17 @@ const DashboardPage: React.FC = async () => {
   ];
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 bg-gray-100">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
-      
+    <PageContainer>
+      <PageHeader
+        title="Dashboard"
+        description="Overview of your production pipeline."
+      />
+
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         {kpiData.map((kpi) => <KpiCard key={kpi.title} {...kpi} />)}
       </div>
-      
+
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
@@ -39,10 +52,10 @@ const DashboardPage: React.FC = async () => {
           <ProductionPipeline data={data.production_pipeline || {}} />
         </div>
         <div className="lg:col-span-3">
-            <RecentOrders data={data.recent_orders || []} />
+          <RecentOrders data={data.recent_orders || []} />
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

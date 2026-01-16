@@ -23,17 +23,24 @@ export default function RootLayout({
 }>) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   return (
-    <html lang="en">
+    <html lang="en" className="h-full">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased h-full bg-gray-50 dark:bg-zinc-900 overflow-hidden text-sm sm:text-base`}
       >
         <UserProvider>
-          <div className="flex">
-            <Sidebar
-              isCollapsed={isCollapsed}
-              setIsCollapsed={setIsCollapsed}
-            />
-            <main className="flex-1">{children}</main>
+          <div className="flex h-screen w-full overflow-hidden">
+            {/* Sidebar Wrapper - Fixed Height */}
+            <div className="h-full shrink-0">
+              <Sidebar
+                isCollapsed={isCollapsed}
+                setIsCollapsed={setIsCollapsed}
+              />
+            </div>
+
+            {/* Main Content Area - Scrollable */}
+            <main className="flex-1 h-full overflow-y-auto overflow-x-hidden relative flex flex-col">
+              {children}
+            </main>
           </div>
           <Toaster position="top-right" />
         </UserProvider>

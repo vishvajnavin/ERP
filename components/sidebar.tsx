@@ -44,80 +44,78 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
 
   return (
     <aside
-      className={`flex flex-col bg-black text-white transition-all duration-300 ease-in-out h-[calc(100vh-2rem)] sticky top-4 left-4 z-10 rounded-3xl shadow-2xl ${
-        isCollapsed ? 'w-20' : 'w-64'
-      } m-4`}
+      className={`flex flex-col bg-black text-white transition-all duration-300 ease-in-out h-full border-r border-gray-800 relative z-20 ${isCollapsed ? 'w-20' : 'w-64'
+        }`}
     >
       {/* --- Header --- */}
-      <div className="flex items-center justify-center h-20 border-gray-800 pt-4 px-4">
-        <div className={`flex items-center justify-center transition-all duration-300 ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'}`}>
-          <Image src="/Vinyork_Logo.png" alt="Vinyork Logo" className="h-12 w-auto" width={48} height={48} />
-          <span className="text-white text-3xl ml-2 uppercase font-bold" style={{ fontFamily: 'Mainlux, sans-serif' }}>vinyork</span>
+      <div className="flex items-center justify-center h-16 border-b border-gray-800/50 shrink-0">
+        <div className={`flex items-center justify-center transition-all duration-300 ${isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 w-auto'}`}>
+          <Image src="/Vinyork_Logo.png" alt="Vinyork Logo" className="h-8 w-auto" width={32} height={32} />
+          <span className="text-white text-xl ml-2 uppercase font-bold tracking-wider" style={{ fontFamily: 'Mainlux, sans-serif' }}>vinyork</span>
         </div>
-         <div className={`flex items-center justify-center transition-all duration-300 ${isCollapsed ? 'opacity-100 w-auto' : 'opacity-0 w-0'}`}>
-            <Image src="/Vinyork_Logo.png" alt="Vinyork Logo" className="h-12 w-auto" width={48} height={48} />
+        <div className={`flex items-center justify-center absolute transition-all duration-300 ${isCollapsed ? 'opacity-100 scale-100' : 'opacity-0 scale-50 pointer-events-none'}`}>
+          <Image src="/Vinyork_Logo.png" alt="Vinyork Logo" className="h-8 w-auto" width={32} height={32} />
         </div>
       </div>
 
       {/* --- Collapse/Expand Button --- */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute top-1/2 -right-4 transform -translate-y-1/2 bg-red-600 text-white p-2 rounded-full shadow-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-transform duration-300"
+        className="absolute bottom-20 -right-3 z-30 bg-red-600 text-white p-1 rounded-full shadow-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-transform duration-300 transform"
         aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
-        {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+        {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
       </button>
 
       {/* --- Navigation Menu --- */}
-      <nav className="flex-1 px-4 py-6 space-y-2">
-        {filteredMenuItems.map((item) => (
-          <Link
-            key={item.name}
-            href={item?.href}
-            className={`flex items-center p-3 rounded-lg transition-colors duration-200 ${
-              pathname === item.href
-                ? 'bg-red-600 text-white shadow-md'
-                : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-            } ${isCollapsed ? 'justify-center' : ''}`}
-            title={isCollapsed ? item.name : ''}
-          >
-            <item.icon className={`h-6 w-6 ${isCollapsed ? '' : 'mr-4'}`} />
-            <span
-              className={`font-medium transition-all duration-200 ease-in-out whitespace-nowrap ${
-                isCollapsed ? 'opacity-0 invisible w-0' : 'opacity-100 visible w-auto'
-              }`}
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto no-scrollbar">
+        {filteredMenuItems.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link
+              key={item.name}
+              href={item?.href}
+              className={`flex items-center p-3 rounded-lg group transition-all duration-200 ${isActive
+                  ? 'bg-red-600/90 text-white shadow-md'
+                  : 'text-gray-400 hover:bg-gray-800/80 hover:text-white'
+                } ${isCollapsed ? 'justify-center' : ''}`}
+              title={isCollapsed ? item.name : ''}
             >
-              {item.name}
-            </span>
-          </Link>
-        ))}
+              <item.icon className={`h-5 w-5 transition-transform group-hover:scale-110 ${isCollapsed ? '' : 'mr-3'}`} />
+              <span
+                className={`font-medium text-sm transition-all duration-200 ease-in-out whitespace-nowrap overflow-hidden ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'
+                  }`}
+              >
+                {item.name}
+              </span>
+            </Link>
+          );
+        })}
       </nav>
 
       {user && (
-        <div className="p-4 border-t border-gray-800">
+        <div className="p-4 border-t border-gray-800 shrink-0 bg-black/50">
           <div className={`flex items-center ${isCollapsed ? 'justify-center' : ''}`}>
-            <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gray-200 flex items-center justify-center text-gray-800 text-lg p-1">
+            <div className="h-9 w-9 flex-shrink-0 rounded-full bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center text-white text-sm font-bold shadow-inner">
               {getInitials(user?.full_name)}
             </div>
             <div
-              className={`ml-4 transition-all duration-200 ease-in-out ${
-                isCollapsed ? 'opacity-0 invisible w-0' : 'opacity-100 visible w-auto'
-              }`}
+              className={`ml-3 transition-all duration-200 ease-in-out overflow-hidden ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'
+                }`}
             >
-              <p className="font-semibold text-white whitespace-nowrap">{user?.full_name ?? 'User'}</p>
-              <p className="text-sm text-gray-400 whitespace-nowrap truncate">{user?.email}</p>
+              <p className="font-semibold text-white text-sm truncate w-32">{user?.full_name ?? 'User'}</p>
+              <p className="text-xs text-gray-400 truncate w-32">{user?.email}</p>
             </div>
           </div>
           <button
             onClick={signOut}
-            className={`flex items-center p-3 mt-4 rounded-lg transition-colors duration-200 text-gray-400 hover:bg-gray-800 hover:text-white w-full ${isCollapsed ? 'justify-center' : ''}`}
+            className={`flex items-center p-2.5 mt-3 rounded-lg transition-colors duration-200 text-gray-400 hover:bg-red-900/30 hover:text-red-400 w-full ${isCollapsed ? 'justify-center' : ''}`}
             title={isCollapsed ? 'Logout' : ''}
           >
-            <LogOut className={`h-6 w-6 ${isCollapsed ? '' : 'mr-4'}`} />
+            <LogOut className={`h-5 w-5 ${isCollapsed ? '' : 'mr-3'}`} />
             <span
-              className={`font-medium transition-all duration-200 ease-in-out whitespace-nowrap ${
-                isCollapsed ? 'opacity-0 invisible w-0' : 'opacity-100 visible w-auto'
-              }`}
+              className={`font-medium text-sm transition-all duration-200 ease-in-out whitespace-nowrap ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'
+                }`}
             >
               Logout
             </span>

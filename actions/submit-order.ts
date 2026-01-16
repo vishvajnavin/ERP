@@ -1,76 +1,104 @@
-// app/actions/orderActions.ts
-'use server'; // This directive is crucial for making this a Server Action
+// app/actions/submit-order.ts
+'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/utils/supabase/server'; // Adjust path if necessary
+import { createClient } from '@/utils/supabase/server';
+import { z } from 'zod';
+import { zfd } from 'zod-form-data';
 
-// Helper to convert empty strings or the string "null" to actual null
-const getFormDataValueOrNull = (formData: FormData, key: string) => {
-    const value = formData.get(key);
-    if (value === '' || value === 'null') {
-        return null;
-    }
-    return value;
-};
+// --- Zod Helpers ---
 
-// Helper to convert empty strings, "null", or invalid numbers to actual null
-const getNumberOrNull = (formData: FormData, key: string) => {
-    const value = getFormDataValueOrNull(formData, key);
-    if (value === null) return null;
-    const num = Number(value);
-    return isNaN(num) ? null : num;
-};
+// Handle "true"/"false" strings to boolean
+const booleanString = z.preprocess((val) => {
+  if (typeof val === 'string') {
+    if (val === 'true') return true;
+    if (val === 'false') return false;
+  }
+  return null;
+}, z.boolean().nullable().optional());
 
-export interface ProductItem {
-  is_existing_model: boolean;
-  is_customization?: boolean;
-  product_type: 'sofa' | 'bed';
-  quantity?: number;
-  // Existing model properties
-  sofa_product_id?: string;
-  bed_product_id?: string;
-  // New model properties (common)
-  model_name?: string;
-  description?: string;
+// Handle strict boolean strings (default false if missing/invalid, for checkboxes/flags)
+const checkboxBool = z.preprocess((val) => val === 'true', z.boolean());
+
+// Handle number strings, converting empty/null to null
+const numberString = z.preprocess((val) => {
+  if (val === '' || val === 'null' || val === null || val === undefined) return null;
+  const num = Number(val);
+  return isNaN(num) ? null : num;
+}, z.number().nullable().optional());
+
+// Handle text strings, converting empty/"null" to null
+const textString = z.preprocess((val) => {
+  if (val === '' || val === 'null' || val === undefined) return null;
+  return String(val);
+}, z.string().nullable().optional());
+
+// --- Schema Definition ---
+
+const productSchema = z.object({
+  product_type: z.enum(['sofa', 'bed']),
+  is_existing_model: checkboxBool,
+  is_customization: checkboxBool,
+  quantity: z.preprocess((val) => Number(val) || 1, z.number()),
+  due_date: textString,
+
+  // References
+  sofa_product_id: textString,
+  bed_product_id: textString,
+
+  // New Model
+  model_name: textString,
+  description: textString,
+
+  // Sofa Specific
+  model_family_configuration: textString,
+  "2_seater_length": numberString,
+  "1_seater_length": numberString,
+  recliner_mechanism_mode: textString,
+  recliner_mechanism_flip: textString,
+  wood_to_floor: booleanString, // tri-state: true, false, or null
+  headrest_mode: textString,
+  cup_holder: textString,
+  snack_swivel_tray: checkboxBool,
+  daybed_headrest_mode: textString,
+  daybed_position: textString,
+  armrest_storage: checkboxBool,
+  storage_side: textString,
+  foam_density_seating: numberString,
+  foam_density_backrest: numberString,
+  belt_details: textString,
+  leg_type: textString,
+  pvd_color: textString,
+  chester_option: textString,
+  armrest_panels: textString,
+  polish_color: textString,
+  polish_finish: textString,
+  upholstery: textString,
+  upholstery_color: textString,
+
+  // Dimensions
+  total_width: numberString,
+  total_depth: numberString,
+  total_height: numberString,
+  seat_width: numberString,
+  seat_depth: numberString,
+  seat_height: numberString,
+  armrest_width: numberString,
+  armrest_depth: numberString,
+
+  // Bed Specific
+  bed_size: textString,
+  customized_mattress_size: textString,
+  headboard_type: textString,
+  storage_option: textString,
+  bed_portion: textString,
+});
+
+// Export inferred type for usage elsewhere
+export type ProductItem = z.infer<typeof productSchema> & {
   reference_image_url?: string;
   measurement_drawing_url?: string;
-  // New sofa-specific properties
-  recliner_mechanism_mode?: string;
-  recliner_mechanism_flip?: string;
-  wood_to_floor?: boolean;
-  headrest_mode?: string;
-  cup_holder?: string;
-  snack_swivel_tray?: boolean;
-  daybed_headrest_mode?: string;  
-  daybed_position?: string;
-  armrest_storage?: boolean;
-  storage_side?: string;
-  foam_density_seating?: string;
-  foam_density_backrest?: string;
-  belt_details?: string;
-  leg_type?: string;
-  pvd_color?: string;
-  chester_option?: string;
-  armrest_panels?: string;
-  polish_color?: string;
-  polish_finish?: string;
-  seat_width?: number;
-  seat_depth?: number;
-  seat_height?: number;
-  armrest_width?: number;
-  armrest_depth?: number;
-  upholstery?: string;
-  upholstery_color?: string;
-  total_width?: number;
-  total_depth?: number;
-  total_height?: number;
-  // New bed-specific properties
-  headboard_type?: string;
-  storage_option?: string;
-  bed_portion?: string;
-  bed_size?: string;
-  customized_mattress_size?: string;
-}
+};
 
 interface FormState {
   success: boolean;
@@ -79,112 +107,100 @@ interface FormState {
 
 export async function submitOrder(prevState: FormState, formData: FormData) {
   const supabase = await createClient();
-  const selectedCustomerId = formData.get('selectedCustomerId') as string;
-  const totalProducts = parseInt(formData.get('totalProducts') as string, 10);
 
-  if (!selectedCustomerId || isNaN(totalProducts) || totalProducts < 1) {
+  // Basic validation using zfd
+  const baseSchema = zfd.formData({
+    selectedCustomerId: zfd.text(),
+    totalProducts: zfd.numeric().refine((n) => n >= 1, { message: "At least 1 product required" }),
+  });
+
+  const parsedBase = baseSchema.safeParse(formData);
+
+  if (!parsedBase.success) {
     return { success: false, message: 'Invalid customer or product count.' };
   }
 
-  try {
-    const products = [];
+  const { selectedCustomerId, totalProducts } = parsedBase.data;
 
-    // 1. Process each product item from the form
-    for (let i = 0; i < totalProducts; i++) {
-      const baseName = `products[${i}]`;
-      const product: any = {
-        product_type: formData.get(`${baseName}.product_type`),
-        is_existing_model: formData.get(`${baseName}.is_existing_model`) === 'true',
-        is_customization: formData.get(`${baseName}.is_customization`) === 'true',
-        quantity: parseInt(formData.get(`${baseName}.quantity`) as string, 10) || 1,
-        due_date: formData.get(`${baseName}.due_date`) || null,
+  try {
+    // Process products in parallel
+    const productPromises = Array.from({ length: totalProducts }).map(async (_, i) => {
+      const base = `products[${i}]`;
+
+      // 1. Extract raw values for this product index to feed into Zod
+      // We manually pick keys because FormData is flat. 
+      // This listing is verbose but robust because it feeds into the schema validation.
+      const rawData = {
+        product_type: formData.get(`${base}.product_type`),
+        is_existing_model: formData.get(`${base}.is_existing_model`),
+        is_customization: formData.get(`${base}.is_customization`),
+        quantity: formData.get(`${base}.quantity`),
+        due_date: formData.get(`${base}.due_date`),
+        sofa_product_id: formData.get(`${base}.sofa_product_id`),
+        bed_product_id: formData.get(`${base}.bed_product_id`),
+        model_name: formData.get(`${base}.model_name`),
+        description: formData.get(`${base}.description`),
+        model_family_configuration: formData.get(`${base}.model_family_configuration`),
+        "2_seater_length": formData.get(`${base}.2_seater_length`),
+        "1_seater_length": formData.get(`${base}.1_seater_length`),
+        recliner_mechanism_mode: formData.get(`${base}.recliner_mechanism_mode`),
+        recliner_mechanism_flip: formData.get(`${base}.recliner_mechanism_flip`),
+        wood_to_floor: formData.get(`${base}.wood_to_floor`),
+        headrest_mode: formData.get(`${base}.headrest_mode`),
+        cup_holder: formData.get(`${base}.cup_holder`),
+        snack_swivel_tray: formData.get(`${base}.snack_swivel_tray`),
+        daybed_headrest_mode: formData.get(`${base}.daybed_headrest_mode`),
+        daybed_position: formData.get(`${base}.daybed_position`),
+        armrest_storage: formData.get(`${base}.armrest_storage`),
+        storage_side: formData.get(`${base}.storage_side`),
+        foam_density_seating: formData.get(`${base}.foam_density_seating`),
+        foam_density_backrest: formData.get(`${base}.foam_density_backrest`),
+        belt_details: formData.get(`${base}.belt_details`),
+        leg_type: formData.get(`${base}.leg_type`),
+        pvd_color: formData.get(`${base}.pvd_color`),
+        chester_option: formData.get(`${base}.chester_option`),
+        armrest_panels: formData.get(`${base}.armrest_panels`),
+        polish_color: formData.get(`${base}.polish_color`),
+        polish_finish: formData.get(`${base}.polish_finish`),
+        upholstery: formData.get(`${base}.upholstery`),
+        upholstery_color: formData.get(`${base}.upholstery_color`),
+        total_width: formData.get(`${base}.total_width`),
+        total_depth: formData.get(`${base}.total_depth`),
+        total_height: formData.get(`${base}.total_height`),
+        seat_width: formData.get(`${base}.seat_width`),
+        seat_depth: formData.get(`${base}.seat_depth`),
+        seat_height: formData.get(`${base}.seat_height`),
+        armrest_width: formData.get(`${base}.armrest_width`),
+        armrest_depth: formData.get(`${base}.armrest_depth`),
+        bed_size: formData.get(`${base}.bed_size`),
+        customized_mattress_size: formData.get(`${base}.customized_mattress_size`),
+        headboard_type: formData.get(`${base}.headboard_type`),
+        storage_option: formData.get(`${base}.storage_option`),
+        bed_portion: formData.get(`${base}.bed_portion`),
       };
 
-      // --- Handle File Uploads ---
-      const referenceImageValue = formData.get(`${baseName}.reference_image_url`);
-      if (referenceImageValue instanceof File && referenceImageValue.size > 0) {
-        const fileExtension = referenceImageValue.name.split('.').pop();
-        const fileName = `${Date.now()}.${fileExtension}`;
-        const filePath = `reference/${fileName}`;
-        const { data, error } = await supabase.storage.from('order-images').upload(filePath, referenceImageValue);
-        if (error) throw new Error(`[Item ${i + 1}] Failed to upload reference image: ${error.message}`);
-        product.reference_image_url = data.path;
-      } else if (typeof referenceImageValue === 'string') {
-        product.reference_image_url = referenceImageValue;
-      }
+      // 2. Validate and Transform
+      const product = await productSchema.parseAsync(rawData);
 
-      const measurementDrawingValue = formData.get(`${baseName}.measurement_drawing_url`);
-      if (measurementDrawingValue instanceof File && measurementDrawingValue.size > 0) {
-        const fileExtension = measurementDrawingValue.name.split('.').pop();
-        const fileName = `${Date.now()}.${fileExtension}`;
-        const filePath = `measurement/${fileName}`;
-        const { data, error } = await supabase.storage.from('order-images').upload(filePath, measurementDrawingValue);
-        if (error) throw new Error(`[Item ${i + 1}] Failed to upload measurement drawing: ${error.message}`);
-        product.measurement_drawing_url = data.path;
-      } else if (typeof measurementDrawingValue === 'string') {
-        product.measurement_drawing_url = measurementDrawingValue;
-      }
+      // 3. Handle File Uploads (Parallel)
+      const refImg = formData.get(`${base}.reference_image_url`);
+      const drawImg = formData.get(`${base}.measurement_drawing_url`);
 
-      // --- Populate product details from form ---
-      if (product.is_existing_model && !product.is_customization) {
-        product.sofa_product_id = getFormDataValueOrNull(formData, `${baseName}.sofa_product_id`);
-        product.bed_product_id = getFormDataValueOrNull(formData, `${baseName}.bed_product_id`);
-      } else {
-        product.model_name = getFormDataValueOrNull(formData, `${baseName}.model_name`);
-        product.description = getFormDataValueOrNull(formData, `${baseName}.description`);
-        
-        if (product.product_type === 'sofa') {
-            product.model_family_configuration = getFormDataValueOrNull(formData, `${baseName}.model_family_configuration`);
-            product["2_seater_length"] = getNumberOrNull(formData, `${baseName}.2_seater_length`);
-            product["1_seater_length"] = getNumberOrNull(formData, `${baseName}.1_seater_length`);
-            product.recliner_mechanism_mode = getFormDataValueOrNull(formData, `${baseName}.recliner_mechanism_mode`);
-            product.recliner_mechanism_flip = getFormDataValueOrNull(formData, `${baseName}.recliner_mechanism_flip`);
-            product.wood_to_floor = getFormDataValueOrNull(formData, `${baseName}.wood_to_floor`) === 'true' ? true : (getFormDataValueOrNull(formData, `${baseName}.wood_to_floor`) === 'false' ? false : null);
-            product.headrest_mode = getFormDataValueOrNull(formData, `${baseName}.headrest_mode`);
-            product.cup_holder = getFormDataValueOrNull(formData, `${baseName}.cup_holder`);
-            product.snack_swivel_tray = formData.get(`${baseName}.snack_swivel_tray`) === 'true';
-            product.daybed_headrest_mode = getFormDataValueOrNull(formData, `${baseName}.daybed_headrest_mode`);
-            product.daybed_position = getFormDataValueOrNull(formData, `${baseName}.daybed_position`);
-            product.armrest_storage = formData.get(`${baseName}.armrest_storage`) === 'true';
-            product.storage_side = getFormDataValueOrNull(formData, `${baseName}.storage_side`);
-            product.foam_density_seating = getNumberOrNull(formData, `${baseName}.foam_density_seating`);
-            product.foam_density_backrest = getNumberOrNull(formData, `${baseName}.foam_density_backrest`);
-            product.belt_details = getFormDataValueOrNull(formData, `${baseName}.belt_details`);
-            product.leg_type = getFormDataValueOrNull(formData, `${baseName}.leg_type`);
-            product.pvd_color = getFormDataValueOrNull(formData, `${baseName}.pvd_color`);
-            product.chester_option = getFormDataValueOrNull(formData, `${baseName}.chester_option`);
-            product.armrest_panels = getFormDataValueOrNull(formData, `${baseName}.armrest_panels`);
-            product.polish_color = getFormDataValueOrNull(formData, `${baseName}.polish_color`);
-            product.polish_finish = getFormDataValueOrNull(formData, `${baseName}.polish_finish`);
-            product.upholstery = getFormDataValueOrNull(formData, `${baseName}.upholstery`);
-            product.upholstery_color = getFormDataValueOrNull(formData, `${baseName}.upholstery_color`);
-            product.total_width = getNumberOrNull(formData, `${baseName}.total_width`);
-            product.total_depth = getNumberOrNull(formData, `${baseName}.total_depth`);
-            product.total_height = getNumberOrNull(formData, `${baseName}.total_height`);
-            product.seat_width = getNumberOrNull(formData, `${baseName}.seat_width`);
-            product.seat_depth = getNumberOrNull(formData, `${baseName}.seat_depth`);
-            product.seat_height = getNumberOrNull(formData, `${baseName}.seat_height`);
-            product.armrest_width = getNumberOrNull(formData, `${baseName}.armrest_width`);
-            product.armrest_depth = getNumberOrNull(formData, `${baseName}.armrest_depth`);
-        } else { // bed
-            product.bed_size = getFormDataValueOrNull(formData, `${baseName}.bed_size`);
-            product.customized_mattress_size = getFormDataValueOrNull(formData, `${baseName}.customized_mattress_size`);
-            product.headboard_type = getFormDataValueOrNull(formData, `${baseName}.headboard_type`);
-            product.storage_option = getFormDataValueOrNull(formData, `${baseName}.storage_option`);
-            product.bed_portion = getFormDataValueOrNull(formData, `${baseName}.bed_portion`);
-            product.upholstery = getFormDataValueOrNull(formData, `${baseName}.upholstery`);
-            product.upholstery_color = getFormDataValueOrNull(formData, `${baseName}.upholstery_color`);
-            product.polish_color = getFormDataValueOrNull(formData, `${baseName}.polish_color`);
-            product.polish_finish = getFormDataValueOrNull(formData, `${baseName}.polish_finish`);
-            product.total_width = getNumberOrNull(formData, `${baseName}.total_width`);
-            product.total_depth = getNumberOrNull(formData, `${baseName}.total_depth`);
-            product.total_height = getNumberOrNull(formData, `${baseName}.total_height`);
-        }
-      }
-      products.push(product);
-    }
+      const [refUrl, drawUrl] = await Promise.all([
+        uploadFile(supabase, refImg, 'reference', i),
+        uploadFile(supabase, drawImg, 'measurement', i),
+      ]);
 
-    // 2. Call the RPC function to submit the entire order
+      return {
+        ...product,
+        reference_image_url: refUrl ?? undefined,
+        measurement_drawing_url: drawUrl ?? undefined,
+      };
+    });
+
+    const products = await Promise.all(productPromises);
+
+    // 4. Submit via RPC
     const { data: orderId, error } = await supabase.rpc('submit_full_order', {
       p_customer_id: parseInt(selectedCustomerId, 10),
       p_products: products,
@@ -194,13 +210,38 @@ export async function submitOrder(prevState: FormState, formData: FormData) {
       throw new Error(`Failed to submit order via RPC: ${error.message}`);
     }
 
-    // 3. Revalidate and return success
     revalidatePath(`/place-order`);
     return { success: true, message: `Order #${orderId} created successfully!` };
 
   } catch (error: unknown) {
+    // Zod Error Handling
+    if (error instanceof z.ZodError) {
+      console.error('Validation Error:', error.flatten());
+      return { success: false, message: 'Form validation failed. Please check your inputs.' };
+    }
+
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
     console.error('Order submission error:', errorMessage);
     return { success: false, message: errorMessage };
   }
+}
+
+// --- Helper for File Uploads ---
+async function uploadFile(supabase: any, file: FormDataEntryValue | null, folder: string, index: number): Promise<string | null> {
+  if (file instanceof File && file.size > 0) {
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `${Date.now()}_${index}_${Math.random().toString(36).substring(7)}.${fileExtension}`;
+    const filePath = `${folder}/${fileName}`;
+    const { data, error } = await supabase.storage.from('order-images').upload(filePath, file);
+
+    if (error) {
+      // Log error but maybe don't fail the whole order? 
+      // For now, let's throw to be safe as per original logic.
+      throw new Error(`Failed to upload ${folder} image: ${error.message}`);
+    }
+    return data.path;
+  } else if (typeof file === 'string' && file !== '') {
+    return file;
+  }
+  return null;
 }
